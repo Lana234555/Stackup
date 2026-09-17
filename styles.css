@@ -181,7 +181,7 @@ nav.scrolled { background: rgba(241, 238, 195, 0.92); backdrop-filter: blur(14px
 }
 .hero-word {
   font-family: "Archivo Black", sans-serif; font-weight: 400;
-  font-size: clamp(3.4rem, 10.5vw, 9.5rem); line-height: 0.88; letter-spacing: -0.02em;
+  font-size: clamp(4rem, 13vw, 12rem); line-height: 0.86; letter-spacing: -0.02em;
   color: var(--ink); width: 100%; overflow: hidden;
 }
 .hero-word .li { display: block; opacity: 0; transform: translateY(110%); animation: slideUp 0.9s cubic-bezier(.22,1,.36,1) forwards; }
