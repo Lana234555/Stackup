@@ -66,8 +66,8 @@ a { color: inherit; }
 .eyebrow::before { content: ""; width: 7px; height: 7px; background: var(--ink); transform: rotate(45deg); flex-shrink: 0; }
 
 .section-title {
-  font-family: "Archivo Black", sans-serif;
-  font-weight: 400;
+  font-family: "Plus Jakarta Sans", sans-serif;
+  font-weight: 800;
   font-size: clamp(1.9rem, 3.2vw, 3rem);
   line-height: 1.06;
   letter-spacing: -0.01em;
@@ -76,7 +76,7 @@ a { color: inherit; }
 }
 .section-title em {
   font-style: normal;
-  font-family: "Archivo Black", sans-serif;
+  font-family: "Plus Jakarta Sans", sans-serif;
   color: var(--ink);
   text-decoration: underline;
   text-decoration-thickness: 3px;
@@ -133,7 +133,7 @@ nav {
 }
 nav.scrolled { background: rgba(241, 238, 195, 0.92); backdrop-filter: blur(14px); border-color: var(--line); }
 .nav-logo { display: flex; align-items: center; text-decoration: none; }
-.logo-text { font-family: "Archivo Black", sans-serif; font-weight: 400; font-size: 1.28rem; letter-spacing: -0.01em; color: var(--ink); }
+.logo-text { font-family: "Plus Jakarta Sans", sans-serif; font-weight: 800; font-size: 1.28rem; letter-spacing: -0.01em; color: var(--ink); }
 .nav-links { display: flex; gap: 34px; list-style: none; }
 .nav-links a { font-size: 0.86rem; color: var(--ink-soft); text-decoration: none; transition: color 0.2s; }
 .nav-links a:hover { color: var(--ink); }
@@ -151,7 +151,7 @@ nav.scrolled { background: rgba(241, 238, 195, 0.92); backdrop-filter: blur(14px
   opacity: 0; visibility: hidden; transition: opacity 0.35s ease, visibility 0.35s;
 }
 .mobile-nav.open { opacity: 1; visibility: visible; }
-.mobile-nav a { font-family: "Archivo Black", sans-serif; font-weight: 400; font-size: 1.8rem; color: var(--ink); text-decoration: none; padding: 12px 0; }
+.mobile-nav a { font-family: "Plus Jakarta Sans", sans-serif; font-weight: 800; font-size: 1.8rem; color: var(--ink); text-decoration: none; padding: 12px 0; }
 .mobile-nav .btn-p { margin-top: 22px; color: var(--paper); }
 
 /* ══════════════ CORNER MARKS (crosshair registration marks) ══════════════ */
@@ -180,7 +180,7 @@ nav.scrolled { background: rgba(241, 238, 195, 0.92); backdrop-filter: blur(14px
   padding: 148px 0 64px;
 }
 .hero-word {
-  font-family: "Archivo Black", sans-serif; font-weight: 400;
+  font-family: "Plus Jakarta Sans", sans-serif; font-weight: 800;
   font-size: clamp(4rem, 13vw, 12rem); line-height: 0.86; letter-spacing: -0.02em;
   color: var(--ink); width: 100%; overflow: hidden;
 }
@@ -188,7 +188,7 @@ nav.scrolled { background: rgba(241, 238, 195, 0.92); backdrop-filter: blur(14px
 .hero-word-top .li { animation-delay: 0.15s; }
 .hero-word-bottom .li { animation-delay: 0.55s; }
 .hero-word em {
-  font-style: normal; font-family: "Archivo Black", sans-serif; color: var(--paper);
+  font-style: normal; font-family: "Plus Jakarta Sans", sans-serif; color: var(--paper);
   background: var(--ink); padding: 0 0.18em; display: inline-block;
 }
 
@@ -223,7 +223,7 @@ nav.scrolled { background: rgba(241, 238, 195, 0.92); backdrop-filter: blur(14px
 }
 .stats.visible { opacity: 1; transform: none; }
 .stat { display: flex; flex-direction: column; gap: 3px; }
-.stat-n { font-family: "Archivo Black", sans-serif; font-weight: 400; font-size: 1.4rem; color: var(--ink); letter-spacing: -0.01em; line-height: 1; }
+.stat-n { font-family: "Plus Jakarta Sans", sans-serif; font-weight: 800; font-size: 1.4rem; color: var(--ink); letter-spacing: -0.01em; line-height: 1; }
 .stat-l { font-family: "IBM Plex Mono", monospace; font-size: 0.66rem; color: var(--ink-faint); letter-spacing: 0.06em; text-transform: uppercase; margin-top: 5px; }
 .stat-div { width: 1px; height: 30px; background: var(--line); }
 
@@ -244,7 +244,7 @@ nav.scrolled { background: rgba(241, 238, 195, 0.92); backdrop-filter: blur(14px
 .srv-card:hover::after { transform: translateY(0); }
 .srv-card:hover { background: var(--white); }
 .srv-num { font-family: "IBM Plex Mono", monospace; font-size: 0.72rem; color: var(--ink-faint); letter-spacing: 0.05em; }
-.srv-name { font-family: "Archivo Black", sans-serif; font-weight: 400; font-size: 1.1rem; color: var(--ink); letter-spacing: -0.01em; }
+.srv-name { font-family: "Plus Jakarta Sans", sans-serif; font-weight: 800; font-size: 1.1rem; color: var(--ink); letter-spacing: -0.01em; }
 .srv-desc { font-size: 0.88rem; line-height: 1.68; color: var(--ink-soft); flex: 1; }
 .srv-tag { display: inline-flex; align-items: center; gap: 6px; font-family: "IBM Plex Mono", monospace; font-size: 0.68rem; color: var(--ink); width: fit-content; margin-top: 2px; }
 .srv-tag::before { content: ""; width: 5px; height: 5px; background: var(--ink); }
@@ -256,7 +256,7 @@ nav.scrolled { background: rgba(241, 238, 195, 0.92); backdrop-filter: blur(14px
 .why-item:first-child { padding-top: 0; }
 .why-item:last-child { border-bottom: none; }
 .why-num { font-family: "IBM Plex Mono", monospace; font-size: 0.78rem; color: var(--ink-faint); letter-spacing: 0.04em; flex-shrink: 0; padding-top: 3px; width: 30px; }
-.why-title { font-family: "Archivo Black", sans-serif; font-weight: 400; font-size: 0.98rem; color: var(--ink); margin-bottom: 6px; }
+.why-title { font-family: "Plus Jakarta Sans", sans-serif; font-weight: 800; font-size: 0.98rem; color: var(--ink); margin-bottom: 6px; }
 .why-text { font-size: 0.88rem; line-height: 1.7; color: var(--ink-soft); }
 
 .why-visual { background: var(--white); border: 1px solid var(--line); border-radius: var(--radius-lg); padding: 30px; position: sticky; top: 110px; }
@@ -284,7 +284,7 @@ nav.scrolled { background: rgba(241, 238, 195, 0.92); backdrop-filter: blur(14px
 }
 .pstep-num span { transform: rotate(-45deg); }
 .pstep-num.active { background: var(--ink); color: var(--paper); }
-.pstep-title { font-family: "Archivo Black", sans-serif; font-weight: 400; font-size: 0.94rem; color: var(--ink); }
+.pstep-title { font-family: "Plus Jakarta Sans", sans-serif; font-weight: 800; font-size: 0.94rem; color: var(--ink); }
 .pstep-desc { font-size: 0.82rem; line-height: 1.65; color: var(--ink-soft); }
 .pstep-time { font-family: "IBM Plex Mono", monospace; font-size: 0.68rem; color: var(--ink-faint); letter-spacing: 0.04em; }
 
@@ -295,7 +295,7 @@ nav.scrolled { background: rgba(241, 238, 195, 0.92); backdrop-filter: blur(14px
 }
 .statement .wrap { display: flex; flex-direction: column; align-items: center; }
 .statement-text {
-  font-family: "Archivo Black", sans-serif; font-weight: 400;
+  font-family: "Plus Jakarta Sans", sans-serif; font-weight: 800;
   font-size: clamp(1.9rem, 5vw, 4rem); line-height: 1.1; letter-spacing: -0.02em;
   max-width: 980px;
 }
@@ -311,7 +311,7 @@ nav.scrolled { background: rgba(241, 238, 195, 0.92); backdrop-filter: blur(14px
   display: grid; grid-template-columns: 90px 1fr 1fr; gap: 40px; align-items: center;
   padding: 44px 0; border-bottom: 1px solid var(--line);
 }
-.work-row-num { font-family: "Archivo Black", sans-serif; font-size: 1.6rem; color: var(--line); align-self: flex-start; padding-top: 6px; }
+.work-row-num { font-family: "Plus Jakarta Sans", sans-serif; font-size: 1.6rem; color: var(--line); align-self: flex-start; padding-top: 6px; }
 .proj-thumb { height: 220px; background: var(--paper2); display: flex; align-items: center; justify-content: center; padding: 22px; border-radius: 4px; }
 .proj-mock { width: 100%; height: 100%; background: var(--white); border: 1px solid var(--line); border-radius: 4px; overflow: hidden; display: flex; flex-direction: column; }
 .pm-nav { height: 18px; background: var(--paper2); display: flex; align-items: center; padding: 0 8px; gap: 4px; flex-shrink: 0; }
@@ -325,14 +325,14 @@ nav.scrolled { background: rgba(241, 238, 195, 0.92); backdrop-filter: blur(14px
 .pm-line.w80 { width: 80%; }
 .proj-info { display: flex; flex-direction: column; gap: 10px; }
 .proj-tag { font-family: "IBM Plex Mono", monospace; font-size: 0.68rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink); }
-.proj-name { font-family: "Archivo Black", sans-serif; font-weight: 400; font-size: clamp(1.4rem, 2.4vw, 2rem); color: var(--ink); letter-spacing: -0.01em; line-height: 1.1; }
+.proj-name { font-family: "Plus Jakarta Sans", sans-serif; font-weight: 800; font-size: clamp(1.4rem, 2.4vw, 2rem); color: var(--ink); letter-spacing: -0.01em; line-height: 1.1; }
 .proj-desc { font-size: 0.9rem; color: var(--ink-soft); line-height: 1.65; max-width: 380px; }
 
 /* ══════════════ CTA ══════════════ */
 #contact { padding: 120px 0; position: relative; overflow: hidden; text-align: center; border-top: 1px solid var(--line); }
 .cta-inner { position: relative; z-index: 2; display: flex; flex-direction: column; align-items: center; gap: 20px; }
-.cta-title { font-family: "Archivo Black", sans-serif; font-weight: 400; font-size: clamp(1.8rem, 3.4vw, 2.9rem); letter-spacing: -0.02em; line-height: 1.12; max-width: 680px; }
-.cta-title em { font-style: normal; font-family: "Archivo Black", sans-serif; color: var(--paper); background: var(--ink); padding: 0 10px; }
+.cta-title { font-family: "Plus Jakarta Sans", sans-serif; font-weight: 800; font-size: clamp(1.8rem, 3.4vw, 2.9rem); letter-spacing: -0.02em; line-height: 1.12; max-width: 680px; }
+.cta-title em { font-style: normal; font-family: "Plus Jakarta Sans", sans-serif; color: var(--paper); background: var(--ink); padding: 0 10px; }
 .cta-sub { font-size: 1rem; color: var(--ink-soft); max-width: 440px; line-height: 1.7; margin-bottom: 6px; }
 .cta-contacts { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 12px; margin-top: 10px; }
 .cta-contact-item {
@@ -350,7 +350,7 @@ footer {
   padding: 72px 48px 0; z-index: 1; overflow: hidden;
 }
 .foot-top { display: grid; grid-template-columns: 1.3fr 1fr 1fr; gap: 40px; padding-bottom: 56px; border-bottom: 1px solid var(--line-on-ink); }
-.foot-lead { font-family: "Archivo Black", sans-serif; font-size: clamp(1.5rem, 2.4vw, 2.1rem); line-height: 1.15; letter-spacing: -0.02em; max-width: 340px; }
+.foot-lead { font-family: "Plus Jakarta Sans", sans-serif; font-size: clamp(1.5rem, 2.4vw, 2.1rem); line-height: 1.15; letter-spacing: -0.02em; max-width: 340px; }
 .foot-col-title { font-family: "IBM Plex Mono", monospace; font-size: 0.66rem; letter-spacing: 0.1em; text-transform: uppercase; color: rgba(241,238,195,0.4); margin-bottom: 16px; }
 .foot-links { display: flex; flex-direction: column; gap: 11px; }
 .foot-links a { font-size: 0.92rem; color: rgba(241,238,195,0.75); text-decoration: none; transition: color 0.2s, padding-left 0.2s; }
@@ -358,7 +358,7 @@ footer {
 .foot-bottom { display: flex; align-items: center; justify-content: space-between; padding: 22px 0; }
 .foot-copy { font-family: "IBM Plex Mono", monospace; font-size: 0.72rem; color: rgba(241,238,195,0.35); }
 .foot-wordmark {
-  font-family: "Archivo Black", sans-serif; font-weight: 400; color: var(--paper);
+  font-family: "Plus Jakarta Sans", sans-serif; font-weight: 800; color: var(--paper);
   font-size: clamp(3.5rem, 13vw, 11rem); line-height: 0.8; letter-spacing: -0.03em;
   text-align: center; padding: 10px 0 18px; opacity: 0.94; user-select: none;
 }
