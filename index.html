@@ -43,17 +43,19 @@
 
 <!-- HERO -->
 <section class="hero" id="top">
-  <div class="hero-crop hero-crop-tl"></div>
-  <div class="hero-crop hero-crop-tr"></div>
+  <div class="corners">
+    <span class="corner-mark tl"></span><span class="corner-mark tr"></span>
+    <span class="corner-mark bl"></span><span class="corner-mark br"></span>
+  </div>
+  <div class="hero-blob" aria-hidden="true"></div>
   <div class="wrap">
     <div class="hero-body">
       <div class="eyebrow">Відкрита до нових проєктів · 2026</div>
       <h1>
-        <span class="line"><span class="li">Сайти та платформи,</span></span>
-        <span class="line"><span class="li">які <em>працюють</em> із</span></span>
-        <span class="line"><span class="li">першого дня</span></span>
+        <span class="line"><span class="li">Сайти, що</span></span>
+        <span class="line"><span class="li"><em>працюють</em></span></span>
       </h1>
-      <p class="sub">Лендінги, корпоративні сайти та веб-платформи під ключ — від дизайну у Figma до продакшн-коду. Один спеціаліст, повна відповідальність за результат.</p>
+      <p class="sub">Лендінги, корпоративні сайти та веб-платформи під ключ — від дизайну у Figma до продакшн-коду, з першого дня. Один спеціаліст, повна відповідальність за результат.</p>
       <div class="hero-actions">
         <a href="#contact" class="btn-p">Обговорити проєкт <svg viewBox="0 0 15 15" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7.5h9M8.5 4l4 3.5-4 3.5"/></svg></a>
         <a href="#work" class="btn-s">Переглянути формати робіт</a>
@@ -68,6 +70,22 @@
         <div class="stat"><div class="stat-n">100%</div><div class="stat-l">адаптивна верстка</div></div>
       </div>
     </div>
+  </div>
+</section>
+
+<!-- STATEMENT -->
+<section class="statement">
+  <div class="corners on-ink">
+    <span class="corner-mark tl"></span><span class="corner-mark tr"></span>
+    <span class="corner-mark bl"></span><span class="corner-mark br"></span>
+  </div>
+  <div class="wrap">
+    <div class="statement-mark reveal" style="margin-left:auto;margin-right:auto"></div>
+    <p class="statement-text reveal">
+      <span>Без відділу продажів.</span>
+      <span>Без ескалацій та бріфів на 40 сторінок.</span>
+      <span class="dim">Один розробник, який відповідає за результат — від першого макета до продакшену.</span>
+    </p>
   </div>
 </section>
 
@@ -192,8 +210,9 @@
       <p class="section-sub">Перші кейси Stackup скоро з'являться тут. А поки — приклади форматів, під які підбирається структура й дизайн.</p>
       <div class="port-note">Реальні кейси в розробці — оновлення найближчим часом</div>
     </div>
-    <div class="port-grid">
-      <div class="proj-card reveal" style="transition-delay:.1s">
+    <div class="work-list">
+      <div class="work-row reveal" style="transition-delay:.1s">
+        <div class="work-row-num">01</div>
         <div class="proj-thumb">
           <div class="proj-mock">
             <div class="pm-nav"><span class="pm-dot"></span><span class="pm-dot"></span><span class="pm-dot"></span></div>
@@ -213,7 +232,8 @@
           <div class="proj-desc">Одноекранна структура з фокусом на конверсію: оффер, соцдоказ, форма заявки.</div>
         </div>
       </div>
-      <div class="proj-card reveal" style="transition-delay:.2s">
+      <div class="work-row reveal" style="transition-delay:.2s">
+        <div class="work-row-num">02</div>
         <div class="proj-thumb">
           <div class="proj-mock">
             <div class="pm-nav"><span class="pm-dot"></span><span class="pm-dot"></span><span class="pm-dot"></span></div>
@@ -234,7 +254,8 @@
           <div class="proj-desc">Структура на кілька розділів, SEO-основа й форма для B2B-звернень.</div>
         </div>
       </div>
-      <div class="proj-card reveal" style="transition-delay:.3s">
+      <div class="work-row reveal" style="transition-delay:.3s">
+        <div class="work-row-num">03</div>
         <div class="proj-thumb">
           <div class="proj-mock">
             <div class="pm-nav"><span class="pm-dot"></span><span class="pm-dot"></span><span class="pm-dot"></span></div>
@@ -285,12 +306,29 @@
 </section>
 
 <footer>
-  <div class="foot-copy">© 2026 Stackup</div>
-  <div class="foot-links">
-    <a href="#services">Послуги</a>
-    <a href="#work">Роботи</a>
-    <a href="#process">Процес</a>
-    <a href="#contact">Контакт</a>
+  <div class="foot-top">
+    <div class="foot-lead">Наступний проєкт може початись сьогодні.</div>
+    <div>
+      <div class="foot-col-title">Навігація</div>
+      <div class="foot-links">
+        <a href="#services">Послуги</a>
+        <a href="#work">Роботи</a>
+        <a href="#process">Процес</a>
+      </div>
+    </div>
+    <div>
+      <div class="foot-col-title">Контакт</div>
+      <div class="foot-links">
+        <a href="mailto:hello@stackup.dev">hello@stackup.dev</a>
+        <a href="https://t.me/stackup" target="_blank" rel="noopener">Telegram</a>
+        <a href="https://instagram.com/stackup" target="_blank" rel="noopener">Instagram</a>
+      </div>
+    </div>
+  </div>
+  <div class="foot-wordmark">Stackup.</div>
+  <div class="foot-bottom">
+    <div class="foot-copy">© 2026 Stackup</div>
+    <div class="foot-copy">Warsaw · UA / EU</div>
   </div>
 </footer>
 
