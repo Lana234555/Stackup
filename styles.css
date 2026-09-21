@@ -239,37 +239,67 @@ nav.scrolled { background: rgba(255, 255, 255, 0.92); backdrop-filter: blur(14px
 #services .eyebrow { justify-content: center; }
 #services .section-title { margin-left: auto; margin-right: auto; text-align: center; }
 .srv-grid {
-  display: flex; gap: 24px; margin-top: 48px;
+  display: flex; align-items: flex-start; gap: 24px; margin-top: 56px;
   overflow-x: auto; overflow-y: hidden;
-  scroll-snap-type: x mandatory; scroll-behavior: smooth;
-  padding: 4px 4px 20px; margin-bottom: -20px;
+  scroll-snap-type: x proximity; scroll-behavior: smooth;
+  padding: 28px 4px 32px 44px; margin-bottom: -20px;
   cursor: grab; scrollbar-width: none; -ms-overflow-style: none;
 }
 .srv-grid::-webkit-scrollbar { display: none; }
 .srv-grid.dragging { cursor: grabbing; scroll-behavior: auto; }
 .srv-grid.dragging, .srv-grid.dragging * { user-select: none; }
+
+.srv-card:nth-child(6n+1) { --card-bg: var(--ink); --card-fg: var(--paper); }
+.srv-card:nth-child(6n+2) { --card-bg: var(--accent); --card-fg: var(--accent-ink); }
+.srv-card:nth-child(6n+3) { --card-bg: #a8ecc4; --card-fg: #14261c; }
+.srv-card:nth-child(6n+4) { --card-bg: #aedcfb; --card-fg: #12222e; }
+.srv-card:nth-child(6n+5) { --card-bg: #ffc39a; --card-fg: #2e1a0d; }
+.srv-card:nth-child(6n+6) { --card-bg: var(--paper2); --card-fg: var(--ink); }
+.srv-card:nth-child(1) { z-index: 1; }
+.srv-card:nth-child(2) { z-index: 2; }
+.srv-card:nth-child(3) { z-index: 3; }
+.srv-card:nth-child(4) { z-index: 4; }
+.srv-card:nth-child(5) { z-index: 5; }
+.srv-card:nth-child(6) { z-index: 6; }
+
 .srv-card {
-  position: relative; overflow: hidden; background: var(--paper);
-  border: 1px solid var(--line); border-radius: var(--radius-lg);
+  position: relative; overflow: hidden;
+  background: var(--card-bg); color: var(--card-fg);
+  border-radius: 22px;
   padding: 30px 26px 26px; display: flex; flex-direction: column; gap: 14px;
-  box-shadow: 0 1px 2px rgba(28,27,25,0.04);
-  transition: background 0.3s, box-shadow 0.3s, transform 0.3s, border-color 0.3s;
-  scroll-snap-align: start; flex: 0 0 calc((100% - 48px) / 3); min-width: 0;
+  box-shadow: 0 10px 26px rgba(28,27,25,0.1);
+  transition: transform 0.4s cubic-bezier(.22,1,.36,1), box-shadow 0.4s;
+  scroll-snap-align: start; flex: 0 0 268px; width: 268px; min-height: 380px; min-width: 0;
 }
-.srv-card::after {
-  content: 'Обговорити →'; position: absolute; left: 0; right: 0; bottom: 0; height: 100%;
-  display: flex; align-items: flex-end; justify-content: center; padding-bottom: 24px;
-  background: linear-gradient(to top, rgba(28,27,25,0.94) 0%, rgba(28,27,25,0.55) 40%, transparent 72%);
-  font-family: "IBM Plex Mono", monospace; font-size: clamp(0.7rem, 0.65rem + 0.25vw, 0.78rem); color: var(--paper); letter-spacing: 0.03em;
-  transform: translateY(100%); transition: transform 0.4s cubic-bezier(.22,1,.36,1); pointer-events: none;
+.srv-num {
+  position: absolute; right: 14px; bottom: -6px; z-index: 0; pointer-events: none;
+  font-family: "Plus Jakarta Sans", sans-serif; font-weight: 800;
+  font-size: clamp(4.4rem, 3.8rem + 2vw, 6.2rem); line-height: 1; letter-spacing: -0.02em;
+  color: var(--card-fg); opacity: 0.16;
 }
-.srv-card:hover::after { transform: translateY(0); }
-.srv-card:hover { background: var(--white); border-color: var(--ink); box-shadow: 0 14px 32px rgba(28,27,25,0.12); transform: translateY(-4px); }
-.srv-num { font-family: "IBM Plex Mono", monospace; font-size: clamp(0.65rem, 0.6rem + 0.25vw, 0.72rem); color: var(--ink-faint); letter-spacing: 0.05em; }
-.srv-name { font-family: "Plus Jakarta Sans", sans-serif; font-weight: 800; font-size: clamp(1.12rem, 0.97rem + 0.65vw, 1.3rem); color: var(--ink); letter-spacing: -0.01em; }
-.srv-desc { font-size: clamp(0.88rem, 0.8rem + 0.35vw, 0.96rem); line-height: 1.68; color: var(--ink-soft); flex: 1; }
-.srv-tag { display: inline-flex; align-items: center; gap: 6px; font-family: "IBM Plex Mono", monospace; font-size: clamp(0.62rem, 0.58rem + 0.2vw, 0.68rem); color: var(--ink); width: fit-content; margin-top: 2px; }
-.srv-tag::before { content: ""; width: 5px; height: 5px; background: var(--accent); }
+.srv-name {
+  position: relative; z-index: 1;
+  font-family: "Plus Jakarta Sans", sans-serif; font-weight: 800; text-transform: uppercase;
+  font-size: clamp(1.3rem, 1.05rem + 1vw, 1.7rem); line-height: 1.05; letter-spacing: -0.01em; color: var(--card-fg);
+}
+.srv-desc { position: relative; z-index: 1; font-size: clamp(0.88rem, 0.8rem + 0.35vw, 0.96rem); line-height: 1.6; color: var(--card-fg); opacity: 0.78; flex: 1; }
+.srv-tag {
+  position: relative; z-index: 1; display: inline-flex; align-items: center; gap: 6px;
+  font-family: "IBM Plex Mono", monospace; font-size: clamp(0.62rem, 0.58rem + 0.2vw, 0.68rem);
+  color: var(--card-fg); width: fit-content; margin-top: 2px;
+}
+.srv-tag::before { content: ""; width: 5px; height: 5px; background: var(--card-fg); opacity: 0.6; }
+
+@media (min-width: 961px) {
+  .srv-card:nth-child(6n+1) { transform: rotate(-3deg); }
+  .srv-card:nth-child(6n+2) { transform: rotate(2deg); }
+  .srv-card:nth-child(6n+3) { transform: rotate(-2deg); }
+  .srv-card:nth-child(6n+4) { transform: rotate(3deg); }
+  .srv-card:nth-child(6n+5) { transform: rotate(-1.5deg); }
+  .srv-card:nth-child(6n+6) { transform: rotate(1.5deg); }
+  .srv-card:not(:first-child) { margin-left: -60px; }
+  .srv-card:hover { transform: rotate(0deg) translateY(-16px) scale(1.05); box-shadow: 0 28px 52px rgba(28,27,25,0.22); z-index: 20 !important; }
+}
 
 /* ══════════════ WHY ME ══════════════ */
 #why { min-height: 100vh; min-height: 100svh; display: flex; align-items: center; padding: 96px 0; }
@@ -410,7 +440,8 @@ footer {
   .stats { flex-wrap: wrap; gap: 20px 0; }
   .stat { width: 33%; }
   .stat-div { display: none; }
-  .srv-card { flex-basis: calc((100% - 24px) / 2); }
+  .srv-card { flex: 0 0 62%; width: 62%; min-height: 320px; }
+  .srv-grid { padding-left: 24px; }
   .why-grid { grid-template-columns: 1fr; gap: 40px; }
   .why-visual { position: static; }
   .process-steps { grid-template-columns: 1fr 1fr; row-gap: 40px; }
@@ -425,7 +456,7 @@ footer {
 @media (max-width: 600px) {
   .section { padding: 76px 0; }
   #services, #why, #process, #work, #contact { padding: 64px 0; }
-  .srv-card { flex-basis: 88%; }
+  .srv-card { flex: 0 0 84%; width: 84%; min-height: 300px; }
   .stat { width: 50%; }
   .foot-bottom { flex-direction: column; gap: 12px; text-align: center; }
 }
