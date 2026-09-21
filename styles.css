@@ -239,7 +239,7 @@ nav.scrolled { background: rgba(255, 255, 255, 0.92); backdrop-filter: blur(14px
 #services .eyebrow { justify-content: center; }
 #services .section-title { margin-left: auto; margin-right: auto; text-align: center; }
 .srv-grid {
-  display: flex; align-items: flex-start; justify-content: center; gap: 24px; margin-top: 24px;
+  display: flex; align-items: flex-start; justify-content: safe center; gap: 24px; margin-top: 24px;
   overflow-x: auto; overflow-y: hidden;
   scroll-snap-type: x proximity; scroll-behavior: smooth;
   padding: 4px 4px 20px 24px; margin-bottom: -20px;
@@ -291,14 +291,14 @@ nav.scrolled { background: rgba(255, 255, 255, 0.92); backdrop-filter: blur(14px
 .srv-tag::before { content: ""; width: 5px; height: 5px; background: var(--card-fg); opacity: 0.6; }
 
 @media (min-width: 700px) {
-  .srv-grid { align-items: center; padding: 90px 100px; }
+  .srv-grid { align-items: center; padding: 90px 32px; }
   .srv-card:nth-child(6n+1) { transform: rotate(-12deg) translateY(48px); }
   .srv-card:nth-child(6n+2) { transform: rotate(-7deg) translateY(14px); }
   .srv-card:nth-child(6n+3) { transform: rotate(-2deg) translateY(-10px); }
   .srv-card:nth-child(6n+4) { transform: rotate(2deg) translateY(-10px); }
   .srv-card:nth-child(6n+5) { transform: rotate(7deg) translateY(14px); }
   .srv-card:nth-child(6n+6) { transform: rotate(12deg) translateY(48px); }
-  .srv-card:not(:first-child) { margin-left: -200px; }
+  .srv-card:not(:first-child) { margin-left: -215px; }
   .srv-card:hover { transform: rotate(0deg) translateY(-12px) scale(1.03); box-shadow: 0 22px 44px rgba(28,27,25,0.16); z-index: 20 !important; }
 }
 
