@@ -234,13 +234,23 @@ nav.scrolled { background: rgba(255, 255, 255, 0.92); backdrop-filter: blur(14px
 #services .wrap > .reveal { text-align: center; }
 #services .eyebrow { justify-content: center; }
 #services .section-title { margin-left: auto; margin-right: auto; text-align: center; }
-.srv-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; margin-top: 48px; }
+.srv-grid {
+  display: flex; gap: 24px; margin-top: 48px;
+  overflow-x: auto; overflow-y: hidden;
+  scroll-snap-type: x mandatory; scroll-behavior: smooth;
+  padding: 4px 4px 20px; margin-bottom: -20px;
+  cursor: grab; scrollbar-width: none; -ms-overflow-style: none;
+}
+.srv-grid::-webkit-scrollbar { display: none; }
+.srv-grid.dragging { cursor: grabbing; scroll-behavior: auto; }
+.srv-grid.dragging, .srv-grid.dragging * { user-select: none; }
 .srv-card {
   position: relative; overflow: hidden; background: var(--paper);
   border: 1px solid var(--line); border-radius: var(--radius-lg);
   padding: 30px 26px 26px; display: flex; flex-direction: column; gap: 14px;
   box-shadow: 0 1px 2px rgba(28,27,25,0.04);
   transition: background 0.3s, box-shadow 0.3s, transform 0.3s, border-color 0.3s;
+  scroll-snap-align: start; flex: 0 0 calc((100% - 48px) / 3); min-width: 0;
 }
 .srv-card::after {
   content: 'Обговорити →'; position: absolute; left: 0; right: 0; bottom: 0; height: 100%;
@@ -386,7 +396,7 @@ footer {
   .stats { flex-wrap: wrap; gap: 20px 0; }
   .stat { width: 33%; }
   .stat-div { display: none; }
-  .srv-grid { grid-template-columns: 1fr 1fr; }
+  .srv-card { flex-basis: calc((100% - 24px) / 2); }
   .why-grid { grid-template-columns: 1fr; gap: 40px; }
   .why-visual { position: static; }
   .process-steps { grid-template-columns: 1fr 1fr; row-gap: 40px; }
@@ -399,7 +409,7 @@ footer {
 }
 @media (max-width: 600px) {
   .section { padding: 76px 0; }
-  .srv-grid { grid-template-columns: 1fr; }
+  .srv-card { flex-basis: 88%; }
   .stat { width: 50%; }
   .foot-bottom { flex-direction: column; gap: 12px; text-align: center; }
 }
