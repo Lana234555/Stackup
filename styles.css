@@ -290,7 +290,7 @@ nav.scrolled { background: rgba(255, 255, 255, 0.92); backdrop-filter: blur(14px
 }
 .srv-tag::before { content: ""; width: 5px; height: 5px; background: var(--card-fg); opacity: 0.6; }
 
-@media (min-width: 961px) {
+@media (min-width: 700px) {
   .srv-card:nth-child(6n+1) { transform: rotate(-3deg); }
   .srv-card:nth-child(6n+2) { transform: rotate(2deg); }
   .srv-card:nth-child(6n+3) { transform: rotate(-2deg); }
@@ -440,8 +440,6 @@ footer {
   .stats { flex-wrap: wrap; gap: 20px 0; }
   .stat { width: 33%; }
   .stat-div { display: none; }
-  .srv-card { flex: 0 0 62%; width: 62%; min-height: 320px; }
-  .srv-grid { padding-left: 24px; }
   .why-grid { grid-template-columns: 1fr; gap: 40px; }
   .why-visual { position: static; }
   .process-steps { grid-template-columns: 1fr 1fr; row-gap: 40px; }
@@ -453,10 +451,13 @@ footer {
   .foot-top { grid-template-columns: 1fr; gap: 32px; padding-bottom: 40px; }
   footer { padding: 56px 24px 0; }
 }
+@media (max-width: 699px) {
+  .srv-card { flex: 0 0 84%; width: 84%; min-height: 300px; }
+  .srv-grid { padding-left: 24px; }
+}
 @media (max-width: 600px) {
   .section { padding: 76px 0; }
   #services, #why, #process, #work, #contact { padding: 64px 0; }
-  .srv-card { flex: 0 0 84%; width: 84%; min-height: 300px; }
   .stat { width: 50%; }
   .foot-bottom { flex-direction: column; gap: 12px; text-align: center; }
 }
