@@ -239,10 +239,10 @@ nav.scrolled { background: rgba(255, 255, 255, 0.92); backdrop-filter: blur(14px
 #services .eyebrow { justify-content: center; }
 #services .section-title { margin-left: auto; margin-right: auto; text-align: center; }
 .srv-grid {
-  display: flex; align-items: flex-start; gap: 24px; margin-top: 56px;
+  display: flex; align-items: flex-start; justify-content: center; gap: 24px; margin-top: 56px;
   overflow-x: auto; overflow-y: hidden;
   scroll-snap-type: x proximity; scroll-behavior: smooth;
-  padding: 90px 90px 130px 50px; margin-bottom: -20px;
+  padding: 90px 70px 90px; margin-bottom: -20px;
   cursor: grab; scrollbar-width: none; -ms-overflow-style: none;
 }
 .srv-grid::-webkit-scrollbar { display: none; }
@@ -259,8 +259,8 @@ nav.scrolled { background: rgba(255, 255, 255, 0.92); backdrop-filter: blur(14px
 .srv-card:nth-child(2) { z-index: 2; }
 .srv-card:nth-child(3) { z-index: 3; }
 .srv-card:nth-child(4) { z-index: 4; }
-.srv-card:nth-child(5) { z-index: 5; }
-.srv-card:nth-child(6) { z-index: 6; }
+.srv-card:nth-child(5) { z-index: 3; }
+.srv-card:nth-child(6) { z-index: 2; }
 
 .srv-card {
   position: relative; overflow: hidden;
@@ -291,13 +291,13 @@ nav.scrolled { background: rgba(255, 255, 255, 0.92); backdrop-filter: blur(14px
 .srv-tag::before { content: ""; width: 5px; height: 5px; background: var(--card-fg); opacity: 0.6; }
 
 @media (min-width: 700px) {
-  .srv-grid { align-items: flex-end; }
-  .srv-card:nth-child(6n+1) { transform: rotate(-10deg) translateY(50px); }
-  .srv-card:nth-child(6n+2) { transform: rotate(-6deg) translateY(24px); }
-  .srv-card:nth-child(6n+3) { transform: rotate(-2deg) translateY(8px); }
-  .srv-card:nth-child(6n+4) { transform: rotate(2deg) translateY(-2px); }
-  .srv-card:nth-child(6n+5) { transform: rotate(6deg) translateY(-8px); }
-  .srv-card:nth-child(6n+6) { transform: rotate(10deg) translateY(-12px); }
+  .srv-grid { align-items: center; }
+  .srv-card:nth-child(6n+1) { transform: rotate(-12deg) translateY(48px); }
+  .srv-card:nth-child(6n+2) { transform: rotate(-7deg) translateY(14px); }
+  .srv-card:nth-child(6n+3) { transform: rotate(-2deg) translateY(-10px); }
+  .srv-card:nth-child(6n+4) { transform: rotate(2deg) translateY(-10px); }
+  .srv-card:nth-child(6n+5) { transform: rotate(7deg) translateY(14px); }
+  .srv-card:nth-child(6n+6) { transform: rotate(12deg) translateY(48px); }
   .srv-card:not(:first-child) { margin-left: -168px; }
   .srv-card:hover { transform: rotate(0deg) translateY(-16px) scale(1.05); box-shadow: 0 28px 52px rgba(28,27,25,0.22); z-index: 20 !important; }
 }
