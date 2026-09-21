@@ -265,7 +265,7 @@ nav.scrolled { background: rgba(255, 255, 255, 0.92); backdrop-filter: blur(14px
 .srv-card {
   position: relative; overflow: hidden;
   background: var(--card-bg); color: var(--card-fg);
-  border-radius: 28px;
+  border-radius: 22px;
   padding: 30px 26px 26px; display: flex; flex-direction: column; gap: 14px;
   box-shadow: 0 10px 26px rgba(28,27,25,0.1);
   transition: transform 0.4s cubic-bezier(.22,1,.36,1), box-shadow 0.4s;
