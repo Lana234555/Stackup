@@ -1,7 +1,9 @@
 /* ══════════════ TOKENS (Stackup brand: cream / ink / white) ══════════════ */
 :root {
-  --paper: #f1eec3;
-  --paper2: #e6e2ac;
+  --paper: #ffffff;
+  --paper2: #f0efe8;
+  --accent: #d4ff3d;
+  --accent-ink: #17130d;
   --white: #ffffff;
   --ink: #1c1b19;
   --ink-soft: rgba(28, 27, 25, 0.62);
@@ -63,12 +65,12 @@ a { color: inherit; }
   gap: 8px;
   margin-bottom: 18px;
 }
-.eyebrow::before { content: ""; width: 7px; height: 7px; background: var(--ink); transform: rotate(45deg); flex-shrink: 0; }
+.eyebrow::before { content: ""; width: 7px; height: 7px; background: var(--accent); transform: rotate(45deg); flex-shrink: 0; }
 
 .section-title {
   font-family: "Plus Jakarta Sans", sans-serif;
   font-weight: 800;
-  font-size: clamp(1.9rem, 3.2vw, 3rem);
+  font-size: clamp(2.4rem, 4.6vw, 4.4rem);
   line-height: 1.06;
   letter-spacing: -0.01em;
   color: var(--ink);
@@ -131,7 +133,7 @@ nav {
   padding: 20px 48px; transition: background 0.3s, border-color 0.3s, backdrop-filter 0.3s;
   border-bottom: 1px solid transparent;
 }
-nav.scrolled { background: rgba(241, 238, 195, 0.92); backdrop-filter: blur(14px); border-color: var(--line); }
+nav.scrolled { background: rgba(255, 255, 255, 0.92); backdrop-filter: blur(14px); border-color: var(--line); }
 .nav-logo { display: flex; align-items: center; text-decoration: none; }
 .logo-text { font-family: "Plus Jakarta Sans", sans-serif; font-weight: 800; font-size: 1.28rem; letter-spacing: -0.01em; color: var(--ink); }
 .nav-links { display: flex; gap: 34px; list-style: none; }
@@ -195,14 +197,14 @@ nav.scrolled { background: rgba(241, 238, 195, 0.92); backdrop-filter: blur(14px
 .hero-mid { display: grid; grid-template-columns: 1fr 1fr; gap: 40px; align-items: center; padding: 36px 0; }
 .hero-meta { opacity: 0; animation: fadeUp 0.8s ease 0.75s forwards; }
 .hero-meta-label { font-family: "IBM Plex Mono", monospace; font-size: 0.7rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--ink-faint); margin-bottom: 14px; }
-.hero-meta-desc { font-size: 1rem; line-height: 1.7; color: var(--ink-soft); max-width: 420px; margin-bottom: 26px; }
+.hero-meta-desc { font-size: 1.08rem; line-height: 1.7; color: var(--ink-soft); max-width: 420px; margin-bottom: 26px; }
 
 .hero-blob-wrap {
   position: relative; aspect-ratio: 1; width: 100%; max-width: 380px; margin: 0 auto;
   display: flex; align-items: center; justify-content: center; opacity: 0; animation: fadeUp 0.9s ease 0.4s forwards;
 }
 .hero-blob {
-  position: absolute; inset: 6%; background: var(--paper2);
+  position: absolute; inset: 6%; background: var(--accent);
   animation: blobMorph 14s ease-in-out infinite;
 }
 .hero-blob-cta {
@@ -244,10 +246,10 @@ nav.scrolled { background: rgba(241, 238, 195, 0.92); backdrop-filter: blur(14px
 .srv-card:hover::after { transform: translateY(0); }
 .srv-card:hover { background: var(--white); }
 .srv-num { font-family: "IBM Plex Mono", monospace; font-size: 0.72rem; color: var(--ink-faint); letter-spacing: 0.05em; }
-.srv-name { font-family: "Plus Jakarta Sans", sans-serif; font-weight: 800; font-size: 1.1rem; color: var(--ink); letter-spacing: -0.01em; }
-.srv-desc { font-size: 0.88rem; line-height: 1.68; color: var(--ink-soft); flex: 1; }
+.srv-name { font-family: "Plus Jakarta Sans", sans-serif; font-weight: 800; font-size: 1.3rem; color: var(--ink); letter-spacing: -0.01em; }
+.srv-desc { font-size: 0.96rem; line-height: 1.68; color: var(--ink-soft); flex: 1; }
 .srv-tag { display: inline-flex; align-items: center; gap: 6px; font-family: "IBM Plex Mono", monospace; font-size: 0.68rem; color: var(--ink); width: fit-content; margin-top: 2px; }
-.srv-tag::before { content: ""; width: 5px; height: 5px; background: var(--ink); }
+.srv-tag::before { content: ""; width: 5px; height: 5px; background: var(--accent); }
 
 /* ══════════════ WHY ME ══════════════ */
 .why-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 56px; align-items: start; margin-top: 44px; }
@@ -256,8 +258,8 @@ nav.scrolled { background: rgba(241, 238, 195, 0.92); backdrop-filter: blur(14px
 .why-item:first-child { padding-top: 0; }
 .why-item:last-child { border-bottom: none; }
 .why-num { font-family: "IBM Plex Mono", monospace; font-size: 0.78rem; color: var(--ink-faint); letter-spacing: 0.04em; flex-shrink: 0; padding-top: 3px; width: 30px; }
-.why-title { font-family: "Plus Jakarta Sans", sans-serif; font-weight: 800; font-size: 0.98rem; color: var(--ink); margin-bottom: 6px; }
-.why-text { font-size: 0.88rem; line-height: 1.7; color: var(--ink-soft); }
+.why-title { font-family: "Plus Jakarta Sans", sans-serif; font-weight: 800; font-size: 1.15rem; color: var(--ink); margin-bottom: 6px; }
+.why-text { font-size: 0.96rem; line-height: 1.7; color: var(--ink-soft); }
 
 .why-visual { background: var(--white); border: 1px solid var(--line); border-radius: var(--radius-lg); padding: 30px; position: sticky; top: 110px; }
 .comp-title { font-family: "IBM Plex Mono", monospace; font-size: 0.68rem; font-weight: 500; color: var(--ink-faint); letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 14px; }
@@ -284,24 +286,25 @@ nav.scrolled { background: rgba(241, 238, 195, 0.92); backdrop-filter: blur(14px
 }
 .pstep-num span { transform: rotate(-45deg); }
 .pstep-num.active { background: var(--ink); color: var(--paper); }
-.pstep-title { font-family: "Plus Jakarta Sans", sans-serif; font-weight: 800; font-size: 0.94rem; color: var(--ink); }
-.pstep-desc { font-size: 0.82rem; line-height: 1.65; color: var(--ink-soft); }
+.pstep-title { font-family: "Plus Jakarta Sans", sans-serif; font-weight: 800; font-size: 1.08rem; color: var(--ink); }
+.pstep-desc { font-size: 0.9rem; line-height: 1.65; color: var(--ink-soft); }
 .pstep-time { font-family: "IBM Plex Mono", monospace; font-size: 0.68rem; color: var(--ink-faint); letter-spacing: 0.04em; }
 
 /* ══════════════ STATEMENT (full-bleed manifesto) ══════════════ */
 .statement {
-  position: relative; background: var(--ink); color: var(--paper);
-  padding: 140px 0; overflow: hidden; text-align: center;
+  position: relative; min-height: 100vh; display: flex; align-items: center; justify-content: center;
+  background: var(--ink); color: var(--paper);
+  padding: 80px 0; overflow: hidden; text-align: center;
 }
 .statement .wrap { display: flex; flex-direction: column; align-items: center; }
 .statement-text {
   font-family: "Plus Jakarta Sans", sans-serif; font-weight: 800;
-  font-size: clamp(1.9rem, 5vw, 4rem); line-height: 1.1; letter-spacing: -0.02em;
+  font-size: clamp(2.3rem, 5.8vw, 4.8rem); line-height: 1.08; letter-spacing: -0.02em;
   max-width: 980px;
 }
 .statement-text span { display: block; }
 .statement-text .dim { color: rgba(241, 238, 195, 0.35); }
-.statement-mark { width: 9px; height: 9px; background: var(--paper); transform: rotate(45deg); margin-bottom: 28px; }
+.statement-mark { width: 9px; height: 9px; background: var(--accent); transform: rotate(45deg); margin-bottom: 28px; }
 
 /* ══════════════ WORK / PORTFOLIO (numbered list) ══════════════ */
 .port-note { display: inline-flex; align-items: center; gap: 8px; font-family: "IBM Plex Mono", monospace; font-size: 0.72rem; color: var(--ink-faint); margin-top: 14px; }
@@ -325,15 +328,15 @@ nav.scrolled { background: rgba(241, 238, 195, 0.92); backdrop-filter: blur(14px
 .pm-line.w80 { width: 80%; }
 .proj-info { display: flex; flex-direction: column; gap: 10px; }
 .proj-tag { font-family: "IBM Plex Mono", monospace; font-size: 0.68rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink); }
-.proj-name { font-family: "Plus Jakarta Sans", sans-serif; font-weight: 800; font-size: clamp(1.4rem, 2.4vw, 2rem); color: var(--ink); letter-spacing: -0.01em; line-height: 1.1; }
-.proj-desc { font-size: 0.9rem; color: var(--ink-soft); line-height: 1.65; max-width: 380px; }
+.proj-name { font-family: "Plus Jakarta Sans", sans-serif; font-weight: 800; font-size: clamp(1.7rem, 3vw, 2.5rem); color: var(--ink); letter-spacing: -0.01em; line-height: 1.1; }
+.proj-desc { font-size: 0.96rem; color: var(--ink-soft); line-height: 1.65; max-width: 380px; }
 
 /* ══════════════ CTA ══════════════ */
 #contact { padding: 120px 0; position: relative; overflow: hidden; text-align: center; border-top: 1px solid var(--line); }
 .cta-inner { position: relative; z-index: 2; display: flex; flex-direction: column; align-items: center; gap: 20px; }
-.cta-title { font-family: "Plus Jakarta Sans", sans-serif; font-weight: 800; font-size: clamp(1.8rem, 3.4vw, 2.9rem); letter-spacing: -0.02em; line-height: 1.12; max-width: 680px; }
+.cta-title { font-family: "Plus Jakarta Sans", sans-serif; font-weight: 800; font-size: clamp(2.1rem, 4.2vw, 3.8rem); letter-spacing: -0.02em; line-height: 1.12; max-width: 680px; }
 .cta-title em { font-style: normal; font-family: "Plus Jakarta Sans", sans-serif; color: var(--paper); background: var(--ink); padding: 0 10px; }
-.cta-sub { font-size: 1rem; color: var(--ink-soft); max-width: 440px; line-height: 1.7; margin-bottom: 6px; }
+.cta-sub { font-size: 1.08rem; color: var(--ink-soft); max-width: 440px; line-height: 1.7; margin-bottom: 6px; }
 .cta-contacts { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 12px; margin-top: 10px; }
 .cta-contact-item {
   display: inline-flex; align-items: center; gap: 9px; padding: 11px 20px;
@@ -350,7 +353,7 @@ footer {
   padding: 72px 48px 0; z-index: 1; overflow: hidden;
 }
 .foot-top { display: grid; grid-template-columns: 1.3fr 1fr 1fr; gap: 40px; padding-bottom: 56px; border-bottom: 1px solid var(--line-on-ink); }
-.foot-lead { font-family: "Plus Jakarta Sans", sans-serif; font-size: clamp(1.5rem, 2.4vw, 2.1rem); line-height: 1.15; letter-spacing: -0.02em; max-width: 340px; }
+.foot-lead { font-family: "Plus Jakarta Sans", sans-serif; font-size: clamp(1.9rem, 3.2vw, 2.7rem); line-height: 1.15; letter-spacing: -0.02em; max-width: 340px; }
 .foot-col-title { font-family: "IBM Plex Mono", monospace; font-size: 0.66rem; letter-spacing: 0.1em; text-transform: uppercase; color: rgba(241,238,195,0.4); margin-bottom: 16px; }
 .foot-links { display: flex; flex-direction: column; gap: 11px; }
 .foot-links a { font-size: 0.92rem; color: rgba(241,238,195,0.75); text-decoration: none; transition: color 0.2s, padding-left 0.2s; }
