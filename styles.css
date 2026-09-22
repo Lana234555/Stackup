@@ -320,8 +320,8 @@ nav.scrolled { background: rgba(255, 255, 255, 0.92); backdrop-filter: blur(14px
 
 .why-right { display: flex; flex-direction: column; gap: 18px; }
 .why-stats { display: flex; gap: 16px; }
-.why-stat { flex: 1; background: var(--paper2); border-radius: 18px; padding: 18px; display: flex; flex-direction: column; gap: 20px; }
-.why-stat-a { background: #cdf3d4; }
+.why-stat { flex: 1; background: #f7f6f9; border-radius: 18px; padding: 18px; display: flex; flex-direction: column; gap: 20px; }
+.why-stat-a { background: #f0fdd6; }
 .why-stat-top { display: flex; align-items: center; justify-content: space-between; color: var(--ink-faint); }
 .why-stat-top svg { width: 20px; height: 20px; }
 .why-stat-num { font-family: "Plus Jakarta Sans", sans-serif; font-weight: 800; font-size: clamp(1.4rem, 1.2rem + 0.8vw, 1.7rem); color: var(--ink); letter-spacing: -0.01em; }
