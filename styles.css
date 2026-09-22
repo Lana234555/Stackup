@@ -363,18 +363,18 @@ nav.scrolled { background: rgba(255, 255, 255, 0.92); backdrop-filter: blur(14px
 }
 .why-note-spark { width: 1.35em; height: 1.35em; color: var(--ink); flex-shrink: 0; }
 .why-note-text { white-space: nowrap; }
-.why-note-1 { left: 0; top: 28%; transform: rotate(-14deg); }
+.why-note-1 { left: -6%; top: 26%; transform: rotate(-14deg); }
 .why-note-2 {
-  position: absolute; z-index: 3; top: -4%; right: 0; text-align: right; color: var(--ink);
+  position: absolute; z-index: 3; top: -5%; right: -2%; text-align: right; color: var(--ink);
   display: flex; flex-direction: column; align-items: flex-end; gap: 2px; transform: rotate(-5deg);
 }
 .why-note-2-text { font-family: "Kalam", cursive; font-weight: 400; font-size: calc(var(--u) * 1.95); line-height: 1.45; }
 .why-note-2-arrow { width: calc(var(--u) * 4.2); height: auto; aspect-ratio: 1; color: var(--ink); margin: calc(var(--u) * 0.2) calc(var(--u) * 1.4) 0 0; }
 
 .why-mock img { position: absolute; }
-.why-rock { z-index: 0; left: 50%; bottom: 0; width: 90%; transform: translateX(-50%); }
-.why-laptop { z-index: 1; left: 50%; top: 4%; width: 93%; transform: translateX(-50%); filter: drop-shadow(0 calc(var(--u) * 1.7) calc(var(--u) * 2.4) rgba(0,0,0,0.18)); }
-.why-phone { z-index: 2; left: 50%; top: 30%; width: 34%; transform: translateX(50%); filter: drop-shadow(0 calc(var(--u) * 1.2) calc(var(--u) * 1.9) rgba(0,0,0,0.18)); }
+.why-rock { z-index: 0; left: 50%; bottom: -16%; width: 138%; transform: translateX(-50%); }
+.why-laptop { z-index: 1; left: 50%; top: 0; width: 130%; transform: translateX(-52%); filter: drop-shadow(0 calc(var(--u) * 1.7) calc(var(--u) * 2.4) rgba(0,0,0,0.18)); }
+.why-phone { z-index: 2; left: 50%; top: 24%; width: 44%; transform: translateX(30%); filter: drop-shadow(0 calc(var(--u) * 1.2) calc(var(--u) * 1.9) rgba(0,0,0,0.18)); }
 
 /* ══════════════ PROCESS ══════════════ */
 #process { min-height: 100vh; min-height: 100svh; display: flex; align-items: center; padding: 96px 0; }
@@ -503,7 +503,10 @@ footer {
   .why-mock { flex: none; width: 100%; max-width: none; margin-inline: 0; aspect-ratio: 1 / 1.02; }
   .why-note { width: calc(var(--u) * 9.5); font-size: calc(var(--u) * 1.25); }
   .why-note-1 { left: 4%; top: 36%; }
-  .why-note-2 { top: 1%; right: 2%; }
+  .why-note-2 { top: 0; right: 0; }
+  .why-rock { width: 112%; bottom: -6%; }
+  .why-laptop { width: 100%; top: 6%; transform: translateX(-50%); }
+  .why-phone { width: 36%; top: 30%; transform: translateX(45%); }
   .why-note-2-text { font-size: calc(var(--u) * 1.4); }
   .why-note-2-arrow { width: calc(var(--u) * 3); margin-right: calc(var(--u) * 1); }
   .process-steps { grid-template-columns: 1fr 1fr; row-gap: 40px; }
