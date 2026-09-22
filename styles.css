@@ -328,9 +328,8 @@ nav.scrolled { background: rgba(255, 255, 255, 0.92); backdrop-filter: blur(14px
 .why-stat-label { font-size: clamp(0.8rem, 0.75rem + 0.2vw, 0.86rem); color: var(--ink-soft); }
 
 .why-mock {
-  position: relative; background: var(--paper2); border-radius: 24px; padding: 44px 32px 0;
-  min-height: 360px; overflow: hidden;
-  display: flex; align-items: flex-end; justify-content: center;
+  position: relative; background: var(--paper2); border-radius: 24px;
+  overflow: hidden; aspect-ratio: 4 / 3.3;
 }
 .why-note {
   position: absolute; z-index: 3; background: var(--accent); border-radius: 12px; padding: 12px 16px;
@@ -340,56 +339,15 @@ nav.scrolled { background: rgba(255, 255, 255, 0.92); backdrop-filter: blur(14px
 .why-note-1 { top: 36px; left: 24px; transform: rotate(-6deg); }
 .why-note-2 { top: 14px; right: 8px; transform: rotate(4deg); background: transparent; box-shadow: none; text-align: right; color: var(--ink-soft); }
 
-/* the "rock" the devices rest on */
-.why-rock {
-  position: absolute; z-index: 0; left: 50%; bottom: 0; transform: translateX(-50%);
-  width: 94%; height: 46%;
-  background:
-    radial-gradient(ellipse 60% 50% at 30% 20%, rgba(255,255,255,0.08), transparent 60%),
-    linear-gradient(155deg, #3c3b39 0%, #201f1d 55%, #0c0c0b 100%);
-  border-radius: 42% 58% 36% 64% / 58% 48% 52% 42%;
+.why-rock { position: absolute; z-index: 0; left: 50%; bottom: -3%; transform: translateX(-50%); width: 106%; }
+.why-laptop {
+  position: absolute; z-index: 1; left: 3%; bottom: 6%; width: 68%;
+  filter: drop-shadow(0 26px 36px rgba(0,0,0,0.22));
 }
-
-.why-laptop { position: relative; z-index: 1; width: 76%; max-width: 440px; margin-bottom: 10px; }
-.why-laptop-screen {
-  background: #1c1b19; border-radius: 14px 14px 3px 3px; padding: 9px 9px 0;
-  box-shadow: 0 28px 48px rgba(0,0,0,0.32);
-}
-.why-laptop-base {
-  height: 12px;
-  background: linear-gradient(180deg, #3a3936, #171615);
-  clip-path: polygon(-8% 0, 108% 0, 97% 100%, 3% 100%);
-  border-radius: 0 0 3px 3px;
-}
-.why-browser {
-  position: relative; background: var(--white); border-radius: 6px 6px 0 0;
-  overflow: hidden;
-}
-.why-browser-body { padding: 22px 26px 28px; }
-.why-browser-nav {
-  display: flex; align-items: center; justify-content: space-between;
-  font-family: "Plus Jakarta Sans", sans-serif; font-weight: 800; font-size: 0.82rem; color: var(--ink);
-  margin-bottom: 22px;
-}
-.why-browser-nav span { font-family: "Work Sans", sans-serif; font-weight: 400; font-size: 0.72rem; color: var(--ink-faint); }
-.why-browser-headline { font-family: "Plus Jakarta Sans", sans-serif; font-weight: 800; font-size: 1.5rem; line-height: 1.15; color: var(--ink); margin-bottom: 10px; }
-.why-browser-sub { font-size: 0.8rem; color: var(--ink-soft); margin-bottom: 16px; }
-.why-browser-btn { display: inline-block; background: var(--ink); color: var(--paper); font-size: 0.76rem; font-weight: 600; padding: 9px 16px; border-radius: 999px; }
-
-.why-phone-device {
-  position: absolute; z-index: 2; right: 8%; bottom: 14%; width: 138px;
-  background: #1c1b19; border-radius: 22px; padding: 10px 9px;
-  box-shadow: 0 22px 38px rgba(0,0,0,0.3);
-  transform: rotate(6deg);
-}
-.why-phone-notch { width: 36px; height: 5px; background: rgba(255,255,255,0.16); border-radius: 4px; margin: 0 auto 10px; }
 .why-phone {
-  background: #1c1b19; color: var(--paper); border-radius: 14px; padding: 14px 12px;
+  position: absolute; z-index: 2; right: 4%; bottom: 3%; width: 27%;
+  filter: drop-shadow(0 18px 28px rgba(0,0,0,0.22));
 }
-.why-phone-nav { font-family: "Plus Jakarta Sans", sans-serif; font-weight: 800; font-size: 0.66rem; margin-bottom: 14px; }
-.why-phone-headline { font-family: "Plus Jakarta Sans", sans-serif; font-weight: 800; font-size: 0.98rem; line-height: 1.15; margin-bottom: 8px; }
-.why-phone-sub { font-size: 0.62rem; color: rgba(241,238,195,0.6); margin-bottom: 14px; }
-.why-phone-btn { font-size: 0.64rem; font-weight: 600; background: var(--paper); color: var(--ink); display: inline-block; padding: 7px 10px; border-radius: 999px; }
 
 /* ══════════════ PROCESS ══════════════ */
 #process { min-height: 100vh; min-height: 100svh; display: flex; align-items: center; padding: 96px 0; }
