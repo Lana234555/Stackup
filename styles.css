@@ -328,25 +328,29 @@ nav.scrolled { background: rgba(255, 255, 255, 0.92); backdrop-filter: blur(14px
 .why-stat-label { font-size: clamp(0.8rem, 0.75rem + 0.2vw, 0.86rem); color: var(--ink-soft); }
 
 .why-mock {
-  position: relative; background: var(--paper2); border-radius: 24px;
-  overflow: hidden; aspect-ratio: 4 / 3.3;
+  position: relative; aspect-ratio: 4 / 3.5; margin-top: 8px;
 }
 .why-note {
   position: absolute; z-index: 3; background: var(--accent); border-radius: 12px; padding: 12px 16px;
   font-family: "Caveat", cursive; font-weight: 700; font-size: 1.3rem; line-height: 1.25; color: var(--accent-ink);
   box-shadow: 0 10px 20px rgba(28,27,25,0.12);
 }
-.why-note-1 { top: 36px; left: 24px; transform: rotate(-6deg); }
-.why-note-2 { top: 14px; right: 8px; transform: rotate(4deg); background: transparent; box-shadow: none; text-align: right; color: var(--ink-soft); }
+.why-note-1 { top: 18%; left: 6%; transform: rotate(-7deg); }
+.why-note-2 {
+  position: absolute; z-index: 3; top: 0; right: 2%; text-align: right; color: var(--ink-soft);
+  display: flex; flex-direction: column; align-items: flex-end; gap: 2px;
+}
+.why-note-2-text { font-family: "Caveat", cursive; font-weight: 700; font-size: 1.3rem; line-height: 1.25; }
+.why-note-2-arrow { width: 46px; height: 46px; color: var(--ink-faint); }
 
-.why-rock { position: absolute; z-index: 0; left: 50%; bottom: -3%; transform: translateX(-50%); width: 106%; }
+.why-rock { position: absolute; z-index: 0; left: 50%; bottom: 0; transform: translateX(-50%); width: 100%; }
 .why-laptop {
-  position: absolute; z-index: 1; left: 3%; bottom: 6%; width: 68%;
-  filter: drop-shadow(0 26px 36px rgba(0,0,0,0.22));
+  position: absolute; z-index: 1; left: 0; bottom: 5%; width: 64%;
+  filter: drop-shadow(0 26px 36px rgba(0,0,0,0.18));
 }
 .why-phone {
-  position: absolute; z-index: 2; right: 4%; bottom: 3%; width: 27%;
-  filter: drop-shadow(0 18px 28px rgba(0,0,0,0.22));
+  position: absolute; z-index: 2; right: 2%; bottom: 2%; width: 25%;
+  filter: drop-shadow(0 18px 28px rgba(0,0,0,0.18));
 }
 
 /* ══════════════ PROCESS ══════════════ */
