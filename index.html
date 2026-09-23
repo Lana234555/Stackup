@@ -12,7 +12,7 @@
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' fill='%231c1b19'/%3E%3Ctext x='50' y='68' font-family='Arial,sans-serif' font-weight='900' font-size='56' fill='%23f1eec3' text-anchor='middle'%3ES%3C/text%3E%3C/svg%3E" />
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@700;800&family=Work+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@500&family=Kalam:wght@300;400;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@700;800&family=Work+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@500&family=Kalam:wght@300;400;700&family=Permanent+Marker&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
@@ -27,7 +27,9 @@
     <li><a href="#process">Process</a></li>
     <li><a href="#contact">Contact</a></li>
   </ul>
-  <a href="#contact" class="nav-cta">Start a project</a>
+  <a href="#contact" class="nav-cta">Let's build
+    <svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9L9 3M4.2 3H9v4.8"/></svg>
+  </a>
   <button class="nav-burger" id="navBurger" aria-label="Menu"><span></span><span></span><span></span></button>
 </nav>
 
@@ -43,27 +45,65 @@
 
 <!-- HERO -->
 <section class="hero" id="top">
-  <div class="corners">
-    <span class="corner-mark tl"></span><span class="corner-mark tr"></span>
-    <span class="corner-mark bl"></span><span class="corner-mark br"></span>
+  <div class="hero-bg" aria-hidden="true">
+    <span class="hero-rules"></span>
+    <span class="hero-blob hero-blob-a"></span>
+    <span class="hero-blob hero-blob-b"></span>
+    <span class="hero-blob hero-blob-c"></span>
   </div>
-  <div class="wrap">
-    <div class="hero-word hero-word-top"><span class="li">Websites,</span></div>
-    <div class="hero-word hero-word-bottom"><span class="li">that <em>work</em></span></div>
-    <div class="hero-mid">
-      <div class="hero-meta">
-        <div class="hero-meta-label">About Stackup</div>
-        <p class="hero-meta-desc">Landing pages, corporate sites, and web platforms — end to end, from Figma design to production code. One specialist, full accountability for the result.</p>
-        <div class="hero-actions">
-          <a href="#contact" class="btn-p">Start a project <svg viewBox="0 0 15 15" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7.5h9M8.5 4l4 3.5-4 3.5"/></svg></a>
-        </div>
-      </div>
-      <div class="hero-blob-wrap">
-        <div class="hero-blob" aria-hidden="true"></div>
-        <a href="#work" class="hero-blob-cta">View the work</a>
-      </div>
+
+  <ol class="hero-flow">
+    <li class="hero-flow-step">
+      <span class="hero-flow-num">01</span>
+      <span class="hero-flow-name"><i class="hero-flow-dot"></i>Idea</span>
+      <p class="hero-flow-desc">Turn your idea<br>into a clear plan.</p>
+    </li>
+    <li class="hero-flow-step">
+      <span class="hero-flow-num">02</span>
+      <span class="hero-flow-name"><i class="hero-flow-dot is-alt"></i>Build</span>
+      <p class="hero-flow-desc">Design, develop<br>and iterate.</p>
+    </li>
+    <li class="hero-flow-step">
+      <span class="hero-flow-num">03</span>
+      <span class="hero-flow-name"><i class="hero-flow-dot"></i>Launch</span>
+      <p class="hero-flow-desc">A product<br>that delivers<br>real results.</p>
+    </li>
+    <svg class="hero-flow-arrow" viewBox="0 0 82 150" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+      <path d="M1 2c34 17 66 50 74 88 4 19-4 37-22 51"/>
+      <path d="M53 141l17-8M53 141l1-18"/>
+    </svg>
+  </ol>
+
+  <div class="hero-main">
+    <div class="hero-kicker">Digital product studio</div>
+    <h1 class="hero-title">Websites &amp;<br>digital products<br>that actually<br><span class="hero-mark">work.</span></h1>
+    <p class="hero-lede">We design and build websites, platforms and digital products — from first idea to launch.</p>
+    <div class="hero-cta">
+      <a href="#contact" class="hero-btn hero-btn-solid">Start a project
+        <svg viewBox="0 0 15 15" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M2.5 7.5h10M8.8 3.8l3.7 3.7-3.7 3.7"/></svg>
+      </a>
+      <a href="#work" class="hero-btn hero-btn-line">View my work
+        <svg viewBox="0 0 15 15" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M2.5 7.5h10M8.8 3.8l3.7 3.7-3.7 3.7"/></svg>
+      </a>
     </div>
+    <div class="hero-disciplines">Strategy <span>/</span> Design <span>/</span> Development</div>
   </div>
+
+  <div class="hero-note" aria-hidden="true"><span>Ideas<br>to <em>impact</em></span></div>
+
+  <span class="hero-dash" aria-hidden="true"></span>
+  <svg class="hero-plus" viewBox="0 0 40 40" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M20 2v36M2 20h36"/></svg>
+
+  <svg class="hero-thread" viewBox="0 0 526 310" fill="none" stroke="currentColor" stroke-width="1.2" aria-hidden="true">
+    <path d="M0 310C126 262 232 186 320 118 392 62 464 22 526 0"/>
+  </svg>
+  <span class="hero-orb" aria-hidden="true"></span>
+
+  <div class="hero-foot">
+    <span class="hero-foot-item">Kyiv, Ukraine</span>
+    <span class="hero-foot-item"><i class="hero-foot-dot"></i>Built for bolder ideas</span>
+  </div>
+  <a class="hero-scroll" href="#services"><span>Scroll</span><i></i></a>
 </section>
 
 <!-- STATEMENT -->
