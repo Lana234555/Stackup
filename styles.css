@@ -352,32 +352,40 @@ nav.scrolled { background: rgba(255, 255, 255, 0.92); backdrop-filter: blur(14px
 .why-stat-num { font-family: "Plus Jakarta Sans", sans-serif; font-weight: 800; font-size: calc(var(--u) * 2.3); line-height: 1; color: var(--ink); letter-spacing: -0.02em; }
 .why-stat-label { font-size: calc(var(--u) * 0.95); line-height: 1.3; color: var(--ink-soft); }
 
-/* The device composition takes whatever height the text column leaves over,
-   and every piece inside is sized from that height so nothing is ever cut off. */
-.why-mock { position: relative; flex: 1 1 auto; min-height: 0; aspect-ratio: 1.06; width: auto; max-width: 100%; margin-inline: auto; }
+/* The device composition is the reference mockup's, one to one: the same box
+   proportions and the same size and place for the rock, the laptop, the phone
+   and the notes inside it. Only the box itself is scaled, so that the whole
+   composition fits the half column and one screen. Everything inside is sized
+   in cqw — a share of the box's width — so the scaling stays uniform. */
+.why-mock {
+  position: relative; container-type: size;
+  flex: 1 1 auto; min-height: 0; aspect-ratio: 1072 / 908;
+  width: auto; max-width: calc(100% + var(--u) * 5); align-self: center;
+  margin-bottom: calc(var(--u) * -3);
+}
 .why-note {
-  position: absolute; z-index: 3; width: calc(var(--u) * 11);
-  background: #eaf3c5; border-radius: calc(var(--u) * 1.4);
-  padding: calc(var(--u) * 1.05) calc(var(--u) * 1.2);
-  display: flex; flex-direction: column; gap: calc(var(--u) * 0.4);
-  font-family: "Kalam", cursive; font-weight: 400; font-size: calc(var(--u) * 1.5);
+  position: absolute; z-index: 3; width: 16cqw;
+  background: #eaf3c5; border-radius: 2.05cqw;
+  padding: 1.49cqw 1.68cqw;
+  display: flex; flex-direction: column; gap: 0.56cqw;
+  font-family: "Kalam", cursive; font-weight: 400; font-size: 2.17cqw;
   line-height: 1.35; color: var(--ink);
-  box-shadow: 0 calc(var(--u) * 1.2) calc(var(--u) * 2) rgba(28,27,25,0.10);
+  box-shadow: 0 1.68cqw 2.8cqw rgba(28,27,25,0.10);
 }
 .why-note-spark { width: 1.35em; height: 1.35em; color: var(--ink); flex-shrink: 0; }
 .why-note-text { white-space: nowrap; }
-.why-note-1 { left: -14%; top: 38%; transform: rotate(-14deg); }
+.why-note-1 { left: 9%; top: 21.7%; transform: rotate(-14deg); }
 .why-note-2 {
-  position: absolute; z-index: 3; top: 0; right: 2%; text-align: right; color: var(--ink);
-  display: flex; flex-direction: column; align-items: flex-end; gap: 2px; transform: rotate(-5deg);
+  position: absolute; z-index: 3; top: -1.5%; right: 6%; text-align: right; color: var(--ink);
+  display: flex; flex-direction: column; align-items: flex-end; gap: 0.19cqw; transform: rotate(-5deg);
 }
-.why-note-2-text { font-family: "Kalam", cursive; font-weight: 400; font-size: calc(var(--u) * 1.95); line-height: 1.45; }
-.why-note-2-arrow { width: calc(var(--u) * 4.2); height: auto; aspect-ratio: 1; color: var(--ink); margin: calc(var(--u) * 0.2) calc(var(--u) * 1.4) 0 0; }
+.why-note-2-text { font-family: "Kalam", cursive; font-weight: 400; font-size: 2.84cqw; line-height: 1.45; }
+.why-note-2-arrow { width: 7.56cqw; height: auto; aspect-ratio: 1; color: var(--ink); margin: 0.37cqw 3.92cqw 0 0; }
 
 .why-mock img { position: absolute; max-width: none; }
-.why-rock { z-index: 0; left: 50%; bottom: -7%; width: 112%; transform: translateX(-52%); }
-.why-laptop { z-index: 1; left: 50%; bottom: 39%; width: 88%; transform: translateX(-64%); filter: drop-shadow(0 calc(var(--u) * 1.7) calc(var(--u) * 2.4) rgba(0,0,0,0.18)); }
-.why-phone { z-index: 2; left: 50%; bottom: 35%; width: 42%; transform: translateX(-2%); filter: drop-shadow(0 calc(var(--u) * 1.2) calc(var(--u) * 1.9) rgba(0,0,0,0.18)); }
+.why-rock { z-index: 0; left: 0; bottom: 3%; width: 100%; }
+.why-laptop { z-index: 1; left: 7.8%; top: -2.2%; width: 73%; filter: drop-shadow(0 2.43cqw 3.36cqw rgba(0,0,0,0.18)); }
+.why-phone { z-index: 2; left: 63%; top: 15.3%; width: 26%; filter: drop-shadow(0 1.68cqw 2.61cqw rgba(0,0,0,0.18)); }
 
 /* ══════════════ PROCESS ══════════════ */
 #process { min-height: 100vh; min-height: 100svh; display: flex; align-items: center; padding: 96px 0; }
@@ -503,16 +511,8 @@ footer {
   #why .section-title { font-size: clamp(2rem, 6.4vw, 3rem); }
   .why-stats { flex-wrap: wrap; }
   .why-stat { flex: 1 1 45%; }
-  .why-mock { flex: none; width: 100%; max-width: none; margin-inline: 0; }
+  .why-mock { flex: none; width: 100%; max-width: none; align-self: stretch; margin-bottom: 0; }
   .why-right-spacer { display: none; }
-  .why-note { width: calc(var(--u) * 9.5); font-size: calc(var(--u) * 1.25); }
-  .why-note-1 { left: 1%; }
-  /* no side gutter here, so the composition sits a touch narrower */
-  .why-rock { width: 104%; transform: translateX(-50%); }
-  .why-laptop { width: 82%; }
-  .why-phone { width: 40%; }
-  .why-note-2-text { font-size: calc(var(--u) * 1.4); }
-  .why-note-2-arrow { width: calc(var(--u) * 3); margin-right: calc(var(--u) * 1); }
   .process-steps { grid-template-columns: 1fr 1fr; row-gap: 40px; }
   .process-steps::before { display: none; }
   .work-row { grid-template-columns: 1fr; row-gap: 20px; }
