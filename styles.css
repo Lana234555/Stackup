@@ -70,9 +70,9 @@ a { color: inherit; }
 .section-title {
   font-family: "Plus Jakarta Sans", sans-serif;
   font-weight: 800;
-  font-size: clamp(2.4rem, 4.6vw, 4.4rem);
-  line-height: 1.06;
-  letter-spacing: -0.01em;
+  font-size: 3.95vw;
+  line-height: 1.02;
+  letter-spacing: -0.02em;
   color: var(--ink);
   max-width: 760px;
 }
@@ -86,7 +86,7 @@ a { color: inherit; }
   text-decoration-color: var(--paper2);
 }
 .section-sub {
-  font-size: clamp(0.9rem, 0.82rem + 0.35vw, 0.98rem);
+  font-size: 1.142vw;
   color: var(--ink-soft);
   max-width: 480px;
   margin-top: 18px;
@@ -322,8 +322,8 @@ nav.scrolled { background: rgba(255, 255, 255, 0.92); backdrop-filter: blur(14px
 .why-left > * { max-width: 27.3vw; }
 .why-left .eyebrow, .why-right-spacer .eyebrow { font-size: calc(var(--u) * 0.95); margin-bottom: calc(var(--u) * 1.4); }
 .why-left .eyebrow::before, .why-right-spacer .eyebrow::before { width: calc(var(--u) * 0.75); height: calc(var(--u) * 0.75); }
-#why .section-title { font-size: 3.95vw; line-height: 1.02; letter-spacing: -0.02em; max-width: none; }
-.why-intro { font-size: calc(var(--u) * 1.12); line-height: 1.5; color: var(--ink-soft); margin-top: calc(var(--u) * 1.55); max-width: 25.7vw; }
+#why .section-title { max-width: none; }
+.why-intro { font-size: 1.142vw; line-height: 1.5; color: var(--ink-soft); margin-top: calc(var(--u) * 1.55); max-width: 25.7vw; }
 .why-features { display: flex; flex-direction: column; gap: calc(var(--u) * 1.45); margin-top: calc(var(--u) * 2.5); }
 .why-feat { display: flex; gap: calc(var(--u) * 1.9); align-items: flex-start; }
 .why-feat-icon {
@@ -459,9 +459,9 @@ nav.scrolled { background: rgba(255, 255, 255, 0.92); backdrop-filter: blur(14px
 }
 #contact > .wrap { width: 100%; }
 .cta-inner { position: relative; z-index: 2; display: flex; flex-direction: column; align-items: center; gap: 20px; }
-.cta-title { font-family: "Plus Jakarta Sans", sans-serif; font-weight: 800; font-size: clamp(2.1rem, 4.2vw, 3.8rem); letter-spacing: -0.02em; line-height: 1.12; max-width: 680px; }
+.cta-title { font-family: "Plus Jakarta Sans", sans-serif; font-weight: 800; font-size: 3.95vw; letter-spacing: -0.02em; line-height: 1.22; max-width: 680px; }
 .cta-title em { font-style: normal; font-family: "Plus Jakarta Sans", sans-serif; color: var(--paper); background: var(--ink); padding: 0 10px; }
-.cta-sub { font-size: clamp(0.96rem, 0.86rem + 0.45vw, 1.08rem); color: var(--ink-soft); max-width: 440px; line-height: 1.7; margin-bottom: 6px; }
+.cta-sub { font-size: 1.142vw; color: var(--ink-soft); max-width: 440px; line-height: 1.7; margin-bottom: 6px; }
 .cta-contacts { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 12px; margin-top: 10px; }
 .cta-contact-item {
   display: inline-flex; align-items: center; gap: 9px; padding: 11px 20px;
@@ -509,7 +509,8 @@ footer {
   #why > .wrap { padding: 0 24px; }
   .why-layout { grid-template-columns: 1fr; gap: calc(var(--u) * 2.6); }
   .why-left > * { max-width: none; }
-  #why .section-title { font-size: clamp(2rem, 6.4vw, 3rem); }
+  .section-title, .cta-title { font-size: clamp(2rem, 6.4vw, 3rem); }
+  .section-sub, .cta-sub, .why-intro { font-size: clamp(0.95rem, 2.2vw, 1.05rem); }
   .why-stats { flex-wrap: wrap; }
   .why-stat { flex: 1 1 45%; }
   .why-mock { width: 100%; margin-left: 0; align-self: stretch; }
