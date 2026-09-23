@@ -375,7 +375,7 @@ nav.scrolled { background: rgba(255, 255, 255, 0.92); backdrop-filter: blur(14px
 }
 .why-note-spark { width: 1.35em; height: 1.35em; color: var(--ink); flex-shrink: 0; }
 .why-note-text { white-space: nowrap; }
-.why-note-1 { left: 9%; top: 21.7%; transform: rotate(-14deg); }
+.why-note-1 { left: 9.56%; top: 20.6%; transform: rotate(-14deg); }
 .why-note-2 {
   position: absolute; z-index: 3; top: -1.5%; right: 6%; text-align: right; color: var(--ink);
   display: flex; flex-direction: column; align-items: flex-end; gap: 0.19cqw; transform: rotate(-5deg);
