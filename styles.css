@@ -338,12 +338,12 @@ nav.scrolled { background: rgba(255, 255, 255, 0.92); backdrop-filter: blur(14px
 .srv-card:nth-child(6n+4) { --card-bg: #aedcfb; --card-fg: #12222e; }
 .srv-card:nth-child(6n+5) { --card-bg: #ffc39a; --card-fg: #2e1a0d; }
 .srv-card:nth-child(6n+6) { --card-bg: var(--paper2); --card-fg: var(--ink); }
-.srv-card:nth-child(1) { z-index: 1; }
-.srv-card:nth-child(2) { z-index: 2; }
-.srv-card:nth-child(3) { z-index: 3; }
-.srv-card:nth-child(4) { z-index: 4; }
-.srv-card:nth-child(5) { z-index: 3; }
-.srv-card:nth-child(6) { z-index: 2; }
+.srv-card:nth-child(1) { z-index: 6; }
+.srv-card:nth-child(2) { z-index: 5; }
+.srv-card:nth-child(3) { z-index: 4; }
+.srv-card:nth-child(4) { z-index: 3; }
+.srv-card:nth-child(5) { z-index: 2; }
+.srv-card:nth-child(6) { z-index: 1; }
 
 .srv-card {
   position: relative; overflow: hidden;
@@ -375,12 +375,12 @@ nav.scrolled { background: rgba(255, 255, 255, 0.92); backdrop-filter: blur(14px
 
 @media (min-width: 700px) {
   .srv-grid { align-items: center; padding: 90px 32px; }
-  .srv-card:nth-child(6n+1) { transform: rotate(-12deg) translateY(48px); }
-  .srv-card:nth-child(6n+2) { transform: rotate(-7deg) translateY(14px); }
-  .srv-card:nth-child(6n+3) { transform: rotate(-2deg) translateY(-10px); }
-  .srv-card:nth-child(6n+4) { transform: rotate(2deg) translateY(-10px); }
-  .srv-card:nth-child(6n+5) { transform: rotate(7deg) translateY(14px); }
-  .srv-card:nth-child(6n+6) { transform: rotate(12deg) translateY(48px); }
+  .srv-card:nth-child(6n+1) { transform: rotate(-4deg) translateY(-14px); }
+  .srv-card:nth-child(6n+2) { transform: rotate(0deg) translateY(2px); }
+  .srv-card:nth-child(6n+3) { transform: rotate(4deg) translateY(20px); }
+  .srv-card:nth-child(6n+4) { transform: rotate(8deg) translateY(44px); }
+  .srv-card:nth-child(6n+5) { transform: rotate(12deg) translateY(74px); }
+  .srv-card:nth-child(6n+6) { transform: rotate(16deg) translateY(110px); }
   .srv-card:not(:first-child) { margin-left: -215px; }
   .srv-card:hover { transform: rotate(0deg) translateY(-12px) scale(1.03); box-shadow: 0 22px 44px rgba(28,27,25,0.16); z-index: 20 !important; }
 }
