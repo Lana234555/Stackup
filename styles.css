@@ -647,13 +647,25 @@ nav.scrolled { background: rgba(255, 255, 255, 0.92); backdrop-filter: blur(14px
   padding: 0 var(--wx);
 }
 .wrow { display: flex; flex-direction: column; }
+/* The shot lives on a layer of its own so hover can push it closer without
+   the rounded frame growing with it. */
 .wrow-shot {
-  display: block; width: 100%; aspect-ratio: 16 / 9;
-  border-radius: var(--radius-card);
-  background-image: var(--shot); background-size: cover; background-position: center;
-  transition: opacity 0.3s;
+  position: relative; display: block; width: 100%; aspect-ratio: 16 / 9;
+  border-radius: var(--radius-card); overflow: hidden;
 }
-.wrow-shot:hover { opacity: 0.88; }
+.wrow-shot::before {
+  content: ""; position: absolute; inset: 0;
+  background-image: var(--shot); background-size: cover; background-position: center;
+  transition: transform 0.7s cubic-bezier(0.22, 1, 0.36, 1);
+}
+@media (hover: hover) {
+  .wrow:hover .wrow-shot::before { transform: scale(1.06); }
+  .wrow:hover .wrow-link { transform: translate(2px, -2px); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .wrow-shot::before, .wrow-link { transition-duration: 0.01ms; }
+  .wrow:hover .wrow-shot::before { transform: none; }
+}
 
 .wrow-kicker {
   margin-top: 1.4vw;
