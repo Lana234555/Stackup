@@ -201,7 +201,7 @@ nav.scrolled { background: rgba(255, 255, 255, 0.92); backdrop-filter: blur(14px
 
 /* backdrop: column rules and the soft green light behind them */
 .hero-bg { position: absolute; inset: 0; z-index: 0; pointer-events: none; }
-.hero-rules {
+.hero-rules, .cta-rules {
   position: absolute; top: 0; bottom: 0; left: var(--gut); right: var(--gut);
   border-right: 1px solid var(--rule);
   background-image: repeating-linear-gradient(90deg, var(--rule) 0 1px, transparent 1px calc(100% / 13));
@@ -687,6 +687,11 @@ nav.scrolled { background: rgba(255, 255, 255, 0.92); backdrop-filter: blur(14px
 
 /* ══════════════ CTA ══════════════ */
 #contact {
+  /* the same column rules as the first screen, so the page opens and closes on one grid */
+  --gut: 4.818vw;
+  --rule: rgba(24,24,45,0.055);
+  /* opaque like the hero, so the page's fixed 64px grid does not cross the column rules */
+  background: #fdfdfd;
   min-height: 100vh; min-height: 100svh; display: flex; align-items: center; justify-content: center;
   padding: 96px 0; position: relative; overflow: hidden; text-align: center; border-top: 1px solid var(--line);
 }
@@ -734,7 +739,7 @@ footer {
   .corners { display: none; }
   .hero { padding: 116px 24px 88px; }
   .hero-flow, .hero-note, .hero-plus, .hero-thread, .hero-orb, .hero-dash { display: none; }
-  .hero-rules { left: 24px; right: 24px; background-image: repeating-linear-gradient(90deg, var(--rule) 0 1px, transparent 1px calc(100% / 4)); }
+  .hero-rules, .cta-rules { left: 24px; right: 24px; background-image: repeating-linear-gradient(90deg, var(--rule) 0 1px, transparent 1px calc(100% / 4)); }
   .hero-kicker { font-size: clamp(0.62rem, 2.4vw, 0.72rem); }
   .hero-title { font-size: clamp(2.3rem, 10.4vw, 3.6rem); line-height: 1.02; letter-spacing: -0.03em; margin-top: 22px; }
   .hero-lede { font-size: clamp(0.95rem, 3.8vw, 1.06rem); line-height: 1.6; max-width: 34ch; margin-top: 20px; }
