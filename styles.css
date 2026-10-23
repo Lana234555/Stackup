@@ -13,6 +13,8 @@
   --line-on-ink: rgba(241, 238, 195, 0.16);
   --radius: 6px;
   --radius-lg: 10px;
+  /* One corner for every card on the page: services, process, work. */
+  --radius-card: 14px;
 }
 
 /* ══════════════ RESET ══════════════ */
@@ -350,7 +352,7 @@ nav.scrolled { background: rgba(255, 255, 255, 0.92); backdrop-filter: blur(14px
 .srv-card {
   position: relative; overflow: hidden;
   background: var(--card-bg); color: var(--card-fg);
-  border-radius: 22px;
+  border-radius: var(--radius-card);
   padding: 30px 26px 26px; display: flex; flex-direction: column; gap: 14px;
   box-shadow: 0 10px 26px rgba(28,27,25,0.1);
   transition: transform 0.6s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.6s cubic-bezier(0.16, 1, 0.3, 1);
@@ -531,7 +533,7 @@ nav.scrolled { background: rgba(255, 255, 255, 0.92); backdrop-filter: blur(14px
 /* right: the card stack, one card open at a time */
 .process-cards { list-style: none; display: flex; flex-direction: column; gap: calc(var(--pu) * 0.8); }
 .pcard {
-  background: var(--white); border: 1px solid transparent; border-radius: calc(var(--pu) * 1.15);
+  background: var(--white); border: 1px solid transparent; border-radius: var(--radius-card);
   box-shadow: 0 1px 2px rgba(28,27,25,0.04);
   transition: background 0.55s var(--ease-soft), border-color 0.55s var(--ease-soft), box-shadow 0.55s var(--ease-soft);
 }
@@ -647,7 +649,7 @@ nav.scrolled { background: rgba(255, 255, 255, 0.92); backdrop-filter: blur(14px
 .wrow { display: flex; flex-direction: column; }
 .wrow-shot {
   display: block; width: 100%; aspect-ratio: 16 / 9;
-  border-radius: clamp(8px, 0.75vw, 14px);
+  border-radius: var(--radius-card);
   background-image: var(--shot); background-size: cover; background-position: center;
   transition: opacity 0.3s;
 }
