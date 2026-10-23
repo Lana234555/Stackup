@@ -616,15 +616,15 @@ nav.scrolled { background: rgba(255, 255, 255, 0.92); backdrop-filter: blur(14px
 .statement-mark { width: 9px; height: 9px; background: var(--accent); transform: rotate(45deg); margin-bottom: 28px; }
 
 /* ══════════════ WORK (project cards, two to a row) ══════════════ */
-/* Each card carries its composition as a background cut from the mockup,
-   cropped to the device side by --pos, with the copy underneath. --wx is the
-   section's side margin, shared with the header. */
-#work { --wx: 7.2%; background: var(--paper); padding: 0 0 7vw; }
+/* A card is a rounded screenshot with its copy on the page below it: no card
+   surface of its own, so a light shot blends into the paper the way the
+   mockup draws it. --wx is the section's side margin, shared with the header. */
+#work { --wx: 4%; background: var(--paper); padding: 0 0 7vw; }
 
 .work-head {
   display: grid; grid-template-columns: 1fr auto; align-items: end;
   grid-template-areas: "wk-eyebrow ." "wk-title wk-all" "wk-sub .";
-  padding: 7vw var(--wx) 4.6vw;
+  padding: 7vw var(--wx) 4.2vw;
 }
 .work-head .eyebrow { grid-area: wk-eyebrow; }
 .work-head .section-title { grid-area: wk-title; max-width: none; }
@@ -641,45 +641,35 @@ nav.scrolled { background: rgba(255, 255, 255, 0.92); backdrop-filter: blur(14px
 .work-all:hover svg { transform: translate(2px, -2px); }
 
 .work-rows {
-  display: grid; grid-template-columns: 1fr 1fr; gap: 1.6vw;
+  display: grid; grid-template-columns: 1fr 1fr; gap: 3vw 2.6vw;
   padding: 0 var(--wx);
 }
-.wrow { --pos: 95%; display: flex; flex-direction: column; overflow: hidden; }
-.wrow::before {
-  content: ""; display: block; width: 100%; aspect-ratio: 16 / 9;
-  background-image: var(--shot); background-size: cover; background-position: var(--pos) center;
-  transition: transform 0.6s cubic-bezier(0.22, 1, 0.36, 1);
+.wrow { display: flex; flex-direction: column; }
+.wrow-shot {
+  display: block; width: 100%; aspect-ratio: 16 / 9;
+  border-radius: clamp(8px, 0.75vw, 14px);
+  background-image: var(--shot); background-size: cover; background-position: center;
+  transition: opacity 0.3s;
 }
-.wrow:hover::before { transform: scale(1.015); }
-.wrow-dark { background: #07080a; color: var(--white); }
-.wrow-light { background: #fefefe; color: var(--ink); box-shadow: inset 0 0 0 1px var(--line-soft); }
-.wrow:nth-child(5) { background: #f3f2f0; }
+.wrow-shot:hover { opacity: 0.88; }
 
-.wrow-text { padding: 1.9vw 2vw 2.1vw; }
 .wrow-kicker {
+  margin-top: 1.4vw;
   font-family: "IBM Plex Mono", monospace; font-weight: 500;
-  font-size: 0.92vw; line-height: 1; letter-spacing: 0.1em; text-transform: uppercase;
-  color: currentColor; opacity: 0.7;
+  font-size: 1.12vw; line-height: 1; letter-spacing: 0.08em; text-transform: uppercase;
+  color: var(--ink-soft);
 }
-.wrow-num { color: var(--accent); opacity: 1; }
-.wrow-dark .wrow-kicker { opacity: 0.95; }
-.wrow-light .wrow-num { color: #9cca00; }
+.wrow-num { color: #c0db29; }
+.wrow-head { display: flex; align-items: center; justify-content: space-between; gap: 1vw; margin-top: 1.2vw; }
 .wrow-name {
   font-family: "Plus Jakarta Sans", sans-serif; font-weight: 800;
-  font-size: 2.2vw; line-height: 1; letter-spacing: -0.02em;
-  margin-top: 1.1vw; color: currentColor;
+  font-size: 2.4vw; line-height: 1; letter-spacing: -0.02em; color: var(--ink);
 }
-.wrow-services { font-size: 1.05vw; line-height: 1.45; margin-top: 0.9vw; opacity: 0.66; }
+.wrow-link { display: inline-flex; color: var(--ink); transition: transform 0.2s, opacity 0.2s; }
+.wrow-link svg { width: 1.5vw; height: 1.5vw; }
+.wrow-link:hover { transform: translate(2px, -2px); opacity: 0.7; }
+.wrow-services { font-size: 1.35vw; line-height: 1.4; margin-top: 0.8vw; color: var(--ink-soft); }
 .wrow-br { display: none; }
-.wrow-link {
-  display: inline-flex; align-items: center; gap: 0.6em; margin-top: 1.5vw;
-  font-family: "IBM Plex Mono", monospace; font-weight: 500;
-  font-size: 0.83vw; letter-spacing: 0.1em; text-transform: uppercase;
-  color: currentColor; text-decoration: none; transition: opacity 0.2s;
-}
-.wrow-link svg { width: 1em; height: 1em; flex-shrink: 0; transition: transform 0.2s; }
-.wrow-link:hover { opacity: 0.65; }
-.wrow-link:hover svg { transform: translate(2px, -2px); }
 
 /* ══════════════ CTA ══════════════ */
 #contact {
@@ -774,13 +764,13 @@ footer {
   .work-head .section-sub { font-size: clamp(0.95rem, 3.8vw, 1.05rem); }
   .work-sub-br { display: none; }
   .work-all { justify-self: start; margin-top: 22px; font-size: clamp(0.7rem, 2.9vw, 0.8rem); }
-  .work-rows { grid-template-columns: 1fr; gap: 20px; }
-  .wrow::before { aspect-ratio: 16 / 10; }
-  .wrow-text { padding: 22px 22px 28px; }
-  .wrow-kicker { font-size: clamp(0.68rem, 2.9vw, 0.78rem); }
-  .wrow-name { font-size: clamp(1.9rem, 8vw, 2.4rem); margin-top: 14px; }
-  .wrow-services { font-size: clamp(0.95rem, 3.8vw, 1.05rem); margin-top: 12px; }
-  .wrow-link { font-size: clamp(0.7rem, 2.9vw, 0.8rem); margin-top: 20px; }
+  .work-rows { grid-template-columns: 1fr; gap: 36px; }
+  .wrow-shot { aspect-ratio: 16 / 10; }
+  .wrow-kicker { margin-top: 16px; font-size: clamp(0.68rem, 2.9vw, 0.78rem); }
+  .wrow-head { margin-top: 12px; }
+  .wrow-name { font-size: clamp(1.9rem, 8vw, 2.4rem); }
+  .wrow-link svg { width: 20px; height: 20px; }
+  .wrow-services { font-size: clamp(0.95rem, 3.8vw, 1.05rem); margin-top: 8px; }
   .statement { padding: 90px 0; }
   #services, #why, #process, #contact { padding: 72px 0; }
   .foot-top { grid-template-columns: 1fr; gap: 32px; padding-bottom: 40px; }
