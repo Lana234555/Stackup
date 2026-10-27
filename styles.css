@@ -634,9 +634,13 @@ nav.scrolled { background: rgba(255, 255, 255, 0.92); backdrop-filter: blur(14px
 /* The shot lives on a layer of its own so hover can push it closer without
    the rounded frame growing with it. */
 .wrow-shot {
-  position: relative; display: block; width: 100%; aspect-ratio: 16 / 9;
+  position: relative; display: block; width: 100%; aspect-ratio: 2 / 1;
   border-radius: var(--radius-card); overflow: hidden;
 }
+/* Each row takes the proportion its two screenshots were drawn in, so the
+   cover is shown whole instead of being cropped at the sides. */
+.wrow:nth-child(n+3) .wrow-shot { aspect-ratio: 9 / 5; }
+.wrow:nth-child(n+5) .wrow-shot { aspect-ratio: 16 / 9; }
 .wrow-shot::before {
   content: ""; position: absolute; inset: 0;
   background-image: var(--shot); background-size: cover; background-position: center;
@@ -768,7 +772,6 @@ footer {
   .work-sub-br { display: none; }
   .work-all { justify-self: start; margin-top: 22px; font-size: clamp(0.7rem, 2.9vw, 0.8rem); }
   .work-rows { grid-template-columns: 1fr; gap: 36px; }
-  .wrow-shot { aspect-ratio: 16 / 10; }
   .wrow-kicker { margin-top: 16px; font-size: clamp(0.68rem, 2.9vw, 0.78rem); }
   .wrow-head { margin-top: 12px; }
   .wrow-name { font-size: clamp(1.9rem, 8vw, 2.4rem); }
