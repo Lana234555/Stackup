@@ -514,6 +514,57 @@ nav.scrolled { background: rgba(255, 255, 255, 0.92); backdrop-filter: blur(14px
 .process-shot.is-active { opacity: 1; transform: none; }
 .process-shot.is-past { opacity: 0; transform: translateY(-12px) scale(0.98); }
 
+/* Design stage: the scene is layered (base, curves, four cards, cursor) and moves when the stage opens */
+.process-shot--design { overflow: visible; }
+.process-shot--design .d-card { opacity: 0; transform-box: fill-box; transform-origin: center; }
+.process-shot--design .d-float { transform-box: fill-box; transform-origin: center; }
+.process-shot--design .d-curve { stroke-dasharray: 1.002; stroke-dashoffset: 1.002; }
+.process-shot--design .d-ring, .process-shot--design .d-ripple { opacity: 0; transform-box: fill-box; transform-origin: center; }
+.process-shot--design .d-ripple { fill: none; stroke: var(--accent); stroke-width: 2.5; }
+.process-shot--design .d-cursor-in { opacity: 0; }
+.process-shot--design .d-cursor-click { transform-box: fill-box; transform-origin: 0 0; }
+.process-shot--design:is(.is-active, .is-past) .d-card { animation: d-pop 0.95s cubic-bezier(0.2, 1.25, 0.3, 1) both; }
+.process-shot--design:is(.is-active, .is-past) .d-card--ui { animation-delay: 0.2s; }
+.process-shot--design:is(.is-active, .is-past) .d-card--typo { animation-delay: 0.38s; }
+.process-shot--design:is(.is-active, .is-past) .d-card--layout { animation-delay: 0.56s; }
+.process-shot--design:is(.is-active, .is-past) .d-card--colors { animation-delay: 0.74s; }
+.process-shot--design:is(.is-active, .is-past) .d-float { animation: d-float 6s ease-in-out infinite alternate; }
+.process-shot--design:is(.is-active, .is-past) .d-card--ui .d-float { animation-delay: 1.2s; }
+.process-shot--design:is(.is-active, .is-past) .d-card--typo .d-float { animation-duration: 7s; animation-delay: 1.4s; }
+.process-shot--design:is(.is-active, .is-past) .d-card--layout .d-float { animation-duration: 6.5s; animation-delay: 1.6s; }
+.process-shot--design:is(.is-active, .is-past) .d-card--colors .d-float { animation-duration: 7.5s; animation-delay: 1.8s; }
+.process-shot--design:is(.is-active, .is-past) .d-curve { animation: d-draw 1.3s cubic-bezier(0.45, 0, 0.2, 1) both; }
+.process-shot--design:is(.is-active, .is-past) .d-curve--a { animation-delay: 0.1s; }
+.process-shot--design:is(.is-active, .is-past) .d-curve--b { animation-delay: 0.3s; }
+.process-shot--design:is(.is-active, .is-past) .d-curve--c { animation-delay: 0.5s; }
+.process-shot--design:is(.is-active, .is-past) .d-cursor-in { animation: d-cursor-in 1.1s cubic-bezier(0.3, 0.7, 0.2, 1) 1.5s both; }
+.process-shot--design:is(.is-active, .is-past) .d-cursor-idle { animation: d-cursor-idle 4s ease-in-out 2.8s infinite alternate; }
+.process-shot--design:is(.is-active, .is-past) .d-cursor-click { animation: d-click 0.4s ease-in-out 2.8s both; }
+.process-shot--design:is(.is-active, .is-past) .d-ripple { animation: d-ripple 0.9s ease-out 2.85s both; }
+.process-shot--design:is(.is-active, .is-past) .d-ring { animation: d-ring 4.6s ease-out infinite; animation-delay: calc(2.9s + var(--i, 0) * 0.14s); }
+.process-shot--design:is(.is-active, .is-past) .d-ring--publish { animation-duration: 3.8s; animation-delay: 3.6s; }
+@keyframes d-pop {
+  from { opacity: 0; transform: translate(var(--dx), var(--dy)) rotate(var(--rot)) scale(0.86); }
+  to { opacity: 1; transform: none; }
+}
+@keyframes d-float { from { transform: translateY(0); } to { transform: translateY(-9px); } }
+@keyframes d-draw { from { stroke-dashoffset: 1.002; } to { stroke-dashoffset: 0; } }
+@keyframes d-cursor-in {
+  from { opacity: 0; transform: translate(-150px, 190px); }
+  25% { opacity: 1; }
+  to { opacity: 1; transform: none; }
+}
+@keyframes d-cursor-idle { from { transform: translate(0, 0); } to { transform: translate(7px, 5px); } }
+@keyframes d-click { 0%, 100% { transform: scale(1); } 45% { transform: scale(0.82); } }
+@keyframes d-ripple { from { opacity: 0.9; transform: scale(0.3); } to { opacity: 0; transform: scale(2.6); } }
+@keyframes d-ring { 0% { opacity: 0.9; transform: scale(1); } 24% { opacity: 0; transform: scale(2.1); } 100% { opacity: 0; transform: scale(2.1); } }
+@media (prefers-reduced-motion: reduce) {
+  .process-shot--design .d-card, .process-shot--design .d-cursor-in { opacity: 1; animation: none !important; }
+  .process-shot--design .d-curve { stroke-dashoffset: 0; animation: none !important; }
+  .process-shot--design .d-float, .process-shot--design .d-cursor-idle, .process-shot--design .d-cursor-click,
+  .process-shot--design .d-ring, .process-shot--design .d-ripple { animation: none !important; }
+}
+
 /* right: the card stack, one card open at a time */
 .process-cards { list-style: none; display: flex; flex-direction: column; gap: calc(var(--pu) * 0.8); }
 .pcard {
