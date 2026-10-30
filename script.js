@@ -56,8 +56,28 @@ if (processSection) {
   const pinned = window.matchMedia("(min-width: 961px)");
   let current = 0;
 
+  // The first scene is drawn open in the markup so the page works without
+  // script; here it is held back until the section scrolls into view, so its
+  // pieces assemble where the visitor can see them.
+  let started = false;
+  const start = () => {
+    if (started) return;
+    started = true;
+    shots[current].classList.add("is-active");
+  };
+  shots[0].classList.remove("is-active");
+  if ("IntersectionObserver" in window) {
+    const startObs = new IntersectionObserver((entries) => {
+      if (entries.some((e) => e.isIntersecting)) { start(); startObs.disconnect(); }
+    }, { threshold: 0.35 });
+    startObs.observe(processSection.querySelector(".process-stage"));
+  } else {
+    start();
+  }
+
   const show = (next) => {
     if (next === current) return;
+    started = true;
     shots.forEach((shot, i) => {
       shot.classList.toggle("is-active", i === next);
       shot.classList.toggle("is-past", i !== next && i <= next);
