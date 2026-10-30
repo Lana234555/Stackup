@@ -535,24 +535,10 @@ nav.scrolled { background: rgba(255, 255, 255, 0.92); backdrop-filter: blur(14px
 .process-shot--scene.is-active .pc-float { animation: pc-float 6s ease-in-out infinite alternate; }
 @keyframes pc-float { from { transform: translateY(0); } to { transform: translateY(calc(var(--fa, 8px) * -1)); } }
 .process-shot--scene .pc-float { transform-box: fill-box; transform-origin: center; }
-.process-shot--scene .d-float--typo { animation-delay: 1.4s; animation-duration: 7s; }
-.process-shot--scene .d-float--ui { animation-delay: 1.2s; --fa: 9px; }
-.process-shot--scene .d-float--layout { animation-delay: 1.6s; animation-duration: 6.5s; --fa: 9px; }
-.process-shot--scene .d-float--colors { animation-delay: 1.8s; animation-duration: 7.5s; --fa: 9px; }
 
-/* Design: curves draw on, then a cursor clicks and the handles pulse */
-.process-shot--design .d-curve { stroke-dasharray: 1.002; stroke-dashoffset: 1.002; transition: stroke-dashoffset 0.4s ease; }
-.process-shot--design.is-active .d-curve { stroke-dashoffset: 0; transition: stroke-dashoffset 1.3s cubic-bezier(0.45, 0, 0.2, 1) var(--d, 0s); }
-.process-shot--design .d-ring, .process-shot--design .d-ripple { opacity: 0; transform-box: fill-box; transform-origin: center; }
-.process-shot--design .d-ripple { fill: none; stroke: var(--accent); stroke-width: 2.5; }
-.process-shot--design .d-cursor-in { opacity: 0; }
-.process-shot--design .d-cursor-click { transform-box: fill-box; transform-origin: 0 0; }
-.process-shot--design.is-active .d-cursor-in { animation: d-cursor-in 1.1s cubic-bezier(0.3, 0.7, 0.2, 1) 1.8s both; }
-.process-shot--design.is-active .d-cursor-idle { animation: d-cursor-idle 4s ease-in-out 3.1s infinite alternate; }
-.process-shot--design.is-active .d-cursor-click { animation: d-click 0.4s ease-in-out 3.1s both; }
-.process-shot--design.is-active .d-ripple { animation: d-ripple 0.9s ease-out 3.15s both; }
-.process-shot--design.is-active .d-ring { animation: d-ring 4.6s ease-out infinite; animation-delay: calc(3.2s + var(--i, 0) * 0.14s); }
-.process-shot--design.is-active .d-ring--publish { animation-duration: 3.8s; animation-delay: 3.9s; }
+/* Handles and buttons send out a ring now and then */
+.process-shot--vec .hring { opacity: 0; transform-box: fill-box; transform-origin: center; }
+.process-shot--vec.is-active .hring { animation: d-ring 4.6s ease-out infinite; animation-delay: calc(3.2s + var(--i, 0) * 0.14s); }
 @keyframes d-cursor-in {
   from { opacity: 0; transform: translate(-150px, 190px); }
   25% { opacity: 1; }
@@ -590,14 +576,11 @@ nav.scrolled { background: rgba(255, 255, 255, 0.92); backdrop-filter: blur(14px
 @media (prefers-reduced-motion: reduce) {
   .process-shot--scene .pc, .process-shot--scene.is-active .pc,
   .process-shot--scene .pc--wipe, .process-shot--scene.is-active .pc--wipe,
-  .process-shot--design .d-curve, .process-shot--design.is-active .d-curve,
   .process-shot--scene .dr, .process-shot--scene.is-active .dr, .process-shot--scene .gx, .process-shot--scene.is-active .gx { transition-duration: 0.01ms; transition-delay: 0s; }
   .process-shot--vec.is-active .flow, .process-shot--vec.is-active .caret, .process-shot--vec.is-active .btn-pulse, .process-shot--vec.is-active .live-dot,
   .process-shot--vec.is-active .badge-pulse, .process-shot--vec.is-active .cur-idle, .process-shot--vec.is-active .cur-click, .process-shot--vec.is-active .cur-ripple { animation: none; }
   .process-shot--vec.is-active .cur-in { animation: none; opacity: 1; }
-  .process-shot--scene.is-active .pc-float, .process-shot--design.is-active .d-cursor-idle, .process-shot--design.is-active .d-cursor-click,
-  .process-shot--design.is-active .d-ring, .process-shot--design.is-active .d-ripple { animation: none; }
-  .process-shot--design.is-active .d-cursor-in { animation: none; opacity: 1; }
+  .process-shot--scene.is-active .pc-float, .process-shot--vec.is-active .hring { animation: none; }
 }
 
 /* right: the card stack, one card open at a time */
