@@ -4,7 +4,8 @@
 const EP = (window.STACKUP || {}).endpoint || '';
 const qp = new URLSearchParams(location.search);
 const DEMO = !EP || qp.has('demo');
-const KEY_STORE = 'stackup-admin-key';
+const KEY_STORE = 'stackup-admin-key', SEEN_STORE = 'stackup-admin-seen', FILTER_STORE = 'stackup-admin-filters';
+const POLL_MS = DEMO ? 15000 : 60000;
 
 const STATUS = [
   ['new', 'Нові', 'acid'],
@@ -18,15 +19,22 @@ const stLabel = s => (STATUS.find(x => x[0] === s) || [s, s])[1];
 const stTone = s => (STATUS.find(x => x[0] === s) || [s, s, 'line'])[2];
 
 const $ = (s, r = document) => r.querySelector(s);
+const $$ = (s, r = document) => [...r.querySelectorAll(s)];
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const fmtDate = iso => { const d = new Date(iso); return isNaN(d) ? '' : d.toLocaleDateString('uk-UA', { day: '2-digit', month: 'short' }) + ', ' + d.toLocaleTimeString('uk-UA', { hour: '2-digit', minute: '2-digit' }); };
-const ago = iso => { const m = (Date.now() - new Date(iso)) / 60000; if (m < 60) return Math.max(1, Math.round(m)) + ' хв тому'; if (m < 1440) return Math.round(m / 60) + ' год тому'; return Math.round(m / 1440) + ' дн тому'; };
+const fmtDay = iso => { const d = new Date(iso); return isNaN(d) ? '' : d.toLocaleDateString('uk-UA', { day: '2-digit', month: 'short' }); };
+const fmtTime = iso => { const d = new Date(iso); return isNaN(d) ? '' : d.toLocaleTimeString('uk-UA', { hour: '2-digit', minute: '2-digit' }); };
+const ago = iso => { const m = (Date.now() - new Date(iso)) / 60000; if (m < 1) return 'щойно'; if (m < 60) return Math.round(m) + ' хв тому'; if (m < 1440) return Math.round(m / 60) + ' год тому'; return Math.round(m / 1440) + ' дн тому'; };
 const size = b => b > 1048576 ? (b / 1048576).toFixed(1) + ' MB' : Math.max(1, Math.round(b / 1024)) + ' KB';
 const ext = n => { const m = String(n).match(/\.([a-z0-9]+)$/i); return m ? m[1].toUpperCase().slice(0, 4) : 'FILE'; };
+const store = { get(k, d) { try { const v = localStorage.getItem(k); return v == null ? d : JSON.parse(v); } catch (e) { return d; } }, set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} } };
 
-let key = '';
-try { key = localStorage.getItem(KEY_STORE) || ''; } catch (e) {}
-let items = [], filter = 'active', query = '', current = null, cache = {};
+let key = store.get(KEY_STORE, '') || '';
+let items = [], current = null, cache = {}, pollTimer = null, firstLoad = true;
+let seen = new Set(store.get(SEEN_STORE, null) || []);
+let seenInit = store.get(SEEN_STORE, null) !== null;
+const F0 = { status: 'active', mode: 'all', type: 'all', period: 'all', budget: 'all', sort: 'new', unread: false, q: '' };
+let F = { ...F0, ...store.get(FILTER_STORE, {}), q: '' };
 
 /* ---------- api ---------- */
 async function apiGet(params) {
@@ -45,64 +53,148 @@ async function apiPost(body) {
 
 /* ---------- auth ---------- */
 function showLogin(err) {
-  $('#login').hidden = false; $('#inbox').hidden = true;
-  $('#refreshBtn').hidden = $('#logoutBtn').hidden = true;
+  $('#login').hidden = false; $('#inbox').hidden = true; $('#detailView').hidden = true;
+  $$('.hdr-tools').forEach(x => x.hidden = true);
   $('#loginError').textContent = err || '';
+  clearInterval(pollTimer);
 }
 async function enter() {
   try {
-    const j = await apiGet({ action: 'list' });
-    try { if (!DEMO) localStorage.setItem(KEY_STORE, key); } catch (e) {}
-    items = j.items || [];
-    $('#login').hidden = true; $('#inbox').hidden = false;
-    $('#refreshBtn').hidden = false; $('#logoutBtn').hidden = DEMO;
-    $('#demoTag').hidden = !DEMO;
-    renderList();
-    const id = location.hash.slice(1);
-    if (id && items.some(x => x.id === id)) open(id);
-    else if (window.innerWidth > 900 && visibleItems()[0]) open(visibleItems()[0].id, true);
-    else renderEmpty();
+    await load();
+    if (!DEMO) store.set(KEY_STORE, key);
+    $('#login').hidden = true;
+    $$('.hdr-tools').forEach(x => x.hidden = false);
+    $('#logoutBtn').hidden = DEMO; $('#demoTag').hidden = !DEMO;
+    clearInterval(pollTimer); pollTimer = setInterval(poll, POLL_MS);
+    route();
   } catch (e) {
     showLogin(/unauthorized/.test(e.message) ? 'Невірний ключ.' : 'Не вдалося з’єднатися: ' + e.message);
   }
 }
 
-/* ---------- list ---------- */
+async function load() {
+  const j = await apiGet({ action: 'list' });
+  const before = new Set(items.map(x => x.id));
+  items = j.items || [];
+  if (!seenInit) { items.filter(x => x.status !== 'new').forEach(x => seen.add(x.id)); seenInit = true; saveSeen(); }
+  const fresh = firstLoad ? [] : items.filter(x => !before.has(x.id));
+  firstLoad = false;
+  $('#updated').textContent = 'ОНОВЛЕНО ' + fmtTime(new Date().toISOString());
+  return fresh;
+}
+
+async function poll() {
+  try {
+    const fresh = await load();
+    if (fresh.length) announce(fresh);
+    if (!$('#inbox').hidden) renderList(fresh.map(x => x.id)); else updateBadge();
+  } catch (e) { $('#updated').textContent = 'НЕМАЄ ЗВ’ЯЗКУ · ' + fmtTime(new Date().toISOString()); }
+}
+
+/* ---------- new-brief signals ---------- */
+const isUnread = x => !seen.has(x.id);
+function saveSeen() { store.set(SEEN_STORE, [...seen].slice(-2000)); }
+function markSeen(id) { if (!seen.has(id)) { seen.add(id); saveSeen(); updateBadge(); } }
+function updateBadge() {
+  const n = items.filter(isUnread).length;
+  document.title = (n ? `(${n}) ` : '') + 'Заявки — STACKUP.';
+  const b = $('#newBadge'); b.hidden = !n; b.textContent = n + ' ' + (n === 1 ? 'НОВА' : n < 5 ? 'НОВІ' : 'НОВИХ');
+}
+function announce(fresh) {
+  const x = fresh[0];
+  const t = $('#toast');
+  t.innerHTML = `<span class="mono">НОВА ЗАЯВКА${fresh.length > 1 ? ' · ' + fresh.length : ''}</span><b>${esc(x.company || x.name)}</b><button type="button" data-id="${esc(x.id)}">Відкрити ↗</button><button type="button" class="x" aria-label="Закрити">×</button>`;
+  t.hidden = false; clearTimeout(t._h); t._h = setTimeout(() => t.hidden = true, 12000);
+  try { const a = new (window.AudioContext || window.webkitAudioContext)(), o = a.createOscillator(), g = a.createGain(); o.frequency.value = 880; g.gain.setValueAtTime(.08, a.currentTime); g.gain.exponentialRampToValueAtTime(.0001, a.currentTime + .5); o.connect(g).connect(a.destination); o.start(); o.stop(a.currentTime + .5); } catch (e) {}
+  try { if ('Notification' in window && Notification.permission === 'granted') new Notification('STACKUP. Нова заявка', { body: (x.company || x.name) + (x.type ? ' · ' + x.type : '') }); } catch (e) {}
+}
+function bellState() {
+  const b = $('#bellBtn');
+  if (!('Notification' in window)) { b.hidden = true; return; }
+  b.textContent = Notification.permission === 'granted' ? '🔔 СПОВІЩЕННЯ УВІМК.' : '🔔 УВІМКНУТИ СПОВІЩЕННЯ';
+}
+
+/* ---------- filters ---------- */
+function inPeriod(x) {
+  if (F.period === 'all') return true;
+  const age = Date.now() - new Date(x.created);
+  return age <= { today: 864e5, week: 7 * 864e5, month: 30 * 864e5 }[F.period];
+}
 function visibleItems() {
-  const q = query.trim().toLowerCase();
-  return items.filter(x => {
-    if (filter === 'active' && (x.status === 'archive' || x.status === 'done')) return false;
-    if (filter !== 'active' && filter !== 'all' && x.status !== filter) return false;
-    if (q && ![x.name, x.company, x.email, x.phone, x.id].join(' ').toLowerCase().includes(q)) return false;
+  const q = F.q.trim().toLowerCase();
+  const list = items.filter(x => {
+    if (F.status === 'active' && (x.status === 'archive' || x.status === 'done')) return false;
+    if (!['active', 'all'].includes(F.status) && x.status !== F.status) return false;
+    if (F.mode !== 'all' && x.mode !== F.mode) return false;
+    if (F.type !== 'all' && x.type !== F.type) return false;
+    if (F.budget !== 'all' && x.budget !== F.budget) return false;
+    if (F.unread && !isUnread(x)) return false;
+    if (!inPeriod(x)) return false;
+    if (q && ![x.name, x.company, x.email, x.phone, x.id, x.type, x.notes].join(' ').toLowerCase().includes(q)) return false;
     return true;
   });
+  const order = STATUS.map(s => s[0]);
+  if (F.sort === 'old') list.sort((a, b) => new Date(a.created) - new Date(b.created));
+  else if (F.sort === 'status') list.sort((a, b) => order.indexOf(a.status) - order.indexOf(b.status) || new Date(b.created) - new Date(a.created));
+  else list.sort((a, b) => new Date(b.created) - new Date(a.created));
+  return list;
 }
-function renderList() {
+function options(sel, values, all) {
+  const cur = F[sel];
+  return `<option value="all">${esc(all)}</option>` + values.map(v => `<option value="${esc(v)}"${v === cur ? ' selected' : ''}>${esc(v)}</option>`).join('');
+}
+function uniq(k) { return [...new Set(items.map(x => x[k]).filter(Boolean))].sort(); }
+
+function renderFilters() {
   const count = s => items.filter(x => x.status === s).length;
-  $('#stats').innerHTML = [['new', 'Нових'], ['review', 'Оцінюю'], ['work', 'В роботі']].map(([s, l]) =>
-    `<button type="button" class="stat ${stTone(s)}" data-f="${s}"><b>${count(s)}</b><span class="mono">${l.toUpperCase()}</span></button>`).join('');
-  const fl = [['active', 'Активні'], ...STATUS.map(s => [s[0], s[1]]), ['all', 'Усі']];
-  $('#filters').innerHTML = fl.map(([v, l]) => `<button type="button" role="tab" aria-selected="${v === filter}" data-f="${v}">${esc(l)}${v !== 'active' && v !== 'all' ? ` <sup>${count(v)}</sup>` : ''}</button>`).join('');
+  const chips = [['active', 'Активні', items.filter(x => !['done', 'archive'].includes(x.status)).length], ...STATUS.map(s => [s[0], s[1], count(s[0])]), ['all', 'Усі', items.length]];
+  $('#statusChips').innerHTML = chips.map(([v, l, n]) => `<button type="button" role="tab" aria-selected="${v === F.status}" data-f="${v}">${esc(l)} <sup>${n}</sup></button>`).join('');
+  $('#fMode').value = F.mode;
+  $('#fType').innerHTML = options('type', uniq('type'), 'Усі проєкти');
+  $('#fBudget').innerHTML = options('budget', uniq('budget'), 'Будь-який бюджет');
+  $('#fPeriod').value = F.period; $('#fSort').value = F.sort; $('#fUnread').checked = F.unread;
+  const dirty = JSON.stringify({ ...F, q: '' }) !== JSON.stringify({ ...F0, q: '' }) || F.q;
+  $('#resetBtn').hidden = !dirty;
+}
+
+/* ---------- list ---------- */
+function renderList(flash = []) {
+  updateBadge();
+  renderFilters();
+  const count = s => items.filter(x => x.status === s).length;
+  const unread = items.filter(isUnread).length;
+  $('#stats').innerHTML = [
+    ['unread', 'НЕПЕРЕГЛЯНУТІ', unread, 'acid'], ['review', 'ОЦІНЮЮ', count('review'), 'blue'], ['quoted', 'КП НАДІСЛАНО', count('quoted'), 'peach'], ['work', 'В РОБОТІ', count('work'), 'mint']
+  ].map(([s, l, n, t]) => `<button type="button" class="stat ${t}" data-stat="${s}"><b>${n}</b><span class="mono">${l}</span></button>`).join('');
   const vis = visibleItems();
-  $('#items').innerHTML = vis.length ? vis.map(x => `<li><button type="button" class="item${current === x.id ? ' cur' : ''}${x.status === 'new' ? ' unread' : ''}" data-id="${esc(x.id)}">
-      <span class="item-top mono"><span class="pill ${stTone(x.status)}">${esc(stLabel(x.status)).toUpperCase()}</span><span>${esc(ago(x.created))}</span></span>
-      <strong>${esc(x.company || x.name)}</strong>
-      <span class="item-sub">${esc(x.company ? x.name : x.email)}</span>
-      <span class="item-meta mono"><span>${x.mode === 'has' ? 'ТЗ ✓' : 'БРИФ'}</span>${x.type ? `<span>${esc(x.type)}</span>` : ''}${x.deadline ? `<span>${esc(x.deadline)}</span>` : ''}${x.files ? `<span>📎 ${x.files}</span>` : ''}</span>
-    </button></li>`).join('') : `<li class="none mono">НІЧОГО НЕ ЗНАЙДЕНО</li>`;
+  $('#resultCount').textContent = `${vis.length} з ${items.length}`;
+  $('#rows').innerHTML = vis.length ? vis.map(x => `<tr class="row${isUnread(x) ? ' unread' : ''}${flash.includes(x.id) ? ' flash' : ''}" data-id="${esc(x.id)}" tabindex="0">
+      <td class="c-dot"><i title="${isUnread(x) ? 'Непереглянута' : ''}"></i></td>
+      <td class="c-date"><b>${esc(fmtDay(x.created))}</b><span class="mono">${esc(ago(x.created))}</span></td>
+      <td class="c-client"><b>${esc(x.company || x.name)}${isUnread(x) ? ' <em class="new-tag mono">НОВА</em>' : ''}</b><span>${esc(x.company ? x.name : x.email)}</span></td>
+      <td class="c-what"><span class="mono kind">${x.mode === 'has' ? 'ТЗ ✓' : 'БРИФ'}</span>${esc(x.mode === 'has' ? 'Власне ТЗ' : x.type || '—')}</td>
+      <td class="c-dl">${esc(x.deadline || '—')}</td>
+      <td class="c-bg">${esc(x.budget || '—')}</td>
+      <td class="c-files mono">${x.files ? '📎 ' + x.files : ''}</td>
+      <td class="c-st"><span class="pill ${stTone(x.status)}">${esc(stLabel(x.status)).toUpperCase()}</span></td>
+    </tr>`).join('') : `<tr><td colspan="8" class="none mono">${items.length ? 'ЗА ЦИМИ ФІЛЬТРАМИ НІЧОГО НЕМАЄ' : 'ПОКИ ЗАЯВОК НЕМАЄ. ПЕРША ВЖЕ БЛИЗЬКО ✶'}</td></tr>`;
 }
 
-/* ---------- detail ---------- */
-function renderEmpty() {
-  $('#detail').innerHTML = `<div class="empty"><p class="eyebrow"><i></i> INBOX</p><h2>${items.length ? 'Оберіть заявку' : 'Поки тихо.'}<br><span class="serif">${items.length ? 'зі списку.' : 'Перша заявка вже близько.'}</span></h2>
-    <p class="lead">Посилання для клієнтів:<br><code>${esc(location.origin)}/brief.html?mode=has</code> — є ТЗ<br><code>${esc(location.origin)}/brief.html?mode=none</code> — створити ТЗ</p></div>`;
-  document.body.classList.remove('show-detail');
+/* ---------- routing: list ↔ detail ---------- */
+function route() {
+  const id = location.hash.slice(1);
+  if (id && items.some(x => x.id === id)) openDetail(id);
+  else showList();
 }
-
-async function open(id, quiet) {
-  current = id; renderList();
-  if (!quiet) history.replaceState(null, '', '#' + id);
-  document.body.classList.add('show-detail');
+function showList() {
+  current = null;
+  $('#detailView').hidden = true; $('#inbox').hidden = false;
+  renderList();
+}
+async function openDetail(id) {
+  current = id; markSeen(id);
+  $('#inbox').hidden = true; $('#detailView').hidden = false;
+  window.scrollTo({ top: 0 });
   const row = items.find(x => x.id === id);
   $('#detail').innerHTML = `<div class="loading mono">ЗАВАНТАЖУЄМО ${esc(row ? row.company || row.name : '')}…</div>`;
   try {
@@ -110,7 +202,9 @@ async function open(id, quiet) {
     if (current === id) renderDetail(d);
   } catch (e) { $('#detail').innerHTML = `<p class="step-error">Не вдалося відкрити: ${esc(e.message)}</p>`; }
 }
+function go(id) { if (id) location.hash = id; else history.pushState(null, '', location.pathname + location.search), route(); }
 
+/* ---------- detail ---------- */
 function valueHTML(r) {
   const v = r.value;
   if (r.type === 'links') return `<ul>${v.map(x => `<li>${x.url ? `<a href="${esc(x.url)}" target="_blank" rel="noopener">${esc(x.url)}</a>` : ''}${x.note ? ` — ${esc(x.note)}` : ''}</li>`).join('')}</ul>`;
@@ -118,7 +212,6 @@ function valueHTML(r) {
   if (r.type === 'url') return `<a href="${esc(v)}" target="_blank" rel="noopener">${esc(v)}</a>`;
   return esc(Array.isArray(v) ? v.join(', ') : v).replace(/\n/g, '<br>');
 }
-
 function contactLinks(c) {
   const out = [];
   if (c.email) out.push(`<a class="button primary" href="mailto:${esc(c.email)}"><b>Написати</b> <span>↗</span></a>`);
@@ -127,6 +220,12 @@ function contactLinks(c) {
   else if (ph) out.push(`<a class="button ghost" href="tel:${esc(ph.replace(/[^\d+]/g, ''))}"><b>${esc(ph)}</b> <span>↗</span></a>`);
   return out.join('');
 }
+function navBtns(id) {
+  const vis = visibleItems(), i = vis.findIndex(x => x.id === id);
+  if (i < 0) return '';
+  const p = vis[i - 1], n = vis[i + 1];
+  return `<span class="mono pager"><button type="button" ${p ? `data-nav="${esc(p.id)}"` : 'disabled'} aria-label="Попередня">←</button>${i + 1} / ${vis.length}<button type="button" ${n ? `data-nav="${esc(n.id)}"` : 'disabled'} aria-label="Наступна">→</button></span>`;
+}
 
 function renderDetail(d) {
   const row = d.row, rec = d.record || {}, c = rec.client || row;
@@ -134,7 +233,7 @@ function renderDetail(d) {
   (d.files || []).forEach(f => (groups[f.label] = groups[f.label] || []).push(f));
   const spec = (d.files || []).filter(f => f.field === 'specFiles');
   $('#detail').innerHTML = `
-    <button type="button" class="link mono back-list" id="backList">← ДО СПИСКУ</button>
+    <div class="d-nav"><button type="button" class="link mono" id="backList">← УСІ ЗАЯВКИ</button>${navBtns(row.id)}</div>
     <div class="d-bar mono"><span>№ ${esc(row.id)}</span><span>${esc(fmtDate(row.created))}</span></div>
     <h2>${esc(c.company || c.name)}<br><span class="serif">${esc(c.company ? c.name : (row.mode === 'has' ? 'надіслав(ла) ТЗ' : 'створив(ла) ТЗ'))}</span></h2>
     <p class="contact-line">${esc(c.email || '')}${c.phone ? ' · ' + esc(c.phone) : ''}</p>
@@ -156,18 +255,15 @@ function renderDetail(d) {
     <section class="d-sec"><h3><span class="mono">📎</span>Файли · ${(d.files || []).length}</h3>
       ${Object.keys(groups).length ? Object.entries(groups).map(([label, list]) => `<p class="f-group mono">${esc(label).toUpperCase()}</p><ul class="file-list">${list.map(f => `<li><span class="mono">${esc(ext(f.name))}</span><b><a href="${esc(f.url)}" target="_blank" rel="noopener">${esc(f.name)}</a></b><em>${size(f.size)}</em></li>`).join('')}</ul>`).join('') : '<p class="lead">Файлів немає.</p>'}
     </section>`;
-  $('#detail').scrollTop = 0;
-  if (window.innerWidth <= 900) window.scrollTo({ top: 0 });
 }
 
 async function setStatus(st) {
   const row = items.find(x => x.id === current); if (!row || row.status === st) return;
   const prev = row.status; row.status = st;
   if (cache[current]) cache[current].row.status = st;
-  document.querySelectorAll('[data-st]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.st === st)));
-  renderList();
+  $$('[data-st]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.st === st)));
   try { await apiPost({ action: 'update', id: current, status: st }); }
-  catch (e) { row.status = prev; renderList(); alert('Не вдалося змінити статус: ' + e.message); }
+  catch (e) { row.status = prev; $$('[data-st]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.st === prev))); alert('Не вдалося змінити статус: ' + e.message); }
 }
 
 async function saveNotes() {
@@ -181,19 +277,37 @@ async function saveNotes() {
 }
 
 /* ---------- events ---------- */
+function setF(k, v) { F[k] = v; store.set(FILTER_STORE, { ...F, q: '' }); renderList(); }
 $('#loginForm').addEventListener('submit', e => { e.preventDefault(); key = $('#keyInput').value.trim(); enter(); });
 $('#logoutBtn').addEventListener('click', () => { try { localStorage.removeItem(KEY_STORE); } catch (e) {} key = ''; items = []; cache = {}; showLogin(); });
-$('#refreshBtn').addEventListener('click', () => { cache = {}; enter(); });
-$('#search').addEventListener('input', e => { query = e.target.value; renderList(); });
+$('#refreshBtn').addEventListener('click', () => { cache = {}; poll(); });
+$('#bellBtn').addEventListener('click', async () => { try { await Notification.requestPermission(); } catch (e) {} bellState(); });
+$('#search').addEventListener('input', e => { F.q = e.target.value; renderList(); });
+$('#fMode').addEventListener('change', e => setF('mode', e.target.value));
+$('#fType').addEventListener('change', e => setF('type', e.target.value));
+$('#fBudget').addEventListener('change', e => setF('budget', e.target.value));
+$('#fPeriod').addEventListener('change', e => setF('period', e.target.value));
+$('#fSort').addEventListener('change', e => setF('sort', e.target.value));
+$('#fUnread').addEventListener('change', e => setF('unread', e.target.checked));
+$('#resetBtn').addEventListener('click', () => { F = { ...F0 }; $('#search').value = ''; store.set(FILTER_STORE, F0); renderList(); });
+$('#newBadge').addEventListener('click', () => { F = { ...F0, status: 'all', unread: true }; go(null); });
+window.addEventListener('hashchange', route);
 document.addEventListener('click', e => {
-  const f = e.target.closest('[data-f]'); if (f) { filter = f.dataset.f; renderList(); return; }
-  const it = e.target.closest('[data-id]'); if (it) { open(it.dataset.id); return; }
+  const f = e.target.closest('[data-f]'); if (f) { setF('status', f.dataset.f); return; }
+  const s = e.target.closest('[data-stat]');
+  if (s) { if (s.dataset.stat === 'unread') { F.unread = !F.unread; F.status = F.unread ? 'all' : F.status; } else { F.unread = false; F.status = F.status === s.dataset.stat ? 'active' : s.dataset.stat; } setF('status', F.status); return; }
+  if (e.target.closest('#toast .x')) { $('#toast').hidden = true; return; }
+  const it = e.target.closest('[data-id]'); if (it) { $('#toast').hidden = true; go(it.dataset.id); return; }
   const st = e.target.closest('[data-st]'); if (st) { setStatus(st.dataset.st); return; }
   if (e.target.closest('#saveNotes')) { saveNotes(); return; }
-  if (e.target.closest('#backList')) { current = null; history.replaceState(null, '', location.pathname + location.search); renderList(); renderEmpty(); }
+  if (e.target.closest('#backList')) { go(null); return; }
+  const nav = e.target.closest('[data-nav]'); if (nav) { go(nav.dataset.nav); }
 });
-document.addEventListener('keydown', e => { if ((e.metaKey || e.ctrlKey) && e.key === 's' && document.activeElement && document.activeElement.id === 'notes') { e.preventDefault(); saveNotes(); } });
-
+document.addEventListener('keydown', e => {
+  if (e.key === 'Enter' && e.target.matches('tr.row')) go(e.target.dataset.id);
+  if ((e.metaKey || e.ctrlKey) && e.key === 's' && document.activeElement && document.activeElement.id === 'notes') { e.preventDefault(); saveNotes(); }
+});
+document.addEventListener('visibilitychange', () => { if (!document.hidden && $('#login').hidden) poll(); });
 /* ---------- demo data (shown until the backend is connected) ---------- */
 function demoData() {
   const h = n => new Date(Date.now() - n * 3600000).toISOString();
@@ -228,6 +342,15 @@ function demoGet(p) {
 }
 function demoPost(b) { const x = demo.find(d => d.id === b.id); if (b.status) x.status = b.status; if (b.notes != null) x.notes = b.notes; return Promise.resolve({ ok: true }); }
 
+// demo: a fresh brief "arrives" 20 s after opening, to show how new ones look
+if (DEMO) setTimeout(() => {
+  demo = demo || demoData();
+  demo.push({ id: '261101-Z9NE', created: new Date().toISOString(), status: 'new', name: 'Софія Ткач', company: 'Bloom Atelier', email: 'sofia@bloom.example', phone: '@sofia_bloom', mode: 'has', type: 'Власне ТЗ', deadline: '1–2 місяці', budget: '$1 000–3 000', files: 1, notes: '',
+    record: { estimate: [['Дизайн-основа', 'Нічого немає'], ['Терміни', '1–2 місяці'], ['Бюджет', '$1 000–3 000']], sections: [{ title: 'Технічне завдання клієнта', rows: [{ label: 'Наскільки ТЗ фінальне?', type: 'radio', value: 'Фінальне, можна оцінювати' }] }] },
+    fileList: [['specFiles', 'Файл ТЗ', 'Bloom_TZ.docx', 220000]] });
+}, 20000);
+
 /* ---------- init ---------- */
+bellState();
 if (DEMO || key) enter(); else showLogin();
 })();
