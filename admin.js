@@ -3,7 +3,8 @@
 'use strict';
 const EP = (window.STACKUP || {}).endpoint || '';
 const qp = new URLSearchParams(location.search);
-const DEMO = !EP || qp.has('demo');
+const LIVE_HOST = /(^|\.)stackup\.studio$/.test(location.hostname);
+const DEMO = qp.has('demo') || (!EP && !LIVE_HOST);
 const KEY_STORE = 'stackup-admin-key', SEEN_STORE = 'stackup-admin-seen', FILTER_STORE = 'stackup-admin-filters-v2', VIEW_STORE = 'stackup-admin-view';
 const POLL_MS = DEMO ? 15000 : 60000;
 
@@ -493,5 +494,6 @@ if (DEMO) setTimeout(() => {
 /* ---------- init ---------- */
 if (!DEMO) setStages(store.get('stackup-stages-cache', null));
 bellState();
-if (DEMO || key) enter(); else showLogin();
+if (!EP && !DEMO) showLogin('Кабінет ще не підключено до Google-скрипта. Додайте адресу /exec у config.js (див. backend/README.md).');
+else if (DEMO || key) enter(); else showLogin();
 })();
