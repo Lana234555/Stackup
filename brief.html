@@ -1,0 +1,109 @@
+<!doctype html>
+<html lang="uk">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#f6f6f0">
+<meta name="description" content="STACKUP — бриф на проєкт. Розкажіть про ідею, додайте ТЗ або створіть його разом з нами.">
+<title>Бриф на проєкт — STACKUP.</title>
+<link rel="stylesheet" href="brief.css?v=1">
+</head>
+<body>
+<header class="b-header">
+  <a class="brand" href="index.html" aria-label="Stackup home">STACKUP<i class="dot"></i></a>
+  <span class="b-header-mid mono" data-i18n="headerMid">БРИФ НА ПРОЄКТ</span>
+  <div class="b-header-right">
+    <div class="lang mono" role="group" aria-label="Language">
+      <button type="button" data-lang="ua">UA</button><button type="button" data-lang="en">EN</button>
+    </div>
+    <a class="back mono" href="index.html" data-i18n="back">НА САЙТ ↗</a>
+  </div>
+</header>
+
+<main id="app">
+  <!-- Intro -->
+  <section class="b-intro" id="intro">
+    <div class="b-intro-copy">
+      <p class="eyebrow"><i></i> <span data-i18n="introEyebrow">00 / БРИФ</span></p>
+      <h1 class="h2"><span data-i18n="introTitle1">Розкажіть про ідею.</span><br><span class="serif" data-i18n="introTitle2">Решту зробимо разом.</span></h1>
+      <p class="lead" data-i18n="introLead">Відповіді допоможуть нам точно оцінити обсяг, терміни і вартість. Не знаєте відповіді — пропускайте, а там, де складно, ми запропонуємо варіанти.</p>
+      <ul class="facts mono">
+        <li><b>~15</b> <span data-i18n="fact1">ХВИЛИН</span></li>
+        <li><b>8</b> <span data-i18n="fact2">КРОКІВ</span></li>
+        <li><b>✓</b> <span data-i18n="fact3">АВТОЗБЕРЕЖЕННЯ</span></li>
+      </ul>
+    </div>
+    <div class="b-intro-art" aria-hidden="true">
+      <div class="note n1"><span class="mono">01 / BRIEF</span><strong data-i18n="art1">Що, для кого і навіщо</strong></div>
+      <div class="note n2"><span class="mono">02 / FILES</span><strong data-i18n="art2">Шрифти, логотип, приклади</strong></div>
+      <div class="note n3"><span class="mono">03 / SPEC</span><strong data-i18n="art3">Готове ТЗ</strong><em class="serif" data-i18n="art3b">за 15 хв</em></div>
+      <svg class="trail" viewBox="0 0 400 300"><path d="M20 260 C 120 250, 110 120, 210 140 S 330 60, 380 30"/></svg>
+    </div>
+  </section>
+
+  <!-- Choose path -->
+  <section class="b-paths" id="paths">
+    <p class="eyebrow"><i></i> <span data-i18n="pathsEyebrow">З ЧОГО ПОЧНЕМО?</span></p>
+    <div class="paths">
+      <button type="button" class="path acid" data-mode="has">
+        <span class="mono path-num">A</span>
+        <strong data-i18n="pathHasTitle">У мене є ТЗ</strong>
+        <span data-i18n="pathHasText">Завантажте готове технічне завдання, а ми поставимо кілька уточнювальних питань.</span>
+        <span class="path-cta mono"><span data-i18n="pathHasCta">ДОДАТИ ТЗ</span> ↗</span>
+      </button>
+      <button type="button" class="path ink" data-mode="none">
+        <span class="mono path-num">B</span>
+        <strong data-i18n="pathNoneTitle">ТЗ немає — створимо разом</strong>
+        <span data-i18n="pathNoneText">Відповідайте на прості питання крок за кроком. На виході отримаєте готове ТЗ, а ми — все для точної оцінки.</span>
+        <span class="path-cta mono"><span data-i18n="pathNoneCta">ПОЧАТИ БРИФ</span> ↗</span>
+      </button>
+    </div>
+    <p class="resume mono" hidden><span data-i18n="resumeText">У вас є незавершений бриф.</span> <button type="button" class="link" id="resumeBtn" data-i18n="resumeBtn">ПРОДОВЖИТИ ↗</button></p>
+  </section>
+
+  <!-- Wizard -->
+  <section class="b-wizard" id="wizard" hidden>
+    <aside class="steps-nav">
+      <p class="mono steps-mode" id="modeLabel"></p>
+      <ol id="stepsList"></ol>
+      <div class="steps-progress"><i id="progressBar"></i></div>
+      <button type="button" class="link mono switch-mode" id="switchMode"></button>
+    </aside>
+    <form class="step-panel" id="stepForm" novalidate>
+      <div id="stepBody"></div>
+      <div class="step-actions">
+        <button type="button" class="button ghost" id="prevBtn"><span>←</span> <b data-i18n="prev">Назад</b></button>
+        <button type="submit" class="button primary" id="nextBtn"><b data-i18n="next">Далі</b> <span>↗</span></button>
+      </div>
+      <p class="step-error" id="stepError" role="alert"></p>
+    </form>
+  </section>
+
+  <!-- Result -->
+  <section class="b-result" id="result" hidden>
+    <div class="result-head">
+      <p class="eyebrow"><i></i> <span data-i18n="resultEyebrow">ГОТОВО</span></p>
+      <h2><span data-i18n="resultTitle1">Ваш бриф готовий.</span><br><span class="serif" data-i18n="resultTitle2">Перевірте й надішліть.</span></h2>
+      <p class="lead" data-i18n="resultLead">Нижче — документ, який ми отримаємо. Якщо щось не так, поверніться до будь-якого кроку.</p>
+      <div class="result-actions">
+        <button type="button" class="button primary" id="sendBtn"><b data-i18n="send">Надіслати бриф</b> <span>↗</span></button>
+        <button type="button" class="button ghost" id="zipBtn"><b data-i18n="zip">Завантажити ZIP</b> <span>↓</span></button>
+        <button type="button" class="button ghost" id="printBtn"><b data-i18n="print">Зберегти PDF</b> <span>⎙</span></button>
+        <button type="button" class="link mono" id="editBtn" data-i18n="edit">← РЕДАГУВАТИ</button>
+      </div>
+      <p class="send-status" id="sendStatus" role="status"></p>
+    </div>
+    <article class="doc" id="doc"></article>
+  </section>
+</main>
+
+<footer class="b-footer mono">
+  <span>© 2026 STACKUP.</span>
+  <span data-i18n="footerMid">СТРАТЕГІЯ. ДИЗАЙН. РОЗРОБКА.</span>
+  <a href="index.html" data-i18n="footerBack">STACKUP.STUDIO ↗</a>
+</footer>
+
+<script src="assets/vendor/jszip.min.js" defer></script>
+<script src="brief.js?v=1" defer></script>
+</body>
+</html>
