@@ -39,7 +39,7 @@ const UI = {
   modeHas: ['A / Є ТЗ', 'A / HAVE A SPEC'], modeNone: ['B / СТВОРЮЄМО ТЗ', 'B / BUILDING A SPEC'],
   switchToNone: ['↺ ТЗ НЕМАЄ? ПРОЙТИ ПОВНИЙ БРИФ', '↺ NO SPEC? TAKE THE FULL BRIEF'],
   switchToHas: ['↺ МАЄТЕ ТЗ? ДОДАТИ ФАЙЛ', '↺ HAVE A SPEC? UPLOAD IT'],
-  required: ['Заповніть, будь ласка, поля з позначкою *', 'Please fill in the fields marked *'],
+  required: ['Заповніть, будь ласка, поля з позначкою * (файли теж)', 'Please fill in the fields marked * (files too)'],
   optional: ['необов’язково', 'optional'],
   drop: ['Перетягніть файли сюди або', 'Drop files here or'],
   browse: ['оберіть на пристрої', 'browse your device'],
@@ -109,10 +109,10 @@ const SECTIONS = [
     nav: ['Ваше ТЗ', 'Your spec'],
     title: ['Додайте', 'Add your'], titleSerif: ['ваше ТЗ.', 'spec.'],
     doc: ['Технічне завдання клієнта', 'Client’s specification'],
-    lead: ['Підійде будь-який формат: PDF, Word, Google Docs, Figma, Notion або просто посилання.', 'Any format works: PDF, Word, Google Docs, Figma, Notion or just a link.'],
+    lead: ['Завантажте файл ТЗ: PDF, Word, Excel, презентація, архів або скріншоти. Посилання можна додати окремо.', 'Upload your spec file: PDF, Word, Excel, slides, an archive or screenshots. You can add a link as well.'],
     fields: [
-      { id: 'specFiles', type: 'files', req: 'specOrLink', big: true, label: ['Файл ТЗ', 'Spec file'], accept: '.pdf,.doc,.docx,.txt,.md,.rtf,.odt,.pages,.xls,.xlsx,.ppt,.pptx,.key,.fig,.zip,image/*' },
-      { id: 'specLink', type: 'url', label: ['…або посилання на ТЗ', '…or a link to the spec'], ph: ['Google Docs, Notion, Figma…', 'Google Docs, Notion, Figma…'] },
+      { id: 'specFiles', type: 'files', req: true, big: true, label: ['Файл ТЗ', 'Spec file'], accept: '.pdf,.doc,.docx,.txt,.md,.rtf,.odt,.pages,.xls,.xlsx,.ppt,.pptx,.key,.fig,.zip,image/*' },
+      { id: 'specLink', type: 'url', label: ['Додаткове посилання (Figma, Google Docs, Notion)', 'Extra link (Figma, Google Docs, Notion)'], ph: ['Google Docs, Notion, Figma…', 'Google Docs, Notion, Figma…'] },
       { id: 'specStatus', type: 'radio', label: ['Наскільки ТЗ фінальне?', 'How final is the spec?'],
         options: [['final', ['Фінальне, можна оцінювати', 'Final, ready to estimate']], ['draft', ['Чернетка, можна доповнювати', 'A draft, open to changes']], ['ideas', ['Скоріше набір ідей', 'More of a set of ideas']]] },
       { id: 'specNotes', type: 'textarea', label: ['Що важливо, але не увійшло в ТЗ?', 'Anything important missing from the spec?'], ph: ['Пріоритети, побоювання, «обов’язково» і «точно ні»', 'Priorities, concerns, must-haves and definite no’s'] }
@@ -431,8 +431,8 @@ function validate() {
   const s = sections()[state.step];
   const missing = [];
   for (const f of s.fields.filter(visible)) {
-    if (f.req === 'specOrLink') { if (!(files.specFiles || []).length && !(state.a.specLink || '').trim()) missing.push(f.id); continue; }
     if (!f.req) continue;
+    if (f.type === 'files') { if (!(files[f.id] || []).length) missing.push(f.id); continue; }
     const v = state.a[f.id];
     if (v == null || (Array.isArray(v) ? !v.length : !String(v).trim())) missing.push(f.id);
     else if (f.type === 'email' && !/^\S+@\S+\.\S+$/.test(v)) missing.push(f.id);
