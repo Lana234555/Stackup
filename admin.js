@@ -7,15 +7,23 @@ const DEMO = !EP || qp.has('demo');
 const KEY_STORE = 'stackup-admin-key', SEEN_STORE = 'stackup-admin-seen', FILTER_STORE = 'stackup-admin-filters-v2', VIEW_STORE = 'stackup-admin-view';
 const POLL_MS = DEMO ? 15000 : 60000;
 
-const STATUS = [
-  ['new', 'Нові', 'acid', 'Щойно надійшли'],
-  ['review', 'Оцінюю', 'blue', 'Рахую обсяг і терміни'],
-  ['quoted', 'КП надіслано', 'peach', 'Чекаю відповіді клієнта'],
-  ['work', 'В роботі', 'mint', 'Погоджено, робимо'],
-  ['done', 'Завершено', 'stone', 'Здано клієнту'],
-  ['archive', 'Архів', 'line', 'Відмова або неактуально']
+const DEFAULT_STAGES = [
+  { id: 'new', name: 'Нові', tone: 'acid', hint: 'Щойно надійшли' },
+  { id: 'review', name: 'Оцінюю', tone: 'blue', hint: 'Рахую обсяг і терміни' },
+  { id: 'quoted', name: 'КП надіслано', tone: 'peach', hint: 'Чекаю відповіді клієнта' },
+  { id: 'work', name: 'В роботі', tone: 'mint', hint: 'Погоджено, робимо' },
+  { id: 'done', name: 'Завершено', tone: 'stone', hint: 'Здано клієнту' }
 ];
-const PIPE = ['new', 'review', 'quoted', 'work', 'done'];
+const ARCHIVE = ['archive', 'Архів', 'line', 'Відмова або неактуально'];
+const TONES = ['acid', 'blue', 'peach', 'mint', 'stone', 'lav', 'rose', 'sand', 'line'];
+let stages = [], STATUS = [], PIPE = [], editingCol = null, addingCol = false;
+function setStages(list) {
+  stages = (Array.isArray(list) && list.length ? list : DEFAULT_STAGES).filter(x => x && x.id && x.id !== 'archive');
+  if (!stages.some(x => x.id === 'new')) stages.unshift({ ...DEFAULT_STAGES[0] });
+  STATUS = [...stages.map(x => [x.id, x.name, x.tone || 'line', x.hint || '']), ARCHIVE];
+  PIPE = stages.map(x => x.id);
+}
+setStages(null);
 const DL_ORDER = ['Якнайшвидше', 'ASAP', 'До 1 місяця', 'Within 1 month', '1–2 місяці', '1–2 months', '2–3 місяці', '2–3 months', 'Гнучко', 'Flexible'];
 const stLabel = s => (STATUS.find(x => x[0] === s) || [s, s])[1];
 const stTone = s => (STATUS.find(x => x[0] === s) || [s, s, 'line'])[2];
@@ -78,6 +86,8 @@ async function load() {
   const j = await apiGet({ action: 'list' });
   const before = new Set(items.map(x => x.id));
   items = j.items || [];
+  if (j.stages) setStages(j.stages);
+  items.forEach(x => { if (x.status !== 'archive' && !PIPE.includes(x.status)) x.status = 'new'; });
   if (!seenInit) { items.filter(x => x.status !== 'new').forEach(x => seen.add(x.id)); seenInit = true; saveSeen(); }
   const fresh = firstLoad ? [] : items.filter(x => !before.has(x.id));
   firstLoad = false;
@@ -173,7 +183,7 @@ function renderKpis() {
   $('#kpis').innerHTML = [
     ['НЕПЕРЕГЛЯНУТІ', items.filter(isUnread).length, 'acid', 'unread'],
     ['ЗА 7 ДНІВ', week, '', ''],
-    ['В РОБОТІ', c('review') + c('quoted') + c('work'), '', ''],
+    ['В РОБОТІ', items.filter(x => !['new', 'done', 'archive'].includes(x.status)).length, '', ''],
     ['КОНВЕРСІЯ КП', conv + '%', '', ''],
     ['УСЬОГО', total, '', '']
   ].map(([l, n, t, q]) => `<${q ? 'button type="button" data-quick="' + q + '"' : 'div'} class="kpi ${t}"><span class="mono">${l}</span><b>${n}</b></${q ? 'button' : 'div'}>`).join('');
@@ -189,6 +199,20 @@ function card(x) {
   </article>`;
 }
 
+function colHead(st, n) {
+  const [id, name, tone, hint] = st;
+  if (editingCol === id) return `<form class="col-edit" data-coledit="${id}">
+      <input name="name" value="${esc(name)}" placeholder="Назва колонки" maxlength="40" required>
+      <input name="hint" value="${esc(hint)}" placeholder="Підказка (необов’язково)" maxlength="60">
+      <div class="tones">${TONES.map(t => `<label><input type="radio" name="tone" value="${t}"${t === tone ? ' checked' : ''}><i class="${t}"></i></label>`).join('')}</div>
+      <div class="col-edit-bar">
+        <button type="button" class="icon-btn sm" data-colmove="-1" aria-label="Вліво">←</button><button type="button" class="icon-btn sm" data-colmove="1" aria-label="Вправо">→</button>
+        ${id === 'new' ? '' : `<button type="button" class="link mono del" data-coldel="${id}">ВИДАЛИТИ</button>`}
+        <button type="button" class="link mono" data-colcancel>СКАСУВАТИ</button><button type="submit" class="mini-ok mono">ЗБЕРЕГТИ</button>
+      </div></form>`;
+  return `<header class="col-head"><span class="dotc ${tone}"></span><b>${esc(name)}</b><span class="mono cnt">${n}</span>${id === 'archive' ? '' : `<button type="button" class="col-menu" data-colmenu="${id}" aria-label="Налаштувати колонку">⋯</button>`}<p class="mono">${esc(hint).toUpperCase()}</p></header>`;
+}
+
 function renderBoard() {
   const list = filtered(true);
   const cols = [...PIPE, ...(F.status === 'all' || F.status === 'archive' ? ['archive'] : [])];
@@ -196,11 +220,27 @@ function renderBoard() {
   $('#board').innerHTML = cols.map(s => {
     const st = STATUS.find(x => x[0] === s), cards = list.filter(x => x.status === s);
     return `<div class="col" data-col="${s}">
-      <header class="col-head"><span class="dotc ${st[2]}"></span><b>${esc(st[1])}</b><span class="mono cnt">${cards.length}</span><p class="mono">${esc(st[3]).toUpperCase()}</p></header>
+      ${colHead(st, cards.length)}
       <div class="col-body" data-drop="${s}">${cards.map(card).join('') || '<p class="col-empty mono">ПЕРЕТЯГНІТЬ СЮДИ</p>'}</div>
     </div>`;
-  }).join('');
+  }).join('') + (addingCol ? `<form class="col col-add-form" id="colAddForm">
+      <p class="mono">НОВА КОЛОНКА</p>
+      <input name="name" placeholder="Напр.: Дзвінок призначено" maxlength="40" required>
+      <input name="hint" placeholder="Підказка (необов’язково)" maxlength="60">
+      <div class="tones">${TONES.map((t, i) => `<label><input type="radio" name="tone" value="${t}"${i === 5 ? ' checked' : ''}><i class="${t}"></i></label>`).join('')}</div>
+      <div class="col-edit-bar"><button type="button" class="link mono" data-coladdcancel>СКАСУВАТИ</button><button type="submit" class="mini-ok mono">ДОДАТИ</button></div>
+    </form>` : `<button type="button" class="col-add" data-coladd><span>＋</span>Нова колонка</button>`);
+  const f = $('#colAddForm input[name=name]') || $('.col-edit input[name=name]'); if (f && !f.dataset.focused) { f.dataset.focused = 1; f.focus(); }
 }
+
+async function saveStages(next) {
+  const prev = stages.map(x => ({ ...x }));
+  setStages(next); render();
+  store.set('stackup-stages-cache', stages);
+  try { await apiPost({ action: 'stages', stages }); }
+  catch (e) { setStages(prev); render(); alert('Не вдалося зберегти колонки: ' + e.message); }
+}
+function stageId(name) { return 'st_' + (Date.now().toString(36) + Math.random().toString(36).slice(2, 5)); }
 
 function renderTable() {
   const list = filtered(false);
@@ -358,10 +398,42 @@ document.addEventListener('keydown', e => {
 });
 document.addEventListener('visibilitychange', () => { if (!document.hidden && !$('#app').hidden) poll(); });
 
+/* columns: add / edit / move / delete */
+document.addEventListener('click', e => {
+  if (e.target.closest('[data-coladd]')) { addingCol = true; editingCol = null; render(); return; }
+  if (e.target.closest('[data-coladdcancel]')) { addingCol = false; render(); return; }
+  const m = e.target.closest('[data-colmenu]'); if (m) { editingCol = m.dataset.colmenu; addingCol = false; render(); return; }
+  if (e.target.closest('[data-colcancel]')) { editingCol = null; render(); return; }
+  const mv = e.target.closest('[data-colmove]');
+  if (mv) { const i = stages.findIndex(x => x.id === editingCol), j = i + +mv.dataset.colmove; if (i < 0 || j < 0 || j >= stages.length) return; const next = stages.map(x => ({ ...x })); const fm = mv.closest('form'); if (fm) { const d = new FormData(fm); const nm = String(d.get('name') || '').trim(); if (nm) next[i].name = nm; next[i].hint = String(d.get('hint') || '').trim(); next[i].tone = d.get('tone') || next[i].tone; } [next[i], next[j]] = [next[j], next[i]]; saveStages(next); return; }
+  const del = e.target.closest('[data-coldel]');
+  if (del) {
+    const id = del.dataset.coldel, st = stages.find(x => x.id === id), n = items.filter(x => x.status === id).length;
+    if (!confirm(n ? `Видалити колонку «${st.name}»? ${n} заявк(и) з неї перейдуть у «${stages[0].name}».` : `Видалити колонку «${st.name}»?`)) return;
+    items.filter(x => x.status === id).forEach(x => setStatus(x.id, stages[0].id));
+    editingCol = null; saveStages(stages.filter(x => x.id !== id)); return;
+  }
+});
+document.addEventListener('submit', e => {
+  const f = e.target;
+  if (f.id === 'colAddForm') {
+    e.preventDefault(); const d = new FormData(f), name = String(d.get('name')).trim(); if (!name) return;
+    addingCol = false;
+    const at = stages.findIndex(x => x.id === 'done'); const next = stages.map(x => ({ ...x })); const col = { id: stageId(name), name, hint: String(d.get('hint') || '').trim(), tone: d.get('tone') || 'lav' };
+    at >= 0 ? next.splice(at, 0, col) : next.push(col);
+    saveStages(next);
+  } else if (f.dataset.coledit) {
+    e.preventDefault(); const d = new FormData(f), id = f.dataset.coledit, name = String(d.get('name')).trim(); if (!name) return;
+    editingCol = null;
+    saveStages(stages.map(x => x.id === id ? { ...x, name, hint: String(d.get('hint') || '').trim(), tone: d.get('tone') || x.tone } : { ...x }));
+  }
+});
+document.addEventListener('keydown', e => { if (e.key === 'Escape' && (editingCol || addingCol)) { editingCol = null; addingCol = false; render(); } });
+
 /* drag empty board space to scroll sideways */
 (() => {
   const b = $('#board'); let sx = null, sl = 0;
-  b.addEventListener('mousedown', e => { if (e.target.closest('.card,button,a,input')) return; sx = e.pageX; sl = b.scrollLeft; b.classList.add('grabbing'); });
+  b.addEventListener('mousedown', e => { if (e.target.closest('.card,button,a,input,label,form')) return; sx = e.pageX; sl = b.scrollLeft; b.classList.add('grabbing'); });
   window.addEventListener('mousemove', e => { if (sx == null) return; b.scrollLeft = sl - (e.pageX - sx); });
   window.addEventListener('mouseup', () => { sx = null; b.classList.remove('grabbing'); });
 })();
@@ -402,13 +474,13 @@ function demoData() {
 let demo = null;
 function demoGet(p) {
   demo = demo || demoData();
-  if (p.action === 'list') return Promise.resolve({ ok: true, items: demo.map(({ record, fileList, ...r }) => r) });
+  if (p.action === 'list') return Promise.resolve({ ok: true, stages: store.get('stackup-demo-stages', null), items: demo.map(({ record, fileList, ...r }) => r) });
   const x = demo.find(d => d.id === p.id);
   const { record, fileList, ...row } = x;
   return new Promise(ok => setTimeout(() => ok({ ok: true, row, record: { client: row, ...record }, folderUrl: 'https://drive.google.com/',
     files: fileList.map(([field, label, name, sz]) => ({ field, label, name, size: sz, url: 'https://drive.google.com/' })) }), 200));
 }
-function demoPost(b) { const x = demo.find(d => d.id === b.id); if (b.status) x.status = b.status; if (b.notes != null) x.notes = b.notes; return Promise.resolve({ ok: true }); }
+function demoPost(b) { if (b.action === 'stages') { store.set('stackup-demo-stages', b.stages); return Promise.resolve({ ok: true }); } const x = demo.find(d => d.id === b.id); if (b.status) x.status = b.status; if (b.notes != null) x.notes = b.notes; return Promise.resolve({ ok: true }); }
 
 // demo: a fresh brief "arrives" 20 s after opening, to show how new ones look
 if (DEMO) setTimeout(() => {
@@ -419,6 +491,7 @@ if (DEMO) setTimeout(() => {
 }, 20000);
 
 /* ---------- init ---------- */
+if (!DEMO) setStages(store.get('stackup-stages-cache', null));
 bellState();
 if (DEMO || key) enter(); else showLogin();
 })();

@@ -51,6 +51,7 @@ function doPost(e) {
       case 'file': return out(addFile(d));
       case 'finish': return out(finish(d));
       case 'update': auth(d.key); return out(update(d));
+      case 'stages': auth(d.key); return out(saveStages(d.stages));
       default: return out({ ok: false, error: 'unknown action' });
     }
   } catch (err) { return out({ ok: false, error: String(err && err.message || err) }); }
@@ -61,7 +62,7 @@ function doGet(e) {
     const q = e.parameter || {};
     if (q.action === 'ping') return out({ ok: true, app: 'stackup-briefs' });
     auth(q.key);
-    if (q.action === 'list') return out({ ok: true, items: list() });
+    if (q.action === 'list') return out({ ok: true, items: list(), stages: getStages() });
     if (q.action === 'get') return out(get(q.id));
     return out({ ok: false, error: 'unknown action' });
   } catch (err) { return out({ ok: false, error: String(err && err.message || err) }); }
@@ -157,10 +158,28 @@ function update(d) {
   const r = findRow(d.id);
   if (!r) throw new Error('not found');
   const sh = sheet();
-  if (d.status != null) { if (STATUSES.indexOf(d.status) < 0) throw new Error('bad status'); sh.getRange(r.row, COLS.indexOf('status') + 1).setValue(d.status); }
+  if (d.status != null) { if (validStatuses().indexOf(d.status) < 0) throw new Error('bad status'); sh.getRange(r.row, COLS.indexOf('status') + 1).setValue(d.status); }
   if (d.notes != null) sh.getRange(r.row, COLS.indexOf('notes') + 1).setValue(String(d.notes).slice(0, 20000));
   sh.getRange(r.row, COLS.indexOf('updated') + 1).setValue(new Date().toISOString());
   return { ok: true };
+}
+
+/* ---------- колонки воронки ---------- */
+function getStages() {
+  const raw = PropertiesService.getScriptProperties().getProperty('STAGES');
+  try { return raw ? JSON.parse(raw) : null; } catch (e) { return null; }
+}
+function saveStages(stages) {
+  if (!Array.isArray(stages) || !stages.length || stages.length > 30) throw new Error('bad stages');
+  const clean = stages.map(s => ({ id: String(s.id).slice(0, 40), name: String(s.name).slice(0, 40), hint: String(s.hint || '').slice(0, 60), tone: String(s.tone || 'line').slice(0, 12) }))
+    .filter(s => s.id && s.name && s.id !== 'archive');
+  if (!clean.some(s => s.id === 'new')) throw new Error('stage "new" is required');
+  PropertiesService.getScriptProperties().setProperty('STAGES', JSON.stringify(clean));
+  return { ok: true };
+}
+function validStatuses() {
+  const st = getStages();
+  return (st ? st.map(s => s.id) : STATUSES).concat(['archive']);
 }
 
 /* ---------- helpers ---------- */

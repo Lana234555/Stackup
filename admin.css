@@ -1,5 +1,6 @@
 /* STACKUP. — CRM заявок (на основі brief.css) */
 .adm{background:var(--paper);display:block}
+.lav{background:#d9d2ed}.rose{background:#f6c6cf}.sand{background:#f1dfae}
 .acid{background:var(--acid)}.blue{background:var(--blue)}.peach{background:var(--peach)}.mint{background:var(--mint)}.stone{background:var(--stone)}.line{background:#cfd1c6}
 .demo-tag{font-size:10px;background:var(--acid);color:var(--ink);padding:5px 8px;border-radius:3px;letter-spacing:.08em;align-self:flex-start}
 
@@ -152,7 +153,7 @@ button.kpi:hover,button.kpi[aria-pressed=true]{transform:translateY(-2px);box-sh
 .d-who{font-size:24px;margin-top:2px}
 .contact-line{font-size:15px;color:#6f7166;margin-top:14px}
 .d-label{font-size:9px;color:var(--muted);letter-spacing:.1em;margin:24px 0 8px}
-.stage{display:grid;grid-template-columns:repeat(6,1fr);gap:3px;background:#fff;border:1px solid var(--line);border-radius:6px;padding:3px}
+.stage{display:grid;grid-template-columns:repeat(auto-fit,minmax(104px,1fr));gap:3px;background:#fff;border:1px solid var(--line);border-radius:6px;padding:3px}
 .stage button{display:flex;flex-direction:column;align-items:flex-start;gap:3px;font-size:12px;padding:9px 10px;border-radius:4px;background:transparent!important;text-align:left;line-height:1.2;transition:background .2s}
 .stage button .mono{font-size:9px;color:var(--muted)}
 .stage button:hover{background:var(--paper)!important}
@@ -220,7 +221,6 @@ button.kpi:hover,button.kpi[aria-pressed=true]{transform:translateY(-2px);box-sh
   .board{grid-template-columns:none;grid-auto-flow:column;grid-auto-columns:82%;overflow-x:auto;scroll-snap-type:x mandatory;scrollbar-width:none;margin:0 -16px;padding:0 16px 16px;scroll-padding:0 16px}
   .board::-webkit-scrollbar{display:none}
   .drawer .detail{padding:16px 16px 50px}
-  .stage{grid-template-columns:repeat(3,1fr)}
   .table thead{display:none}
   .table,.table tbody{display:block}
   .table tr.row{display:grid;grid-template-columns:36px 1fr auto;grid-template-areas:"dot client st" ". what what" ". date date";gap:4px 10px;padding:12px}
@@ -232,3 +232,28 @@ button.kpi:hover,button.kpi[aria-pressed=true]{transform:translateY(-2px);box-sh
   .toast{left:16px;right:16px;bottom:16px;flex-wrap:wrap}
 }
 @media(max-width:480px){.seg button{padding:8px 9px}.new-badge{padding:9px 10px}}
+
+/* custom columns */
+.col-head{grid-template-columns:auto 1fr auto auto}
+.col-menu{width:24px;height:24px;border-radius:50%;font-size:16px;line-height:1;color:var(--muted);opacity:.5;transition:.2s}
+.col:hover .col-menu{opacity:1}
+.col-menu:hover{background:#fff;color:var(--ink)}
+.col-add{align-self:start;display:flex;align-items:center;gap:10px;justify-content:center;border:1.5px dashed #c9cbbf;border-radius:8px;padding:18px;font-size:15px;color:var(--muted);transition:.2s;min-height:64px}
+.col-add span{font-size:20px}
+.col-add:hover{border-color:var(--ink);color:var(--ink);background:#fff}
+.col-edit,.col-add-form{display:flex;flex-direction:column;gap:8px;padding:4px 4px 10px}
+.col-add-form{background:#fff;border:1.5px solid var(--ink);min-height:0;padding:14px}
+.col-add-form>.mono{font-size:9px;color:var(--muted);letter-spacing:.1em}
+.col-edit input[type=text],.col-edit input:not([type]),.col-add-form input:not([type]){width:100%;border:1px solid #cdd2c0;border-radius:5px;padding:9px 10px;background:#fff;font-size:14px}
+.col-edit input:focus,.col-add-form input:focus{outline:0;border-color:var(--ink)}
+.tones{display:flex;flex-wrap:wrap;gap:6px}
+.tones label{cursor:pointer;position:relative}
+.tones input{position:absolute;opacity:0;width:1px;height:1px}
+.tones i{display:block;width:22px;height:22px;border-radius:50%;border:1px solid #0000001a}
+.tones input:checked+i{box-shadow:0 0 0 2px #fff,0 0 0 4px var(--ink)}
+.tones input:focus-visible+i{outline:2px solid #769b08;outline-offset:3px}
+.col-edit-bar{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:4px}
+.col-edit-bar .link{font-size:9px}
+.col-edit-bar .del{color:#b2481b;border-color:#d9825c}
+.icon-btn.sm{width:28px;height:28px;font-size:13px}
+.mini-ok{margin-left:auto;background:var(--ink);color:var(--paper);font-size:10px;letter-spacing:.08em;padding:8px 12px;border-radius:30px}
