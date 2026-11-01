@@ -193,7 +193,6 @@ function renderBoard() {
   const list = filtered(true);
   const cols = [...PIPE, ...(F.status === 'all' || F.status === 'archive' ? ['archive'] : [])];
   $('#resultCount').textContent = '';
-  $('#board').style.setProperty('--n', cols.length);
   $('#board').innerHTML = cols.map(s => {
     const st = STATUS.find(x => x[0] === s), cards = list.filter(x => x.status === s);
     return `<div class="col" data-col="${s}">
@@ -358,6 +357,14 @@ document.addEventListener('keydown', e => {
   if ((e.metaKey || e.ctrlKey) && e.key === 's' && document.activeElement && document.activeElement.id === 'notes') { e.preventDefault(); saveNotes(); }
 });
 document.addEventListener('visibilitychange', () => { if (!document.hidden && !$('#app').hidden) poll(); });
+
+/* drag empty board space to scroll sideways */
+(() => {
+  const b = $('#board'); let sx = null, sl = 0;
+  b.addEventListener('mousedown', e => { if (e.target.closest('.card,button,a,input')) return; sx = e.pageX; sl = b.scrollLeft; b.classList.add('grabbing'); });
+  window.addEventListener('mousemove', e => { if (sx == null) return; b.scrollLeft = sl - (e.pageX - sx); });
+  window.addEventListener('mouseup', () => { sx = null; b.classList.remove('grabbing'); });
+})();
 
 /* drag & drop between pipeline stages */
 let dragId = null;
