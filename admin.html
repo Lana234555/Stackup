@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="uk">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<meta name="theme-color" content="#f6f6f0">
+<title>Заявки — STACKUP.</title>
+<link rel="stylesheet" href="brief.css?v=2">
+<link rel="stylesheet" href="admin.css?v=1">
+</head>
+<body class="adm">
+<header class="b-header">
+  <a class="brand" href="admin.html" aria-label="Stackup">STACKUP<i class="dot"></i></a>
+  <span class="b-header-mid mono">КАБІНЕТ ЗАЯВОК</span>
+  <div class="b-header-right">
+    <span class="demo-tag mono" id="demoTag" hidden>ДЕМО-ДАНІ</span>
+    <button type="button" class="link mono" id="refreshBtn" hidden>↻ ОНОВИТИ</button>
+    <button type="button" class="link mono" id="logoutBtn" hidden>ВИЙТИ</button>
+  </div>
+</header>
+
+<main>
+  <section class="login" id="login" hidden>
+    <div>
+      <p class="eyebrow"><i></i> STACKUP / INBOX</p>
+      <h1 class="h2">Ваші заявки.<br><span class="serif">В одному місці.</span></h1>
+      <p class="lead">Введіть ключ кабінету. Він з’являється один раз під час налаштування (backend/README.md) і зберігається лише в цьому браузері.</p>
+      <form id="loginForm" class="login-form">
+        <label class="field"><span class="f-label">Ключ кабінету</span><input type="password" id="keyInput" autocomplete="current-password" placeholder="••••••••••••" required></label>
+        <button class="button primary" type="submit"><b>Увійти</b> <span>↗</span></button>
+        <p class="step-error" id="loginError" role="alert"></p>
+      </form>
+    </div>
+  </section>
+
+  <section class="inbox" id="inbox" hidden>
+    <aside class="list-col">
+      <div class="stats" id="stats"></div>
+      <div class="list-tools">
+        <input type="search" id="search" placeholder="Пошук: ім’я, компанія, email" aria-label="Пошук">
+      </div>
+      <div class="filters" id="filters" role="tablist" aria-label="Статус"></div>
+      <ol class="items" id="items"></ol>
+    </aside>
+    <article class="detail" id="detail"></article>
+  </section>
+</main>
+
+<script src="config.js?v=1"></script>
+<script src="admin.js?v=1" defer></script>
+</body>
+</html>

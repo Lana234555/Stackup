@@ -5,9 +5,10 @@
 'use strict';
 
 /* ---------- settings ---------- */
+const SHARED = window.STACKUP || {};
 const CONFIG = {
-  email: 'hello@stackup.dev',      // where the client sends the brief
-  endpoint: '',                    // optional: URL that accepts multipart FormData (form service / serverless). Empty = ZIP + email.
+  email: SHARED.email || 'hello@stackup.dev',   // fallback: where the client emails the ZIP
+  endpoint: SHARED.endpoint || '',              // Google Apps Script web app (config.js). Empty = ZIP + email.
   maxFileMB: 25,                   // per file
   maxTotalMB: 100                  // all files together
 };
@@ -58,6 +59,7 @@ const UI = {
   resultLead: ['Нижче — документ, який ми отримаємо. Якщо щось не так, поверніться до будь-якого кроку.', 'Below is the document we’ll receive. If something is off, go back to any step.'],
   send: ['Надіслати бриф', 'Send brief'], zip: ['Завантажити ZIP', 'Download ZIP'], print: ['Зберегти PDF', 'Save as PDF'], edit: ['← РЕДАГУВАТИ', '← EDIT'],
   sending: ['Надсилаємо…', 'Sending…'],
+  uploading: ['Завантажуємо файли', 'Uploading files'],
   sentOk: ['Дякуємо! Бриф отримано. Ми повернемося з оцінкою протягом 1–2 робочих днів.', 'Thank you! Brief received. We’ll come back with an estimate within 1–2 business days.'],
   sentFail: ['Не вдалося надіслати автоматично. Завантажте ZIP і надішліть його на {email}.', 'Couldn’t send automatically. Download the ZIP and email it to {email}.'],
   mailHint: ['Архів з брифом і файлами завантажено. У листі, що відкрився, прикріпіть його і натисніть «Надіслати». Адреса: {email}', 'The ZIP with your brief and files has been downloaded. Attach it to the email that just opened and press send. Address: {email}'],
@@ -576,22 +578,55 @@ function mailBody() {
   return lines.join('\n');
 }
 
+/* ---------- inbox (Google Apps Script) ---------- */
+function structured() {
+  const optLabel = (id, v) => { const f = SECTIONS.flatMap(s => s.fields).find(x => x.id === id); const o = f && f.options && f.options.find(x => x[0] === v); return o ? L(o[1]) : (v || ''); };
+  const secs = sections().map(s => ({
+    title: L(s.doc),
+    rows: s.fields.filter(visible).filter(f => f.type !== 'files').map(f => {
+      const v = answerText(f);
+      if (v == null || (Array.isArray(v) && !v.length)) return null;
+      let value = v;
+      if (f.type === 'links') value = v.map(r => ({ url: r.url, note: r.note }));
+      return { id: f.id, label: L(f.label), type: f.type, value };
+    }).filter(Boolean)
+  })).filter(s => s.rows.length);
+  return {
+    client: { name: state.a.name || '', company: state.a.company || '', email: state.a.email || '', phone: state.a.phone || '' },
+    summary: { type: state.mode === 'has' ? (lang === 'en' ? 'Own spec' : 'Власне ТЗ') : optLabel('type', state.a.type), deadline: optLabel('deadline', state.a.deadline), budget: optLabel('budget', state.a.budget) },
+    estimate: estimate(),
+    sections: secs
+  };
+}
+
+async function api(body) {
+  const res = await fetch(CONFIG.endpoint, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify(body) });
+  const j = await res.json();
+  if (!j.ok) throw new Error(j.error || 'error');
+  return j;
+}
+
+const toB64 = file => new Promise((ok, bad) => { const r = new FileReader(); r.onload = () => ok(String(r.result).split(',')[1] || ''); r.onerror = bad; r.readAsDataURL(file); });
+
+async function sendToInbox(st) {
+  const all = [];
+  for (const s of sections()) for (const f of s.fields.filter(visible)) for (const file of (files[f.id] || [])) all.push({ f, file });
+  const data = structured();
+  const sub = await api({ action: 'submit', mode: state.mode, lang, ...data, answers: JSON.parse(answersJSON()).answers, html: standaloneHTML(), fileCount: all.length, website: '' });
+  let n = 0;
+  for (const { f, file } of all) {
+    n++; st.textContent = `${T('uploading')} ${n} / ${all.length} · ${file.name}`;
+    await api({ action: 'file', id: sub.id, token: sub.token, field: f.id, fieldLabel: L(f.label), name: file.name, type: file.type, data: await toB64(file) });
+  }
+  await api({ action: 'finish', id: sub.id, token: sub.token, fileCount: all.length });
+}
+
 async function send() {
   const st = $('#sendStatus');
   st.textContent = T('sending');
   if (CONFIG.endpoint) {
-    try {
-      const fd = new FormData();
-      fd.append('_subject', `${T('mailSubject')}: ${state.a.company || state.a.name || ''}`);
-      fd.append('email', state.a.email || '');
-      fd.append('brief', mailBody());
-      fd.append('answers', answersJSON());
-      fd.append('brief_html', new Blob([standaloneHTML()], { type: 'text/html' }), 'brief.html');
-      Object.entries(files).forEach(([id, list]) => list.forEach(file => fd.append('attachment', file, `${id}__${file.name}`)));
-      const res = await fetch(CONFIG.endpoint, { method: 'POST', body: fd, headers: { Accept: 'application/json' } });
-      if (!res.ok) throw new Error(res.status);
-      st.textContent = T('sentOk'); localStorage.removeItem(STORE); return;
-    } catch (e) { st.textContent = T('sentFail', { email: CONFIG.email }); return; }
+    try { await sendToInbox(st); st.textContent = T('sentOk'); try { localStorage.removeItem(STORE); } catch (e) {} $('#sendBtn').disabled = true; return; }
+    catch (e) { console.error(e); st.textContent = T('sentFail', { email: CONFIG.email }); return; }
   }
   try { const z = await buildZip(); download(z.blob, z.name); } catch (e) { /* still open mail */ }
   const subject = `${T('mailSubject')}: ${state.a.company || state.a.name || ''}`;
