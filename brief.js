@@ -181,7 +181,8 @@ const SECTIONS = [
       { id: 'media', type: 'radio', label: ['Фото і відео', 'Photos and video'],
         options: [['ready', ['Є власні', 'We have our own']], ['stock', ['Підібрати стокові', 'Use stock']], ['shoot', ['Потрібна зйомка', 'Need a shoot']], ['ai', ['Згенерувати / ілюстрації', 'Generate / illustrate']]] },
       { id: 'mediaFiles', type: 'files', label: ['Фото, відео, ілюстрації', 'Photos, video, illustrations'], accept: 'image/*,video/*,.zip', show: a => a.media === 'ready' },
-      { id: 'materialsLink', type: 'url', label: ['Посилання на папку з матеріалами', 'Link to a materials folder'], ph: ['Google Drive, Dropbox…', 'Google Drive, Dropbox…'] }
+      { id: 'materialsLink', type: 'url', label: ['Посилання на папку з матеріалами', 'Link to a materials folder'], hint: ['Найзручніше: одна папка на Google Drive або Dropbox з усіма текстами, фото і відео.', 'Easiest: one Google Drive or Dropbox folder with all copy, photos and video.'], ph: ['Google Drive, Dropbox…', 'Google Drive, Dropbox…'] },
+      { id: 'materialsFiles', type: 'files', label: ['Файли з матеріалами', 'Material files'], hint: ['Можна разом із посиланням або замість нього. Тексти, фото, відео, документи, архіви, до 25 МБ на файл.', 'Together with the link or instead of it. Copy, photos, video, documents, archives, up to 25 MB per file.'], accept: '' }
     ]
   },
   {
