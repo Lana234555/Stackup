@@ -1,10 +1,11 @@
 @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;650;700;800;1000&family=IBM+Plex+Mono:wght@400;500&display=swap');
-:root{--paper:#f6f6f0;--ink:#181917;--acid:#ceff31;--olive:#90b336;--line:#deded6;--muted:#77786f;--soft:#8c9576;--blue:#b9dbef;--peach:#ffb990;--mint:#a8dfbd;--stone:#e2e1d6;--card:#fbfbf7}
+:root{color-scheme:light;--paper:#f6f6f0;--ink:#181917;--acid:#ceff31;--olive:#90b336;--line:#deded6;--muted:#77786f;--soft:#8c9576;--blue:#b9dbef;--peach:#ffb990;--mint:#a8dfbd;--stone:#e2e1d6;--card:#fbfbf7}
 *{box-sizing:border-box}
 html{scroll-behavior:smooth}
 body{margin:0;background:var(--paper);color:var(--ink);font-family:'DM Sans',Arial,sans-serif;-webkit-font-smoothing:antialiased;min-height:100vh;display:flex;flex-direction:column}
 ::selection{background:var(--acid);color:var(--ink)}
-button,input,textarea{font:inherit;color:inherit}
+button,input,textarea,select{font:inherit;color:var(--ink)}
+option{color:#181917;background:#fff}
 a{color:inherit;text-decoration:none}
 button{border:0;background:none;cursor:pointer;padding:0}
 button:focus-visible,a:focus-visible,input:focus-visible,textarea:focus-visible,.opt input:focus-visible+span{outline:2px solid #769b08;outline-offset:4px}
