@@ -68,8 +68,8 @@ button.kpi:hover,button.kpi[aria-pressed=true]{transform:translateY(-2px);box-sh
 .result-count{margin-left:auto;font-size:10px;color:var(--muted)}
 
 /* board */
-.board{display:grid;grid-auto-flow:column;grid-auto-columns:minmax(206px,1fr);gap:12px;overflow-x:auto;padding-bottom:16px;align-items:start;scroll-snap-type:x proximity}
-.col{background:#ebebe3;border-radius:8px;padding:10px;min-height:420px;scroll-snap-align:start;transition:background .2s,box-shadow .2s}
+.board{display:grid;grid-template-columns:repeat(var(--n,5),minmax(0,1fr));gap:10px;align-items:start}
+.col{background:#ebebe3;border-radius:8px;padding:8px;min-height:420px;min-width:0;scroll-snap-align:start;transition:background .2s,box-shadow .2s}
 .col.over{background:#e1e9c8;box-shadow:inset 0 0 0 2px var(--olive)}
 .col-head{display:grid;grid-template-columns:auto 1fr auto;align-items:center;gap:8px;padding:6px 6px 12px}
 .col-head b{font-size:15px;font-weight:650;letter-spacing:-.02em}
@@ -90,7 +90,8 @@ button.kpi:hover,button.kpi[aria-pressed=true]{transform:translateY(-2px);box-sh
 .card.flash{animation:flash 2.4s ease-out}
 @keyframes flash{0%,35%{background:#ceff31}100%{background:#fff}}
 .card-top{display:flex;align-items:center;gap:8px;margin-bottom:6px}
-.card-age{font-size:10px;color:var(--muted);margin-left:auto}
+.card-age{font-size:10px;color:var(--muted);margin-left:auto;white-space:nowrap}
+.card strong,.card-sub{overflow-wrap:anywhere}
 .card strong{font-size:16px;font-weight:650;letter-spacing:-.03em;line-height:1.2}
 .card-sub{font-size:12px;color:#6f7166}
 .tags{display:flex;flex-wrap:wrap;gap:4px;margin-top:6px}
@@ -212,7 +213,8 @@ button.kpi:hover,button.kpi[aria-pressed=true]{transform:translateY(-2px);box-sh
   .kpis{grid-template-columns:repeat(2,1fr)}.kpis>:nth-child(n+3){display:none}
   .filterbar select{flex:1 1 44%;max-width:none}
   .result-count{margin-left:0}
-  .board{grid-auto-columns:82%;margin:0 -16px;padding:0 16px 16px;scroll-padding:0 16px}
+  .board{grid-template-columns:none;grid-auto-flow:column;grid-auto-columns:82%;overflow-x:auto;scroll-snap-type:x mandatory;scrollbar-width:none;margin:0 -16px;padding:0 16px 16px;scroll-padding:0 16px}
+  .board::-webkit-scrollbar{display:none}
   .drawer .detail{padding:16px 16px 50px}
   .stage{grid-template-columns:repeat(3,1fr)}
   .table thead{display:none}

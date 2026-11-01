@@ -192,14 +192,15 @@ function card(x) {
 function renderBoard() {
   const list = filtered(true);
   const cols = [...PIPE, ...(F.status === 'all' || F.status === 'archive' ? ['archive'] : [])];
-  $('#resultCount').textContent = `${list.filter(x => cols.includes(x.status)).length} В ВОРОНЦІ`;
+  $('#resultCount').textContent = '';
+  $('#board').style.setProperty('--n', cols.length);
   $('#board').innerHTML = cols.map(s => {
     const st = STATUS.find(x => x[0] === s), cards = list.filter(x => x.status === s);
     return `<div class="col" data-col="${s}">
       <header class="col-head"><span class="dotc ${st[2]}"></span><b>${esc(st[1])}</b><span class="mono cnt">${cards.length}</span><p class="mono">${esc(st[3]).toUpperCase()}</p></header>
       <div class="col-body" data-drop="${s}">${cards.map(card).join('') || '<p class="col-empty mono">ПЕРЕТЯГНІТЬ СЮДИ</p>'}</div>
     </div>`;
-  }).join('') + (cols.includes('archive') ? '' : `<button type="button" class="col-more mono" data-showarch>+ АРХІВ (${items.filter(x => x.status === 'archive').length})</button>`);
+  }).join('');
 }
 
 function renderTable() {
