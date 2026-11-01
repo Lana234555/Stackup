@@ -1,20 +1,22 @@
-/* STACKUP. — кабінет заявок. Дані: Google Apps Script (config.js → endpoint). */
+/* STACKUP. — CRM заявок. Дані: Google Apps Script (config.js → endpoint). */
 (() => {
 'use strict';
 const EP = (window.STACKUP || {}).endpoint || '';
 const qp = new URLSearchParams(location.search);
 const DEMO = !EP || qp.has('demo');
-const KEY_STORE = 'stackup-admin-key', SEEN_STORE = 'stackup-admin-seen', FILTER_STORE = 'stackup-admin-filters';
+const KEY_STORE = 'stackup-admin-key', SEEN_STORE = 'stackup-admin-seen', FILTER_STORE = 'stackup-admin-filters-v2', VIEW_STORE = 'stackup-admin-view';
 const POLL_MS = DEMO ? 15000 : 60000;
 
 const STATUS = [
-  ['new', 'Нові', 'acid'],
-  ['review', 'Оцінюю', 'blue'],
-  ['quoted', 'КП надіслано', 'peach'],
-  ['work', 'В роботі', 'mint'],
-  ['done', 'Завершено', 'stone'],
-  ['archive', 'Архів', 'line']
+  ['new', 'Нові', 'acid', 'Щойно надійшли'],
+  ['review', 'Оцінюю', 'blue', 'Рахую обсяг і терміни'],
+  ['quoted', 'КП надіслано', 'peach', 'Чекаю відповіді клієнта'],
+  ['work', 'В роботі', 'mint', 'Погоджено, робимо'],
+  ['done', 'Завершено', 'stone', 'Здано клієнту'],
+  ['archive', 'Архів', 'line', 'Відмова або неактуально']
 ];
+const PIPE = ['new', 'review', 'quoted', 'work', 'done'];
+const DL_ORDER = ['Якнайшвидше', 'ASAP', 'До 1 місяця', 'Within 1 month', '1–2 місяці', '1–2 months', '2–3 місяці', '2–3 months', 'Гнучко', 'Flexible'];
 const stLabel = s => (STATUS.find(x => x[0] === s) || [s, s])[1];
 const stTone = s => (STATUS.find(x => x[0] === s) || [s, s, 'line'])[2];
 
@@ -24,15 +26,17 @@ const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': 
 const fmtDate = iso => { const d = new Date(iso); return isNaN(d) ? '' : d.toLocaleDateString('uk-UA', { day: '2-digit', month: 'short' }) + ', ' + d.toLocaleTimeString('uk-UA', { hour: '2-digit', minute: '2-digit' }); };
 const fmtDay = iso => { const d = new Date(iso); return isNaN(d) ? '' : d.toLocaleDateString('uk-UA', { day: '2-digit', month: 'short' }); };
 const fmtTime = iso => { const d = new Date(iso); return isNaN(d) ? '' : d.toLocaleTimeString('uk-UA', { hour: '2-digit', minute: '2-digit' }); };
-const ago = iso => { const m = (Date.now() - new Date(iso)) / 60000; if (m < 1) return 'щойно'; if (m < 60) return Math.round(m) + ' хв тому'; if (m < 1440) return Math.round(m / 60) + ' год тому'; return Math.round(m / 1440) + ' дн тому'; };
+const ago = iso => { const m = (Date.now() - new Date(iso)) / 60000; if (m < 1) return 'щойно'; if (m < 60) return Math.round(m) + ' хв'; if (m < 1440) return Math.round(m / 60) + ' год'; return Math.round(m / 1440) + ' дн'; };
 const size = b => b > 1048576 ? (b / 1048576).toFixed(1) + ' MB' : Math.max(1, Math.round(b / 1024)) + ' KB';
 const ext = n => { const m = String(n).match(/\.([a-z0-9]+)$/i); return m ? m[1].toUpperCase().slice(0, 4) : 'FILE'; };
+const initials = x => String(x.company || x.name || '?').split(/\s+/).map(w => w[0]).join('').slice(0, 2).toUpperCase();
 const store = { get(k, d) { try { const v = localStorage.getItem(k); return v == null ? d : JSON.parse(v); } catch (e) { return d; } }, set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} } };
 
 let key = store.get(KEY_STORE, '') || '';
-let items = [], current = null, cache = {}, pollTimer = null, firstLoad = true;
+let items = [], current = null, cache = {}, pollTimer = null, firstLoad = true, flashIds = [];
 let seen = new Set(store.get(SEEN_STORE, null) || []);
 let seenInit = store.get(SEEN_STORE, null) !== null;
+let view = store.get(VIEW_STORE, 'board');
 const F0 = { status: 'active', mode: 'all', type: 'all', period: 'all', budget: 'all', sort: 'new', unread: false, q: '' };
 let F = { ...F0, ...store.get(FILTER_STORE, {}), q: '' };
 
@@ -51,10 +55,9 @@ async function apiPost(body) {
   return j;
 }
 
-/* ---------- auth ---------- */
+/* ---------- auth / load ---------- */
 function showLogin(err) {
-  $('#login').hidden = false; $('#inbox').hidden = true; $('#detailView').hidden = true;
-  $$('.hdr-tools').forEach(x => x.hidden = true);
+  $('#login').hidden = false; $('#app').hidden = true; closeDrawer(true);
   $('#loginError').textContent = err || '';
   clearInterval(pollTimer);
 }
@@ -62,16 +65,15 @@ async function enter() {
   try {
     await load();
     if (!DEMO) store.set(KEY_STORE, key);
-    $('#login').hidden = true;
-    $$('.hdr-tools').forEach(x => x.hidden = false);
+    $('#login').hidden = true; $('#app').hidden = false;
     $('#logoutBtn').hidden = DEMO; $('#demoTag').hidden = !DEMO;
     clearInterval(pollTimer); pollTimer = setInterval(poll, POLL_MS);
-    route();
+    render();
+    const id = location.hash.slice(1); if (id && items.some(x => x.id === id)) openDrawer(id);
   } catch (e) {
     showLogin(/unauthorized/.test(e.message) ? 'Невірний ключ.' : 'Не вдалося з’єднатися: ' + e.message);
   }
 }
-
 async function load() {
   const j = await apiGet({ action: 'list' });
   const before = new Set(items.map(x => x.id));
@@ -82,28 +84,29 @@ async function load() {
   $('#updated').textContent = 'ОНОВЛЕНО ' + fmtTime(new Date().toISOString());
   return fresh;
 }
-
 async function poll() {
   try {
     const fresh = await load();
-    if (fresh.length) announce(fresh);
-    if (!$('#inbox').hidden) renderList(fresh.map(x => x.id)); else updateBadge();
+    if (fresh.length) { flashIds = fresh.map(x => x.id); announce(fresh); }
+    render();
   } catch (e) { $('#updated').textContent = 'НЕМАЄ ЗВ’ЯЗКУ · ' + fmtTime(new Date().toISOString()); }
 }
 
 /* ---------- new-brief signals ---------- */
 const isUnread = x => !seen.has(x.id);
 function saveSeen() { store.set(SEEN_STORE, [...seen].slice(-2000)); }
-function markSeen(id) { if (!seen.has(id)) { seen.add(id); saveSeen(); updateBadge(); } }
+function markSeen(id) { if (!seen.has(id)) { seen.add(id); saveSeen(); render(); } }
 function updateBadge() {
   const n = items.filter(isUnread).length;
   document.title = (n ? `(${n}) ` : '') + 'Заявки — STACKUP.';
-  const b = $('#newBadge'); b.hidden = !n; b.textContent = n + ' ' + (n === 1 ? 'НОВА' : n < 5 ? 'НОВІ' : 'НОВИХ');
+  const b = $('#newBadge'); b.hidden = !n; b.textContent = '◆ ' + n + ' ' + (n === 1 ? 'НОВА' : n < 5 ? 'НОВІ' : 'НОВИХ');
+  $('#cntNew').textContent = n || '';
+  $('#cntAll').textContent = items.filter(x => x.status !== 'archive').length;
+  $('#cntArch').textContent = items.filter(x => x.status === 'archive').length || '';
 }
 function announce(fresh) {
-  const x = fresh[0];
-  const t = $('#toast');
-  t.innerHTML = `<span class="mono">НОВА ЗАЯВКА${fresh.length > 1 ? ' · ' + fresh.length : ''}</span><b>${esc(x.company || x.name)}</b><button type="button" data-id="${esc(x.id)}">Відкрити ↗</button><button type="button" class="x" aria-label="Закрити">×</button>`;
+  const x = fresh[0], t = $('#toast');
+  t.innerHTML = `<span class="mono">НОВА ЗАЯВКА${fresh.length > 1 ? ' · ' + fresh.length : ''}</span><b>${esc(x.company || x.name)}</b><button type="button" data-open="${esc(x.id)}">Відкрити ↗</button><button type="button" class="x" aria-label="Закрити">×</button>`;
   t.hidden = false; clearTimeout(t._h); t._h = setTimeout(() => t.hidden = true, 12000);
   try { const a = new (window.AudioContext || window.webkitAudioContext)(), o = a.createOscillator(), g = a.createGain(); o.frequency.value = 880; g.gain.setValueAtTime(.08, a.currentTime); g.gain.exponentialRampToValueAtTime(.0001, a.currentTime + .5); o.connect(g).connect(a.destination); o.start(); o.stop(a.currentTime + .5); } catch (e) {}
   try { if ('Notification' in window && Notification.permission === 'granted') new Notification('STACKUP. Нова заявка', { body: (x.company || x.name) + (x.type ? ' · ' + x.type : '') }); } catch (e) {}
@@ -117,14 +120,15 @@ function bellState() {
 /* ---------- filters ---------- */
 function inPeriod(x) {
   if (F.period === 'all') return true;
-  const age = Date.now() - new Date(x.created);
-  return age <= { today: 864e5, week: 7 * 864e5, month: 30 * 864e5 }[F.period];
+  return Date.now() - new Date(x.created) <= { today: 864e5, week: 7 * 864e5, month: 30 * 864e5 }[F.period];
 }
-function visibleItems() {
+function filtered(ignoreStatus) {
   const q = F.q.trim().toLowerCase();
   const list = items.filter(x => {
-    if (F.status === 'active' && (x.status === 'archive' || x.status === 'done')) return false;
-    if (!['active', 'all'].includes(F.status) && x.status !== F.status) return false;
+    if (!ignoreStatus) {
+      if (F.status === 'active' && (x.status === 'archive' || x.status === 'done')) return false;
+      if (!['active', 'all'].includes(F.status) && x.status !== F.status) return false;
+    }
     if (F.mode !== 'all' && x.mode !== F.mode) return false;
     if (F.type !== 'all' && x.type !== F.type) return false;
     if (F.budget !== 'all' && x.budget !== F.budget) return false;
@@ -133,78 +137,118 @@ function visibleItems() {
     if (q && ![x.name, x.company, x.email, x.phone, x.id, x.type, x.notes].join(' ').toLowerCase().includes(q)) return false;
     return true;
   });
-  const order = STATUS.map(s => s[0]);
+  const dl = x => { const i = DL_ORDER.indexOf(x.deadline); return i < 0 ? 99 : i; };
   if (F.sort === 'old') list.sort((a, b) => new Date(a.created) - new Date(b.created));
-  else if (F.sort === 'status') list.sort((a, b) => order.indexOf(a.status) - order.indexOf(b.status) || new Date(b.created) - new Date(a.created));
+  else if (F.sort === 'deadline') list.sort((a, b) => dl(a) - dl(b) || new Date(b.created) - new Date(a.created));
   else list.sort((a, b) => new Date(b.created) - new Date(a.created));
   return list;
 }
-function options(sel, values, all) {
-  const cur = F[sel];
-  return `<option value="all">${esc(all)}</option>` + values.map(v => `<option value="${esc(v)}"${v === cur ? ' selected' : ''}>${esc(v)}</option>`).join('');
-}
 function uniq(k) { return [...new Set(items.map(x => x[k]).filter(Boolean))].sort(); }
-
+function options(sel, values, all) { return `<option value="all">${esc(all)}</option>` + values.map(v => `<option value="${esc(v)}"${v === F[sel] ? ' selected' : ''}>${esc(v)}</option>`).join(''); }
 function renderFilters() {
-  const count = s => items.filter(x => x.status === s).length;
-  const chips = [['active', 'Активні', items.filter(x => !['done', 'archive'].includes(x.status)).length], ...STATUS.map(s => [s[0], s[1], count(s[0])]), ['all', 'Усі', items.length]];
-  $('#statusChips').innerHTML = chips.map(([v, l, n]) => `<button type="button" role="tab" aria-selected="${v === F.status}" data-f="${v}">${esc(l)} <sup>${n}</sup></button>`).join('');
   $('#fMode').value = F.mode;
   $('#fType').innerHTML = options('type', uniq('type'), 'Усі проєкти');
   $('#fBudget').innerHTML = options('budget', uniq('budget'), 'Будь-який бюджет');
   $('#fPeriod').value = F.period; $('#fSort').value = F.sort; $('#fUnread').checked = F.unread;
-  const dirty = JSON.stringify({ ...F, q: '' }) !== JSON.stringify({ ...F0, q: '' }) || F.q;
-  $('#resetBtn').hidden = !dirty;
+  $('#resetBtn').hidden = !(JSON.stringify({ ...F, q: '', status: 'active' }) !== JSON.stringify({ ...F0, q: '' }) || F.q || (view === 'list' && F.status !== 'active'));
 }
 
-/* ---------- list ---------- */
-function renderList(flash = []) {
-  updateBadge();
-  renderFilters();
+/* ---------- render ---------- */
+function render() {
+  updateBadge(); renderFilters(); renderKpis();
+  $$('[data-view]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.view === view)));
+  $$('[data-quick]').forEach(b => b.setAttribute('aria-pressed', String((b.dataset.quick === 'unread' && F.unread) || (b.dataset.quick === 'archive' && view === 'list' && F.status === 'archive'))));
+  $('#viewTitle').textContent = view === 'board' ? 'Воронка' : (F.status === 'archive' ? 'Архів' : 'Усі заявки');
+  $('#board').hidden = view !== 'board'; $('#listview').hidden = view !== 'list';
+  if (view === 'board') renderBoard(); else renderTable();
+  flashIds = [];
+}
+
+function renderKpis() {
+  const c = s => items.filter(x => x.status === s).length;
+  const week = items.filter(x => Date.now() - new Date(x.created) <= 7 * 864e5).length;
+  const total = items.filter(x => x.status !== 'archive').length;
+  const won = c('work') + c('done');
+  const conv = (c('quoted') + won) ? Math.round(won / (c('quoted') + won) * 100) : 0;
+  $('#kpis').innerHTML = [
+    ['НЕПЕРЕГЛЯНУТІ', items.filter(isUnread).length, 'acid', 'unread'],
+    ['ЗА 7 ДНІВ', week, '', ''],
+    ['В РОБОТІ', c('review') + c('quoted') + c('work'), '', ''],
+    ['КОНВЕРСІЯ КП', conv + '%', '', ''],
+    ['УСЬОГО', total, '', '']
+  ].map(([l, n, t, q]) => `<${q ? 'button type="button" data-quick="' + q + '"' : 'div'} class="kpi ${t}"><span class="mono">${l}</span><b>${n}</b></${q ? 'button' : 'div'}>`).join('');
+}
+
+function card(x) {
+  return `<article class="card${isUnread(x) ? ' unread' : ''}${flashIds.includes(x.id) ? ' flash' : ''}${current === x.id ? ' cur' : ''}" draggable="true" data-open="${esc(x.id)}" tabindex="0">
+    <div class="card-top"><span class="ava ${stTone(x.status)}">${esc(initials(x))}</span><span class="mono card-age">${esc(ago(x.created))}</span>${isUnread(x) ? '<em class="new-tag mono">НОВА</em>' : ''}</div>
+    <strong>${esc(x.company || x.name)}</strong>
+    <span class="card-sub">${esc(x.company ? x.name : x.email)}</span>
+    <div class="tags"><span class="tag mono">${x.mode === 'has' ? 'ТЗ ✓' : 'БРИФ'}</span>${x.type && x.mode !== 'has' ? `<span class="tag">${esc(x.type)}</span>` : ''}</div>
+    <div class="card-foot mono">${x.budget ? `<span>${esc(x.budget)}</span>` : ''}${x.deadline ? `<span>⏱ ${esc(x.deadline)}</span>` : ''}${x.files ? `<span>📎 ${x.files}</span>` : ''}${x.notes ? '<span title="Є нотатки">✎</span>' : ''}</div>
+  </article>`;
+}
+
+function renderBoard() {
+  const list = filtered(true);
+  const cols = [...PIPE, ...(F.status === 'all' || F.status === 'archive' ? ['archive'] : [])];
+  $('#resultCount').textContent = `${list.filter(x => cols.includes(x.status)).length} В ВОРОНЦІ`;
+  $('#board').innerHTML = cols.map(s => {
+    const st = STATUS.find(x => x[0] === s), cards = list.filter(x => x.status === s);
+    return `<div class="col" data-col="${s}">
+      <header class="col-head"><span class="dotc ${st[2]}"></span><b>${esc(st[1])}</b><span class="mono cnt">${cards.length}</span><p class="mono">${esc(st[3]).toUpperCase()}</p></header>
+      <div class="col-body" data-drop="${s}">${cards.map(card).join('') || '<p class="col-empty mono">ПЕРЕТЯГНІТЬ СЮДИ</p>'}</div>
+    </div>`;
+  }).join('') + (cols.includes('archive') ? '' : `<button type="button" class="col-more mono" data-showarch>+ АРХІВ (${items.filter(x => x.status === 'archive').length})</button>`);
+}
+
+function renderTable() {
+  const list = filtered(false);
   const count = s => items.filter(x => x.status === s).length;
-  const unread = items.filter(isUnread).length;
-  $('#stats').innerHTML = [
-    ['unread', 'НЕПЕРЕГЛЯНУТІ', unread, 'acid'], ['review', 'ОЦІНЮЮ', count('review'), 'blue'], ['quoted', 'КП НАДІСЛАНО', count('quoted'), 'peach'], ['work', 'В РОБОТІ', count('work'), 'mint']
-  ].map(([s, l, n, t]) => `<button type="button" class="stat ${t}" data-stat="${s}"><b>${n}</b><span class="mono">${l}</span></button>`).join('');
-  const vis = visibleItems();
-  $('#resultCount').textContent = `${vis.length} з ${items.length}`;
-  $('#rows').innerHTML = vis.length ? vis.map(x => `<tr class="row${isUnread(x) ? ' unread' : ''}${flash.includes(x.id) ? ' flash' : ''}" data-id="${esc(x.id)}" tabindex="0">
-      <td class="c-dot"><i title="${isUnread(x) ? 'Непереглянута' : ''}"></i></td>
-      <td class="c-date"><b>${esc(fmtDay(x.created))}</b><span class="mono">${esc(ago(x.created))}</span></td>
+  const chips = [['active', 'Активні', items.filter(x => !['done', 'archive'].includes(x.status)).length], ...STATUS.map(s => [s[0], s[1], count(s[0])]), ['all', 'Усі', items.length]];
+  $('#statusChips').innerHTML = chips.map(([v, l, n]) => `<button type="button" role="tab" aria-selected="${v === F.status}" data-f="${v}">${esc(l)} <sup>${n}</sup></button>`).join('');
+  $('#resultCount').textContent = `${list.length} З ${items.length}`;
+  $('#rows').innerHTML = list.length ? list.map(x => `<tr class="row${isUnread(x) ? ' unread' : ''}${flashIds.includes(x.id) ? ' flash' : ''}" data-open="${esc(x.id)}" tabindex="0">
+      <td class="c-dot"><span class="ava ${stTone(x.status)}">${esc(initials(x))}</span></td>
+      <td class="c-date"><b>${esc(fmtDay(x.created))}</b><span class="mono">${esc(ago(x.created))} тому</span></td>
       <td class="c-client"><b>${esc(x.company || x.name)}${isUnread(x) ? ' <em class="new-tag mono">НОВА</em>' : ''}</b><span>${esc(x.company ? x.name : x.email)}</span></td>
-      <td class="c-what"><span class="mono kind">${x.mode === 'has' ? 'ТЗ ✓' : 'БРИФ'}</span>${esc(x.mode === 'has' ? 'Власне ТЗ' : x.type || '—')}</td>
+      <td class="c-what"><span class="tag mono">${x.mode === 'has' ? 'ТЗ ✓' : 'БРИФ'}</span> ${esc(x.mode === 'has' ? 'Власне ТЗ' : x.type || '—')}</td>
       <td class="c-dl">${esc(x.deadline || '—')}</td>
       <td class="c-bg">${esc(x.budget || '—')}</td>
       <td class="c-files mono">${x.files ? '📎 ' + x.files : ''}</td>
       <td class="c-st"><span class="pill ${stTone(x.status)}">${esc(stLabel(x.status)).toUpperCase()}</span></td>
-    </tr>`).join('') : `<tr><td colspan="8" class="none mono">${items.length ? 'ЗА ЦИМИ ФІЛЬТРАМИ НІЧОГО НЕМАЄ' : 'ПОКИ ЗАЯВОК НЕМАЄ. ПЕРША ВЖЕ БЛИЗЬКО ✶'}</td></tr>`;
+    </tr>`).join('') : `<tr><td colspan="8" class="none mono">${items.length ? 'ЗА ЦИМИ ФІЛЬТРАМИ НІЧОГО НЕМАЄ' : 'ПОКИ ЗАЯВОК НЕМАЄ'}</td></tr>`;
 }
 
-/* ---------- routing: list ↔ detail ---------- */
-function route() {
-  const id = location.hash.slice(1);
-  if (id && items.some(x => x.id === id)) openDetail(id);
-  else showList();
-}
-function showList() {
-  current = null;
-  $('#detailView').hidden = true; $('#inbox').hidden = false;
-  renderList();
-}
-async function openDetail(id) {
-  current = id; markSeen(id);
-  $('#inbox').hidden = true; $('#detailView').hidden = false;
-  window.scrollTo({ top: 0 });
+/* ---------- drawer ---------- */
+async function openDrawer(id) {
+  current = id; history.replaceState(null, '', '#' + id);
+  $('#drawer').hidden = false; $('#scrim').hidden = false; document.body.classList.add('drawer-open');
+  requestAnimationFrame(() => $('#drawer').classList.add('in'));
+  markSeen(id);
   const row = items.find(x => x.id === id);
   $('#detail').innerHTML = `<div class="loading mono">ЗАВАНТАЖУЄМО ${esc(row ? row.company || row.name : '')}…</div>`;
   try {
     const d = cache[id] || (cache[id] = await apiGet({ action: 'get', id }));
-    if (current === id) renderDetail(d);
+    if (current === id) { renderDetail(d); $('#drawer').scrollTop = 0; }
   } catch (e) { $('#detail').innerHTML = `<p class="step-error">Не вдалося відкрити: ${esc(e.message)}</p>`; }
+  $$('.card.cur').forEach(c => c.classList.remove('cur')); const c = $(`.card[data-open="${CSS.escape(id)}"]`); c && c.classList.add('cur');
 }
-function go(id) { if (id) location.hash = id; else history.pushState(null, '', location.pathname + location.search), route(); }
+function closeDrawer(instant) {
+  current = null; $$('.card.cur').forEach(c => c.classList.remove('cur'));
+  if (location.hash) history.replaceState(null, '', location.pathname + location.search);
+  $('#drawer').classList.remove('in'); document.body.classList.remove('drawer-open');
+  const hide = () => { if (!current) { $('#drawer').hidden = true; $('#scrim').hidden = true; } };
+  instant ? hide() : setTimeout(hide, 260);
+}
+function navBtns(id) {
+  const vis = view === 'board' ? filtered(true).sort((a, b) => PIPE.indexOf(a.status) - PIPE.indexOf(b.status)) : filtered(false);
+  const i = vis.findIndex(x => x.id === id);
+  if (i < 0) return '';
+  const p = vis[i - 1], n = vis[i + 1];
+  return `<span class="mono pager"><button type="button" ${p ? `data-open="${esc(p.id)}"` : 'disabled'} aria-label="Попередня">←</button>${i + 1} / ${vis.length}<button type="button" ${n ? `data-open="${esc(n.id)}"` : 'disabled'} aria-label="Наступна">→</button></span>`;
+}
 
-/* ---------- detail ---------- */
 function valueHTML(r) {
   const v = r.value;
   if (r.type === 'links') return `<ul>${v.map(x => `<li>${x.url ? `<a href="${esc(x.url)}" target="_blank" rel="noopener">${esc(x.url)}</a>` : ''}${x.note ? ` — ${esc(x.note)}` : ''}</li>`).join('')}</ul>`;
@@ -220,94 +264,106 @@ function contactLinks(c) {
   else if (ph) out.push(`<a class="button ghost" href="tel:${esc(ph.replace(/[^\d+]/g, ''))}"><b>${esc(ph)}</b> <span>↗</span></a>`);
   return out.join('');
 }
-function navBtns(id) {
-  const vis = visibleItems(), i = vis.findIndex(x => x.id === id);
-  if (i < 0) return '';
-  const p = vis[i - 1], n = vis[i + 1];
-  return `<span class="mono pager"><button type="button" ${p ? `data-nav="${esc(p.id)}"` : 'disabled'} aria-label="Попередня">←</button>${i + 1} / ${vis.length}<button type="button" ${n ? `data-nav="${esc(n.id)}"` : 'disabled'} aria-label="Наступна">→</button></span>`;
-}
-
 function renderDetail(d) {
   const row = d.row, rec = d.record || {}, c = rec.client || row;
+  const live = items.find(x => x.id === row.id) || row;
   const groups = {};
   (d.files || []).forEach(f => (groups[f.label] = groups[f.label] || []).push(f));
   const spec = (d.files || []).filter(f => f.field === 'specFiles');
   $('#detail').innerHTML = `
-    <div class="d-nav"><button type="button" class="link mono" id="backList">← УСІ ЗАЯВКИ</button>${navBtns(row.id)}</div>
+    <div class="d-nav"><button type="button" class="icon-btn" id="closeDrawer" aria-label="Закрити">×</button>${navBtns(row.id)}</div>
     <div class="d-bar mono"><span>№ ${esc(row.id)}</span><span>${esc(fmtDate(row.created))}</span></div>
-    <h2>${esc(c.company || c.name)}<br><span class="serif">${esc(c.company ? c.name : (row.mode === 'has' ? 'надіслав(ла) ТЗ' : 'створив(ла) ТЗ'))}</span></h2>
+    <div class="d-hero"><span class="ava big ${stTone(live.status)}">${esc(initials(c))}</span>
+      <div><h2>${esc(c.company || c.name)}</h2><p class="serif d-who">${esc(c.company ? c.name : (row.mode === 'has' ? 'надіслав(ла) ТЗ' : 'створив(ла) ТЗ'))}</p></div></div>
     <p class="contact-line">${esc(c.email || '')}${c.phone ? ' · ' + esc(c.phone) : ''}</p>
-    <div class="status-row" role="group" aria-label="Статус">${STATUS.map(([v, l, t]) => `<button type="button" class="st ${t}" data-st="${v}" aria-pressed="${row.status === v}">${esc(l)}</button>`).join('')}</div>
+    <p class="mono d-label">ЕТАП</p>
+    <div class="stage" role="group" aria-label="Етап">${STATUS.map(([v, l, t], i) => `<button type="button" class="${t}${PIPE.indexOf(v) <= PIPE.indexOf(live.status) && PIPE.includes(live.status) && PIPE.includes(v) ? ' passed' : ''}" data-st="${v}" aria-pressed="${live.status === v}"><span class="mono">${v === 'archive' ? '×' : String(i + 1).padStart(2, '0')}</span>${esc(l)}</button>`).join('')}</div>
     <div class="act-row">${contactLinks(c)}${d.folderUrl ? `<a class="button ghost" href="${esc(d.folderUrl)}" target="_blank" rel="noopener"><b>Папка на Drive</b> <span>↗</span></a>` : ''}</div>
 
     ${spec.length ? `<div class="spec-box"><span class="mono">ТЗ КЛІЄНТА</span>${spec.map(f => `<a href="${esc(f.url)}" target="_blank" rel="noopener"><span class="mono">${esc(ext(f.name))}</span><b>${esc(f.name)}</b><em>${size(f.size)}</em><i>↗</i></a>`).join('')}</div>` : ''}
 
-    ${rec.estimate && rec.estimate.length ? `<section class="d-sec d-est"><h3><span class="mono">✱</span>Для оцінки</h3><div class="est">${rec.estimate.map(([k, v]) => `<div><span class="mono">${esc(k)}</span><b>${esc(v)}</b></div>`).join('')}</div></section>` : ''}
-
     <section class="d-sec notes"><h3><span class="mono">✎</span>Мої нотатки</h3>
-      <textarea id="notes" rows="4" placeholder="Оцінка, години, ціна, питання до клієнта…">${esc(row.notes || '')}</textarea>
+      <textarea id="notes" rows="4" placeholder="Оцінка, години, ціна, питання до клієнта…">${esc(live.notes || '')}</textarea>
       <div class="notes-bar"><button type="button" class="link mono" id="saveNotes">ЗБЕРЕГТИ НОТАТКИ</button><span class="mono" id="notesState"></span></div>
     </section>
 
-    ${(rec.sections || []).map((s, i) => `<section class="d-sec"><h3><span class="mono">${String(i + 1).padStart(2, '0')}</span>${esc(s.title)}</h3>
-      <dl>${s.rows.map(r => `<dt>${esc(r.label)}</dt><dd>${valueHTML(r)}</dd>`).join('')}</dl></section>`).join('')}
+    ${rec.estimate && rec.estimate.length ? `<section class="d-sec d-est"><h3><span class="mono">✱</span>Для оцінки</h3><div class="est">${rec.estimate.map(([k, v]) => `<div><span class="mono">${esc(k)}</span><b>${esc(v)}</b></div>`).join('')}</div></section>` : ''}
+
+    ${(rec.sections || []).map((s, i) => `<details class="d-sec acc"${i < 2 ? ' open' : ''}><summary><h3><span class="mono">${String(i + 1).padStart(2, '0')}</span>${esc(s.title)}</h3><i aria-hidden="true">+</i></summary>
+      <dl>${s.rows.map(r => `<dt>${esc(r.label)}</dt><dd>${valueHTML(r)}</dd>`).join('')}</dl></details>`).join('')}
 
     <section class="d-sec"><h3><span class="mono">📎</span>Файли · ${(d.files || []).length}</h3>
       ${Object.keys(groups).length ? Object.entries(groups).map(([label, list]) => `<p class="f-group mono">${esc(label).toUpperCase()}</p><ul class="file-list">${list.map(f => `<li><span class="mono">${esc(ext(f.name))}</span><b><a href="${esc(f.url)}" target="_blank" rel="noopener">${esc(f.name)}</a></b><em>${size(f.size)}</em></li>`).join('')}</ul>`).join('') : '<p class="lead">Файлів немає.</p>'}
     </section>`;
 }
 
-async function setStatus(st) {
-  const row = items.find(x => x.id === current); if (!row || row.status === st) return;
+async function setStatus(id, st) {
+  const row = items.find(x => x.id === id); if (!row || row.status === st) return;
   const prev = row.status; row.status = st;
-  if (cache[current]) cache[current].row.status = st;
-  $$('[data-st]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.st === st)));
-  try { await apiPost({ action: 'update', id: current, status: st }); }
-  catch (e) { row.status = prev; $$('[data-st]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.st === prev))); alert('Не вдалося змінити статус: ' + e.message); }
+  if (cache[id]) cache[id].row.status = st;
+  render(); if (current === id && cache[id]) renderDetail(cache[id]);
+  try { await apiPost({ action: 'update', id, status: st }); }
+  catch (e) { row.status = prev; if (cache[id]) cache[id].row.status = prev; render(); if (current === id && cache[id]) renderDetail(cache[id]); alert('Не вдалося змінити етап: ' + e.message); }
 }
-
 async function saveNotes() {
-  const v = $('#notes').value, s = $('#notesState');
+  const v = $('#notes').value, s = $('#notesState'), id = current;
   s.textContent = 'ЗБЕРІГАЄМО…';
   try {
-    await apiPost({ action: 'update', id: current, notes: v });
-    const row = items.find(x => x.id === current); row.notes = v; if (cache[current]) cache[current].row.notes = v;
-    s.textContent = '✓ ЗБЕРЕЖЕНО';
+    await apiPost({ action: 'update', id, notes: v });
+    const row = items.find(x => x.id === id); row.notes = v; if (cache[id]) cache[id].row.notes = v;
+    s.textContent = '✓ ЗБЕРЕЖЕНО'; render();
   } catch (e) { s.textContent = 'ПОМИЛКА: ' + e.message; }
 }
 
 /* ---------- events ---------- */
-function setF(k, v) { F[k] = v; store.set(FILTER_STORE, { ...F, q: '' }); renderList(); }
+function setF(k, v) { F[k] = v; store.set(FILTER_STORE, { ...F, q: '' }); render(); }
+function setView(v) { view = v; store.set(VIEW_STORE, v); render(); }
 $('#loginForm').addEventListener('submit', e => { e.preventDefault(); key = $('#keyInput').value.trim(); enter(); });
 $('#logoutBtn').addEventListener('click', () => { try { localStorage.removeItem(KEY_STORE); } catch (e) {} key = ''; items = []; cache = {}; showLogin(); });
 $('#refreshBtn').addEventListener('click', () => { cache = {}; poll(); });
 $('#bellBtn').addEventListener('click', async () => { try { await Notification.requestPermission(); } catch (e) {} bellState(); });
-$('#search').addEventListener('input', e => { F.q = e.target.value; renderList(); });
+$('#search').addEventListener('input', e => { F.q = e.target.value; render(); });
 $('#fMode').addEventListener('change', e => setF('mode', e.target.value));
 $('#fType').addEventListener('change', e => setF('type', e.target.value));
 $('#fBudget').addEventListener('change', e => setF('budget', e.target.value));
 $('#fPeriod').addEventListener('change', e => setF('period', e.target.value));
 $('#fSort').addEventListener('change', e => setF('sort', e.target.value));
 $('#fUnread').addEventListener('change', e => setF('unread', e.target.checked));
-$('#resetBtn').addEventListener('click', () => { F = { ...F0 }; $('#search').value = ''; store.set(FILTER_STORE, F0); renderList(); });
-$('#newBadge').addEventListener('click', () => { F = { ...F0, status: 'all', unread: true }; go(null); });
-window.addEventListener('hashchange', route);
+$('#resetBtn').addEventListener('click', () => { F = { ...F0 }; $('#search').value = ''; store.set(FILTER_STORE, F0); render(); });
+$('#newBadge').addEventListener('click', () => { F.unread = true; F.status = 'all'; setView('list'); });
+$('#scrim').addEventListener('click', () => closeDrawer());
+
 document.addEventListener('click', e => {
-  const f = e.target.closest('[data-f]'); if (f) { setF('status', f.dataset.f); return; }
-  const s = e.target.closest('[data-stat]');
-  if (s) { if (s.dataset.stat === 'unread') { F.unread = !F.unread; F.status = F.unread ? 'all' : F.status; } else { F.unread = false; F.status = F.status === s.dataset.stat ? 'active' : s.dataset.stat; } setF('status', F.status); return; }
   if (e.target.closest('#toast .x')) { $('#toast').hidden = true; return; }
-  const it = e.target.closest('[data-id]'); if (it) { $('#toast').hidden = true; go(it.dataset.id); return; }
-  const st = e.target.closest('[data-st]'); if (st) { setStatus(st.dataset.st); return; }
+  if (e.target.closest('#closeDrawer')) { closeDrawer(); return; }
+  const v = e.target.closest('[data-view]'); if (v) { if (v.closest('.side-nav')) { F.unread = false; if (F.status === 'archive') F.status = 'active'; } setView(v.dataset.view); return; }
+  const q = e.target.closest('[data-quick]');
+  if (q) {
+    if (q.dataset.quick === 'unread') { F.unread = !F.unread; if (F.unread) F.status = 'all'; else if (F.status === 'all') F.status = 'active'; store.set(FILTER_STORE, { ...F, q: '' }); render(); }
+    else { F.unread = false; F.status = 'archive'; setView('list'); }
+    return;
+  }
+  if (e.target.closest('[data-showarch]')) { setF('status', 'all'); return; }
+  const f = e.target.closest('[data-f]'); if (f) { setF('status', f.dataset.f); return; }
+  const cp = e.target.closest('[data-copy]');
+  if (cp) { const url = new URL(cp.dataset.copy, location.href).href; navigator.clipboard && navigator.clipboard.writeText(url).then(() => { const s = cp.querySelector('span'); s.textContent = '✓ СКОПІЙОВАНО'; setTimeout(() => s.textContent = 'КОПІЮВАТИ', 1600); }); return; }
+  const st = e.target.closest('[data-st]'); if (st && current) { setStatus(current, st.dataset.st); return; }
   if (e.target.closest('#saveNotes')) { saveNotes(); return; }
-  if (e.target.closest('#backList')) { go(null); return; }
-  const nav = e.target.closest('[data-nav]'); if (nav) { go(nav.dataset.nav); }
+  const o = e.target.closest('[data-open]'); if (o) { $('#toast').hidden = true; openDrawer(o.dataset.open); }
 });
 document.addEventListener('keydown', e => {
-  if (e.key === 'Enter' && e.target.matches('tr.row')) go(e.target.dataset.id);
+  if (e.key === 'Escape' && current) closeDrawer();
+  if (e.key === 'Enter' && e.target.matches('[data-open].card, tr.row')) openDrawer(e.target.dataset.open);
   if ((e.metaKey || e.ctrlKey) && e.key === 's' && document.activeElement && document.activeElement.id === 'notes') { e.preventDefault(); saveNotes(); }
 });
-document.addEventListener('visibilitychange', () => { if (!document.hidden && $('#login').hidden) poll(); });
+document.addEventListener('visibilitychange', () => { if (!document.hidden && !$('#app').hidden) poll(); });
+
+/* drag & drop between pipeline stages */
+let dragId = null;
+document.addEventListener('dragstart', e => { const c = e.target.closest('.card'); if (!c) return; dragId = c.dataset.open; c.classList.add('dragging'); e.dataTransfer.effectAllowed = 'move'; try { e.dataTransfer.setData('text/plain', dragId); } catch (x) {} });
+document.addEventListener('dragend', e => { const c = e.target.closest('.card'); c && c.classList.remove('dragging'); $$('.col.over').forEach(x => x.classList.remove('over')); dragId = null; });
+document.addEventListener('dragover', e => { const col = e.target.closest('.col'); if (!col || !dragId) return; e.preventDefault(); $$('.col.over').forEach(x => x !== col && x.classList.remove('over')); col.classList.add('over'); });
+document.addEventListener('drop', e => { const col = e.target.closest('.col'); if (!col || !dragId) return; e.preventDefault(); col.classList.remove('over'); setStatus(dragId, col.dataset.col); });
 /* ---------- demo data (shown until the backend is connected) ---------- */
 function demoData() {
   const h = n => new Date(Date.now() - n * 3600000).toISOString();
@@ -329,6 +385,10 @@ function demoData() {
     { id: '261028-M4QX', created: h(96), status: 'quoted', name: 'Марія Лис', company: '', email: 'maria.lys@example.com', phone: '', mode: 'none', type: 'Лендинг', deadline: 'Якнайшвидше', budget: 'до $1 000', files: 0, notes: 'КП: $900, 2 тижні.',
       record: { estimate: [['Сторінок / екранів', '1'], ['Функцій', '2'], ['Тексти', 'Потрібен копірайтинг'], ['Дизайн-основа', 'Довіряю вам'], ['Терміни', 'Якнайшвидше'], ['Бюджет', 'до $1 000']], sections: [{ title: 'Про компанію і аудиторію', rows: [{ label: 'Чим займається компанія?', type: 'textarea', value: 'Психологиня, онлайн-консультації та курс для батьків.' }] }] }, fileList: [] },
     { id: '261015-P8LA', created: h(400), status: 'work', name: 'Ігор Бондар', company: 'Lume Studio', email: 'hello@lume.example', phone: '@igor_lume', mode: 'none', type: 'Корпоративний сайт', deadline: '2–3 місяці', budget: '$7 000+', files: 6, notes: 'Дизайн погоджено 28.10.', record: { estimate: [], sections: [] }, fileList: [] }
+    ,{ id: '261030-R5TB', created: h(30), status: 'new', name: 'Тарас Гнатюк', company: 'Reelly Dubai', email: 'taras@reelly.example', phone: '@taras_g', mode: 'none', type: 'Вебсервіс / продукт', deadline: '2–3 місяці', budget: '$7 000+', files: 3, notes: '', record: { estimate: [['Сторінок / екранів', '14'], ['Функцій', '9'], ['Тексти', 'Готові'], ['Дизайн-основа', 'Є брендбук / гайд'], ['Терміни', '2–3 місяці'], ['Бюджет', '$7 000+']], sections: [] }, fileList: [] },
+    { id: '261029-W2HC', created: h(60), status: 'review', name: 'Ірина Савчук', company: 'Savchuk Dental', email: 'clinic@savchuk.example', phone: '+380 50 222 33 44', mode: 'none', type: 'Корпоративний сайт', deadline: 'До 1 місяця', budget: '$1 000–3 000', files: 5, notes: 'Потрібен онлайн-запис, перевірити інтеграцію з їхньою CRM.', record: { estimate: [], sections: [] }, fileList: [] },
+    { id: '261020-J7MS', created: h(280), status: 'quoted', name: 'Олег Ярема', company: 'Yarema Wines', email: 'oleh@yarema.example', phone: '', mode: 'has', type: 'Власне ТЗ', deadline: 'Гнучко', budget: '$3 000–7 000', files: 1, notes: 'КП $4 200, чекаю відповіді до п’ятниці.', record: { estimate: [], sections: [] }, fileList: [] },
+    { id: '261002-N1DD', created: h(720), status: 'done', name: 'Анна Руденко', company: 'Rudenko Law', email: 'anna@rudenko.example', phone: '', mode: 'none', type: 'Лендинг', deadline: 'До 1 місяця', budget: '$1 000–3 000', files: 2, notes: 'Здано 25.10.', record: { estimate: [], sections: [] }, fileList: [] }
   ];
 }
 let demo = null;
