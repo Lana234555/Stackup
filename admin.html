@@ -1,0 +1,101 @@
+<!doctype html>
+<html lang="uk">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<meta name="theme-color" content="#181917">
+<title>Заявки — STACKUP.</title>
+<link rel="stylesheet" href="brief.css?v=3">
+<link rel="stylesheet" href="admin.css?v=8">
+</head>
+<body class="adm">
+
+<section class="login" id="login" hidden>
+  <div>
+    <a class="brand" href="admin.html">STACKUP<i class="dot"></i></a>
+    <p class="eyebrow"><i></i> CRM / ВХІД</p>
+    <h1 class="h2">Ваші заявки.<br><span class="serif">В одному місці.</span></h1>
+    <p class="lead">Введіть ключ кабінету. Він з’являється один раз під час налаштування і зберігається лише в цьому браузері.</p>
+    <form id="loginForm" class="login-form">
+      <label class="field"><span class="f-label">Ключ кабінету</span><input type="password" id="keyInput" autocomplete="current-password" placeholder="••••••••••••" required></label>
+      <button class="button primary" type="submit"><b>Увійти</b> <span>↗</span></button>
+      <p class="step-error" id="loginError" role="alert"></p>
+    </form>
+  </div>
+</section>
+
+<div class="app" id="app" hidden>
+  <aside class="side">
+    <a class="brand" href="admin.html">STACKUP<i class="dot"></i></a>
+    <span class="side-tag mono">CRM</span>
+    <nav class="side-nav" id="sideNav">
+      <button type="button" data-view="board"><span class="ico">▦</span>Воронка</button>
+      <button type="button" data-view="list"><span class="ico">≡</span>Усі заявки <em id="cntAll"></em></button>
+      <button type="button" data-quick="unread"><span class="ico">◆</span>Нові <em class="hot" id="cntNew"></em></button>
+      <button type="button" data-quick="archive"><span class="ico">▢</span>Архів <em id="cntArch"></em></button>
+    </nav>
+    <div class="side-links">
+      <p class="mono">ПОСИЛАННЯ ДЛЯ КЛІЄНТІВ</p>
+      <button type="button" class="copy" data-copy="brief.html?mode=has">Є ТЗ <span class="mono">КОПІЮВАТИ</span></button>
+      <button type="button" class="copy" data-copy="brief.html?mode=none">Створити ТЗ <span class="mono">КОПІЮВАТИ</span></button>
+    </div>
+    <div class="side-foot">
+      <span class="demo-tag mono" id="demoTag" hidden>ДЕМО-ДАНІ</span>
+      <button type="button" class="link mono" id="bellBtn">🔔 СПОВІЩЕННЯ</button>
+      <button type="button" class="link mono" id="logoutBtn">ВИЙТИ</button>
+    </div>
+  </aside>
+
+  <div class="main">
+    <header class="top">
+      <div class="top-title">
+        <h1 id="viewTitle">Воронка</h1>
+        <span class="mono" id="updated"></span>
+      </div>
+      <div class="top-tools">
+        <input type="search" id="search" placeholder="Пошук клієнта, email, нотаток" aria-label="Пошук">
+        <button type="button" class="new-badge mono" id="newBadge" hidden></button>
+        <button type="button" class="icon-btn" id="refreshBtn" aria-label="Оновити">↻</button>
+        <div class="seg mono" role="group" aria-label="Вигляд"><button type="button" data-view="board">ВОРОНКА</button><button type="button" data-view="list">СПИСОК</button></div>
+      </div>
+    </header>
+
+    <div class="kpis" id="kpis"></div>
+
+    <div class="filterbar">
+      <select id="fMode" aria-label="Тип заявки"><option value="all">ТЗ і брифи</option><option value="has">Готове ТЗ</option><option value="none">Бриф</option></select>
+      <select id="fType" aria-label="Вид проєкту"></select>
+      <select id="fBudget" aria-label="Бюджет"></select>
+      <select id="fPeriod" aria-label="Період"><option value="all">За весь час</option><option value="today">Сьогодні</option><option value="week">7 днів</option><option value="month">30 днів</option></select>
+      <select id="fSort" aria-label="Сортування"><option value="new">Спершу нові</option><option value="old">Спершу старі</option><option value="deadline">За терміном</option></select>
+      <label class="check mono"><input type="checkbox" id="fUnread"> НЕПЕРЕГЛЯНУТІ</label>
+      <button type="button" class="link mono" id="resetBtn" hidden>× СКИНУТИ</button>
+      <span class="result-count mono" id="resultCount"></span>
+    </div>
+
+    <section class="board" id="board" aria-label="Воронка"></section>
+
+    <section class="listview" id="listview" hidden>
+      <div class="filters" id="statusChips" role="tablist" aria-label="Статус"></div>
+      <div class="table-wrap">
+        <table class="table">
+          <thead class="mono"><tr><th></th><th>НАДІЙШЛА</th><th>КЛІЄНТ</th><th>ЩО ПОТРІБНО</th><th>ТЕРМІНИ</th><th>БЮДЖЕТ</th><th>ФАЙЛИ</th><th>ЕТАП</th></tr></thead>
+          <tbody id="rows"></tbody>
+        </table>
+      </div>
+    </section>
+  </div>
+</div>
+
+<div class="scrim" id="scrim" hidden></div>
+<aside class="drawer" id="drawer" aria-label="Заявка" hidden>
+  <article class="detail" id="detail"></article>
+</aside>
+
+<div class="toast" id="toast" role="status" hidden></div>
+
+<script src="config.js?v=1"></script>
+<script src="admin.js?v=7" defer></script>
+</body>
+</html>
