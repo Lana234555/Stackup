@@ -626,7 +626,7 @@ async function send() {
   st.textContent = T('sending');
   if (CONFIG.endpoint) {
     try { await sendToInbox(st); st.textContent = T('sentOk'); try { localStorage.removeItem(STORE); } catch (e) {} $('#sendBtn').disabled = true; return; }
-    catch (e) { console.error(e); st.textContent = T('sentFail', { email: CONFIG.email }); return; }
+    catch (e) { console.error(e); st.textContent = T('sentFail', { email: CONFIG.email }) + ' [' + String(e && e.message || e).slice(0, 60) + ']'; return; }
   }
   try { const z = await buildZip(); download(z.blob, z.name); } catch (e) { /* still open mail */ }
   const subject = `${T('mailSubject')}: ${state.a.company || state.a.name || ''}`;
