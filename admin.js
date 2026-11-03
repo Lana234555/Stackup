@@ -1,12 +1,16 @@
 /* STACKUP. — CRM заявок. Дані: Google Apps Script (config.js → endpoint). */
 (() => {
 'use strict';
+/* не відкриватися всередині чужого сайту (clickjacking) */
+if (window.top !== window.self) { try { window.top.location = window.self.location.href; } catch (e) {} document.documentElement.innerHTML = ''; return; }
+document.documentElement.classList.remove('guard');
 const EP = (window.STACKUP || {}).endpoint || '';
 const qp = new URLSearchParams(location.search);
 const LIVE_HOST = /(^|\.)stackup\.studio$/.test(location.hostname);
 const DEMO = qp.has('demo') || (!EP && !LIVE_HOST);
-const KEY_STORE = 'stackup-admin-key', SEEN_STORE = 'stackup-admin-seen', FILTER_STORE = 'stackup-admin-filters-v2', VIEW_STORE = 'stackup-admin-view';
+const SESSION_STORE = 'stackup-crm-session', DEVICE_STORE = 'stackup-crm-device', SEEN_STORE = 'stackup-admin-seen', FILTER_STORE = 'stackup-admin-filters-v2', VIEW_STORE = 'stackup-admin-view';
 const POLL_MS = DEMO ? 15000 : 60000;
+const IDLE_MS = 30 * 60000; // автовихід після 30 хв без дій
 
 const DEFAULT_STAGES = [
   { id: 'new', name: 'Нові', tone: 'acid', hint: 'Щойно надійшли' },
@@ -19,7 +23,9 @@ const ARCHIVE = ['archive', 'Архів', 'line', 'Відмова або неа�
 const TONES = ['acid', 'blue', 'peach', 'mint', 'stone', 'lav', 'rose', 'sand', 'line'];
 let stages = [], STATUS = [], PIPE = [], editingCol = null, addingCol = false;
 function setStages(list) {
-  stages = (Array.isArray(list) && list.length ? list : DEFAULT_STAGES).filter(x => x && x.id && x.id !== 'archive');
+  stages = (Array.isArray(list) && list.length ? list : DEFAULT_STAGES)
+    .map(x => x && ({ id: String(x.id || '').toLowerCase().replace(/[^a-z0-9_-]/g, '').slice(0, 40), name: String(x.name || '').slice(0, 40), hint: String(x.hint || '').slice(0, 60), tone: TONES.includes(x.tone) ? x.tone : 'line' }))
+    .filter(x => x && x.id && x.name && x.id !== 'archive');
   if (!stages.some(x => x.id === 'new')) stages.unshift({ ...DEFAULT_STAGES[0] });
   STATUS = [...stages.map(x => [x.id, x.name, x.tone || 'line', x.hint || '']), ARCHIVE];
   PIPE = stages.map(x => x.id);
@@ -31,7 +37,11 @@ const stTone = s => (STATUS.find(x => x[0] === s) || [s, s, 'line'])[2];
 
 const $ = (s, r = document) => r.querySelector(s);
 const $$ = (s, r = document) => [...r.querySelectorAll(s)];
-const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const esc = s => String(s ?? '').replace(/[&<>"'`]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;', '`': '&#96;' }[c]));
+/* лише http(s)-посилання: javascript:, data: тощо з даних клієнта не пропускаємо */
+const safeUrl = u => { try { const x = new URL(String(u || ''), location.href); return /^https?:$/.test(x.protocol) ? x.href : ''; } catch (e) { return ''; } };
+const safeColor = c => /^#[0-9a-f]{3,8}$/i.test(String(c || '').trim()) ? String(c).trim() : '#cccccc';
+const num = n => Math.max(0, parseInt(n, 10) || 0);
 const fmtDate = iso => { const d = new Date(iso); return isNaN(d) ? '' : d.toLocaleDateString('uk-UA', { day: '2-digit', month: 'short' }) + ', ' + d.toLocaleTimeString('uk-UA', { hour: '2-digit', minute: '2-digit' }); };
 const fmtDay = iso => { const d = new Date(iso); return isNaN(d) ? '' : d.toLocaleDateString('uk-UA', { day: '2-digit', month: 'short' }); };
 const fmtTime = iso => { const d = new Date(iso); return isNaN(d) ? '' : d.toLocaleTimeString('uk-UA', { hour: '2-digit', minute: '2-digit' }); };
@@ -41,7 +51,12 @@ const ext = n => { const m = String(n).match(/\.([a-z0-9]+)$/i); return m ? m[1]
 const initials = x => String(x.company || x.name || '?').split(/\s+/).map(w => w[0]).join('').slice(0, 2).toUpperCase();
 const store = { get(k, d) { try { const v = localStorage.getItem(k); return v == null ? d : JSON.parse(v); } catch (e) { return d; } }, set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} } };
 
-let key = store.get(KEY_STORE, '') || '';
+// сесія — лише в цій вкладці (sessionStorage), зникає після закриття браузера
+const sess = { get() { try { return sessionStorage.getItem(SESSION_STORE) || ''; } catch (e) { return ''; } }, set(v) { try { v ? sessionStorage.setItem(SESSION_STORE, v) : sessionStorage.removeItem(SESSION_STORE); } catch (e) {} } };
+const device = { get() { try { return localStorage.getItem(DEVICE_STORE) || ''; } catch (e) { return ''; } }, set(v) { try { v ? localStorage.setItem(DEVICE_STORE, v) : localStorage.removeItem(DEVICE_STORE); } catch (e) {} } };
+try { localStorage.removeItem('stackup-admin-key'); } catch (e) {} // старий ключ більше не потрібен
+let token = sess.get();
+let challenge = '', lastAct = Date.now(), idleTimer = null;
 let items = [], current = null, cache = {}, pollTimer = null, firstLoad = true, flashIds = [];
 let seen = new Set(store.get(SEEN_STORE, null) || []);
 let seenInit = store.get(SEEN_STORE, null) !== null;
@@ -50,41 +65,111 @@ const F0 = { status: 'active', mode: 'all', type: 'all', period: 'all', budget: 
 let F = { ...F0, ...store.get(FILTER_STORE, {}), q: '' };
 
 /* ---------- api ---------- */
+const UA = (() => { const u = navigator.userAgent; const os = /iPhone|iPad/.test(u) ? 'iOS' : /Android/.test(u) ? 'Android' : /Mac/.test(u) ? 'macOS' : /Windows/.test(u) ? 'Windows' : /Linux/.test(u) ? 'Linux' : 'Інша ОС'; const br = /Edg\//.test(u) ? 'Edge' : /Chrome\//.test(u) ? 'Chrome' : /Firefox\//.test(u) ? 'Firefox' : /Safari\//.test(u) ? 'Safari' : 'Браузер'; return br + ' · ' + os; })();
+async function call(body) {
+  const res = await fetch(EP, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify({ ...body, ua: UA }), credentials: 'omit', cache: 'no-store', referrerPolicy: 'no-referrer' });
+  const j = await res.json();
+  if (!j.ok) throw new Error(j.error || 'error');
+  return j;
+}
 async function apiGet(params) {
   if (DEMO) return demoGet(params);
-  const u = new URL(EP); Object.entries({ ...params, key }).forEach(([k, v]) => u.searchParams.set(k, v));
-  const j = await (await fetch(u)).json();
-  if (!j.ok) throw new Error(j.error);
-  return j;
+  return authed({ ...params });
 }
 async function apiPost(body) {
   if (DEMO) return demoPost(body);
-  const j = await (await fetch(EP, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify({ ...body, key }) })).json();
-  if (!j.ok) throw new Error(j.error);
-  return j;
+  return authed(body);
+}
+async function authed(body) {
+  if (!token) { expire(); throw new Error('unauthorized'); }
+  try { return await call({ ...body, token }); }
+  catch (e) { if (e.message === 'unauthorized') expire(); throw e; }
 }
 
 /* ---------- auth / load ---------- */
 function showLogin(err) {
   $('#login').hidden = false; $('#app').hidden = true; closeDrawer(true);
-  $('#loginError').textContent = err || '';
-  clearInterval(pollTimer);
+  $('#loginForm').hidden = false; $('#otpForm').hidden = true; challenge = '';
+  $('#loginError').textContent = err || ''; $('#otpError').textContent = '';
+  $('#codeInput').value = ''; $('#otpInput').value = '';
+  clearInterval(pollTimer); clearInterval(idleTimer);
+  setTimeout(() => $('#codeInput').focus(), 30);
 }
+/* прибрати всі дані з пам’яті і з екрана */
+function wipe() {
+  token = ''; sess.set(''); items = []; cache = {}; current = null;
+  ['#board', '#rows', '#detail', '#kpis'].forEach(s => { const el = $(s); if (el) el.innerHTML = ''; });
+}
+function expire(msg) { if (DEMO) return; wipe(); showLogin(msg || 'Сесія завершилась. Увійдіть знову.'); }
+function lockMsg(m) { const t = +String(m).split(':')[1]; const mins = Math.max(1, Math.ceil((t - Date.now()) / 60000)); return `Забагато невдалих спроб. Вхід заблоковано ще на ${mins} хв. Ми надіслали вам лист.`; }
+function loginError(e) {
+  const m = e.message || '';
+  if (/^locked:/.test(m)) return lockMsg(m);
+  if (m === 'bad code') return 'Невірний код.';
+  if (m === 'bad otp') return 'Невірний код із листа. Спробуйте ще раз.';
+  if (m === 'expired') return 'Код із листа застарів. Введіть код кабінету знову.';
+  if (m === 'not configured') return 'Код кабінету ще не задано. Див. інструкцію налаштування.';
+  if (m === 'mail failed') return 'Не вдалося надіслати лист із кодом. Спробуйте пізніше.';
+  return 'Не вдалося з’єднатися. Перевірте інтернет і спробуйте ще раз.';
+}
+async function submitCode() {
+  const code = $('#codeInput').value;
+  if (!code) return;
+  const btn = $('#codeBtn'); btn.disabled = true; $('#loginError').textContent = '';
+  try {
+    const j = await call({ action: 'login', code, device: device.get() });
+    $('#codeInput').value = '';
+    if (j.token) { token = j.token; sess.set(token); return enter(); }
+    challenge = j.challenge;
+    $('#otpTo').textContent = j.to ? '· ' + j.to : '';
+    $('#loginForm').hidden = true; $('#otpForm').hidden = false; $('#otpInput').value = '';
+    setTimeout(() => $('#otpInput').focus(), 30);
+  } catch (e) { $('#loginError').textContent = loginError(e); $('#codeInput').select(); }
+  finally { btn.disabled = false; }
+}
+async function submitOtp() {
+  const otp = $('#otpInput').value.replace(/\D/g, '');
+  if (otp.length !== 6) { $('#otpError').textContent = 'Введіть 6 цифр із листа.'; return; }
+  const btn = $('#otpBtn'); btn.disabled = true; $('#otpError').textContent = '';
+  try {
+    const j = await call({ action: 'verify', challenge, otp, trust: $('#trustInput').checked });
+    if (j.device) device.set(j.device);
+    token = j.token; sess.set(token); challenge = '';
+    enter();
+  } catch (e) {
+    if (e.message === 'expired' || /^locked:/.test(e.message)) showLogin(loginError(e));
+    else { $('#otpError').textContent = loginError(e); $('#otpInput').select(); }
+  } finally { btn.disabled = false; }
+}
+async function logout(all) {
+  if (all && !confirm('Вийти на всіх пристроях і забути всі довірені пристрої?')) return;
+  const t = token;
+  wipe();
+  if (all) device.set('');
+  showLogin(all ? 'Ви вийшли на всіх пристроях.' : 'Ви вийшли з кабінету.');
+  try { if (all) await call({ action: 'logoutAll', token: t }); else await call({ action: 'logout', token: t }); } catch (e) {}
+}
+function watchIdle() {
+  clearInterval(idleTimer); lastAct = Date.now();
+  idleTimer = setInterval(() => { if (Date.now() - lastAct > IDLE_MS) { clearInterval(idleTimer); logout(false).then(() => $('#loginError').textContent = 'Вас автоматично виведено після 30 хв без дій.'); } }, 15000);
+}
+['pointerdown', 'keydown', 'wheel', 'touchstart'].forEach(ev => document.addEventListener(ev, () => { lastAct = Date.now(); }, { passive: true }));
 async function enter() {
   try {
     await load();
-    if (!DEMO) store.set(KEY_STORE, key);
     $('#login').hidden = true; $('#app').hidden = false;
-    $('#logoutBtn').hidden = DEMO; $('#demoTag').hidden = !DEMO;
+    $('#logoutBtn').hidden = DEMO; $('#logoutAllBtn').hidden = DEMO; $('#demoTag').hidden = !DEMO;
     clearInterval(pollTimer); pollTimer = setInterval(poll, POLL_MS);
+    if (!DEMO) watchIdle();
     render();
     const id = location.hash.slice(1); if (id && items.some(x => x.id === id)) openDrawer(id);
   } catch (e) {
-    showLogin(/unauthorized/.test(e.message) ? 'Невірний ключ.' : 'Не вдалося з’єднатися: ' + e.message);
+    if (e.message === 'unauthorized') return expire();
+    showLogin('Не вдалося завантажити заявки. Спробуйте ще раз.');
   }
 }
-async function load() {
-  const j = await apiGet({ action: 'list' });
+async function load(background) {
+  const j = await apiGet({ action: 'list', background: !!background });
   const before = new Set(items.map(x => x.id));
   items = j.items || [];
   if (j.stages) setStages(j.stages);
@@ -97,10 +182,10 @@ async function load() {
 }
 async function poll() {
   try {
-    const fresh = await load();
+    const fresh = await load(true);
     if (fresh.length) { flashIds = fresh.map(x => x.id); announce(fresh); }
     render();
-  } catch (e) { $('#updated').textContent = 'НЕМАЄ ЗВ’ЯЗКУ · ' + fmtTime(new Date().toISOString()); }
+  } catch (e) { if (e.message === 'unauthorized') return; $('#updated').textContent = 'НЕМАЄ ЗВ’ЯЗКУ · ' + fmtTime(new Date().toISOString()); }
 }
 
 /* ---------- new-brief signals ---------- */
@@ -196,7 +281,7 @@ function card(x) {
     <strong>${esc(x.company || x.name)}</strong>
     <span class="card-sub">${esc(x.company ? x.name : x.email)}</span>
     <div class="tags"><span class="tag mono">${x.mode === 'has' ? 'ТЗ ✓' : 'БРИФ'}</span>${x.type && x.mode !== 'has' ? `<span class="tag">${esc(x.type)}</span>` : ''}</div>
-    <div class="card-foot mono">${x.budget ? `<span>${esc(x.budget)}</span>` : ''}${x.deadline ? `<span>⏱ ${esc(x.deadline)}</span>` : ''}${x.files ? `<span>📎 ${x.files}</span>` : ''}${x.notes ? '<span title="Є нотатки">✎</span>' : ''}</div>
+    <div class="card-foot mono">${x.budget ? `<span>${esc(x.budget)}</span>` : ''}${x.deadline ? `<span>⏱ ${esc(x.deadline)}</span>` : ''}${num(x.files) ? `<span>📎 ${num(x.files)}</span>` : ''}${x.notes ? '<span title="Є нотатки">✎</span>' : ''}</div>
   </article>`;
 }
 
@@ -211,7 +296,7 @@ function colHead(st, n) {
         ${id === 'new' ? '' : `<button type="button" class="link mono del" data-coldel="${id}">ВИДАЛИТИ</button>`}
         <button type="button" class="link mono" data-colcancel>СКАСУВАТИ</button><button type="submit" class="mini-ok mono">ЗБЕРЕГТИ</button>
       </div></form>`;
-  return `<header class="col-head"><span class="dotc ${tone}"></span><b>${esc(name)}</b><span class="mono cnt">${n}</span>${id === 'archive' ? '' : `<button type="button" class="col-menu" data-colmenu="${id}" aria-label="Налаштувати колонку">⋯</button>`}<p class="mono">${esc(hint).toUpperCase()}</p></header>`;
+  return `<header class="col-head"><span class="dotc ${tone}"></span><b>${esc(name)}</b><span class="mono cnt">${n}</span>${id === 'archive' ? '' : `<button type="button" class="col-menu" data-colmenu="${esc(id)}" aria-label="Налаштувати колонку">⋯</button>`}<p class="mono">${esc(hint).toUpperCase()}</p></header>`;
 }
 
 function renderBoard() {
@@ -292,9 +377,9 @@ function navBtns(id) {
 
 function valueHTML(r) {
   const v = r.value;
-  if (r.type === 'links') return `<ul>${v.map(x => `<li>${x.url ? `<a href="${esc(x.url)}" target="_blank" rel="noopener">${esc(x.url)}</a>` : ''}${x.note ? ` — ${esc(x.note)}` : ''}</li>`).join('')}</ul>`;
-  if (r.type === 'colors') return `<span class="d-colors">${v.map(c => `<span><i style="background:${esc(c)}"></i>${esc(String(c).toUpperCase())}</span>`).join('')}</span>`;
-  if (r.type === 'url') return `<a href="${esc(v)}" target="_blank" rel="noopener">${esc(v)}</a>`;
+  if (r.type === 'links') return `<ul>${v.map(x => `<li>${x.url ? `${safeUrl(x.url) ? `<a href="${esc(safeUrl(x.url))}" target="_blank" rel="noopener noreferrer">${esc(x.url)}</a>` : esc(x.url)}` : ''}${x.note ? ` — ${esc(x.note)}` : ''}</li>`).join('')}</ul>`;
+  if (r.type === 'colors') return `<span class="d-colors">${v.map(c => `<span><i style="background:${safeColor(c)}"></i>${esc(String(c).toUpperCase())}</span>`).join('')}</span>`;
+  if (r.type === 'url') return safeUrl(v) ? `<a href="${esc(safeUrl(v))}" target="_blank" rel="noopener noreferrer">${esc(v)}</a>` : esc(v);
   return esc(Array.isArray(v) ? v.join(', ') : v).replace(/\n/g, '<br>');
 }
 function contactLinks(c) {
@@ -318,10 +403,10 @@ function renderDetail(d) {
       <div><h2>${esc(c.company || c.name)}</h2><p class="serif d-who">${esc(c.company ? c.name : (row.mode === 'has' ? 'надіслав(ла) ТЗ' : 'створив(ла) ТЗ'))}</p></div></div>
     <p class="contact-line">${esc(c.email || '')}${c.phone ? ' · ' + esc(c.phone) : ''}</p>
     <p class="mono d-label">ЕТАП</p>
-    <div class="stage" role="group" aria-label="Етап">${STATUS.map(([v, l, t], i) => `<button type="button" class="${t}${PIPE.indexOf(v) <= PIPE.indexOf(live.status) && PIPE.includes(live.status) && PIPE.includes(v) ? ' passed' : ''}" data-st="${v}" aria-pressed="${live.status === v}"><span class="mono">${v === 'archive' ? '×' : String(i + 1).padStart(2, '0')}</span>${esc(l)}</button>`).join('')}</div>
-    <div class="act-row">${contactLinks(c)}${d.folderUrl ? `<a class="button ghost" href="${esc(d.folderUrl)}" target="_blank" rel="noopener"><b>Папка на Drive</b> <span>↗</span></a>` : ''}</div>
+    <div class="stage" role="group" aria-label="Етап">${STATUS.map(([v, l, t], i) => `<button type="button" class="${t}${PIPE.indexOf(v) <= PIPE.indexOf(live.status) && PIPE.includes(live.status) && PIPE.includes(v) ? ' passed' : ''}" data-st="${esc(v)}" aria-pressed="${live.status === v}"><span class="mono">${v === 'archive' ? '×' : String(i + 1).padStart(2, '0')}</span>${esc(l)}</button>`).join('')}</div>
+    <div class="act-row">${contactLinks(c)}${safeUrl(d.folderUrl) ? `<a class="button ghost" href="${esc(safeUrl(d.folderUrl))}" target="_blank" rel="noopener noreferrer"><b>Папка на Drive</b> <span>↗</span></a>` : ''}</div>
 
-    ${spec.length ? `<div class="spec-box"><span class="mono">ТЗ КЛІЄНТА</span>${spec.map(f => `<a href="${esc(f.url)}" target="_blank" rel="noopener"><span class="mono">${esc(ext(f.name))}</span><b>${esc(f.name)}</b><em>${size(f.size)}</em><i>↗</i></a>`).join('')}</div>` : ''}
+    ${spec.length ? `<div class="spec-box"><span class="mono">ТЗ КЛІЄНТА</span>${spec.map(f => `<a href="${esc(safeUrl(f.url))}" target="_blank" rel="noopener noreferrer"><span class="mono">${esc(ext(f.name))}</span><b>${esc(f.name)}</b><em>${size(f.size)}</em><i>↗</i></a>`).join('')}</div>` : ''}
 
     <section class="d-sec notes"><h3><span class="mono">✎</span>Мої нотатки</h3>
       <textarea id="notes" rows="4" placeholder="Оцінка, години, ціна, питання до клієнта…">${esc(live.notes || '')}</textarea>
@@ -334,7 +419,7 @@ function renderDetail(d) {
       <dl>${s.rows.map(r => `<dt>${esc(r.label)}</dt><dd>${valueHTML(r)}</dd>`).join('')}</dl></details>`).join('')}
 
     <section class="d-sec"><h3><span class="mono">📎</span>Файли · ${(d.files || []).length}</h3>
-      ${Object.keys(groups).length ? Object.entries(groups).map(([label, list]) => `<p class="f-group mono">${esc(label).toUpperCase()}</p><ul class="file-list">${list.map(f => `<li><span class="mono">${esc(ext(f.name))}</span><b><a href="${esc(f.url)}" target="_blank" rel="noopener">${esc(f.name)}</a></b><em>${size(f.size)}</em></li>`).join('')}</ul>`).join('') : '<p class="lead">Файлів немає.</p>'}
+      ${Object.keys(groups).length ? Object.entries(groups).map(([label, list]) => `<p class="f-group mono">${esc(label).toUpperCase()}</p><ul class="file-list">${list.map(f => `<li><span class="mono">${esc(ext(f.name))}</span><b><a href="${esc(safeUrl(f.url))}" target="_blank" rel="noopener noreferrer">${esc(f.name)}</a></b><em>${size(f.size)}</em></li>`).join('')}</ul>`).join('') : '<p class="lead">Файлів немає.</p>'}
     </section>`;
 }
 
@@ -359,8 +444,12 @@ async function saveNotes() {
 /* ---------- events ---------- */
 function setF(k, v) { F[k] = v; store.set(FILTER_STORE, { ...F, q: '' }); render(); }
 function setView(v) { view = v; store.set(VIEW_STORE, v); render(); }
-$('#loginForm').addEventListener('submit', e => { e.preventDefault(); key = $('#keyInput').value.trim(); enter(); });
-$('#logoutBtn').addEventListener('click', () => { try { localStorage.removeItem(KEY_STORE); } catch (e) {} key = ''; items = []; cache = {}; showLogin(); });
+$('#loginForm').addEventListener('submit', e => { e.preventDefault(); submitCode(); });
+$('#otpForm').addEventListener('submit', e => { e.preventDefault(); submitOtp(); });
+$('#otpInput').addEventListener('input', e => { e.target.value = e.target.value.replace(/\D/g, '').slice(0, 6); if (e.target.value.length === 6) submitOtp(); });
+$('#otpBack').addEventListener('click', () => showLogin());
+$('#logoutBtn').addEventListener('click', () => logout(false));
+$('#logoutAllBtn').addEventListener('click', () => logout(true));
 $('#refreshBtn').addEventListener('click', () => { cache = {}; poll(); });
 $('#bellBtn').addEventListener('click', async () => { try { await Notification.requestPermission(); } catch (e) {} bellState(); });
 $('#search').addEventListener('input', e => { F.q = e.target.value; render(); });
@@ -495,5 +584,6 @@ if (DEMO) setTimeout(() => {
 if (!DEMO) setStages(store.get('stackup-stages-cache', null));
 bellState();
 if (!EP && !DEMO) showLogin('Кабінет ще не підключено до Google-скрипта. Додайте адресу /exec у config.js (див. backend/README.md).');
-else if (DEMO || key) enter(); else showLogin();
+else if (DEMO || token) enter(); else showLogin();
+if (DEMO) { $('#logoutAllBtn').hidden = true; }
 })();
