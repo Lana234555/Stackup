@@ -96,9 +96,9 @@ const URL_ = `http://localhost:${WEB}/admin.html`;
     ok((await page.$$('.card')).length === 2, 'cards: ' + (await page.$$('.card')).length);
     await page.screenshot({ path: SHOTS + '/sec-board.png' });
   });
-  await t('токен — лише в sessionStorage, нічого секретного в localStorage', async () => {
-    const st = await page.evaluate(() => ({ s: Object.keys(sessionStorage), l: JSON.stringify(localStorage) }));
-    ok(st.s.includes('stackup-crm-session'), 'no session'); ok(!/48271593/.test(st.l) && !/stackup-crm-session|stackup-admin-key/.test(st.l), st.l);
+  await t('у браузері лише токен сесії, без коду і старого ключа', async () => {
+    const st = await page.evaluate(() => ({ s: JSON.stringify(sessionStorage), l: JSON.stringify(localStorage) }));
+    ok(/stackup-crm-session/.test(st.l), 'no session'); ok(!/48271593/.test(st.l + st.s) && !/stackup-admin-key/.test(st.l), st.l);
   });
   await t('XSS у заявці не виконується (картка, список, деталі)', async () => {
     await page.click(`.card[data-open="${sub.id}"]`); await page.waitForSelector('.detail h2');
@@ -114,8 +114,9 @@ const URL_ = `http://localhost:${WEB}/admin.html`;
     await page.click('.seg [data-view="list"]'); await page.waitForTimeout(300);
     ok(dialogs.length === 0, 'dialogs in list: ' + dialogs.join(','));
   });
-  await t('перезавантаження вкладки — сесія зберігається', async () => {
+  await t('перезавантаження і нова вкладка — сесія зберігається', async () => {
     await page.reload(); await page.waitForSelector('#app:not([hidden])', { timeout: 5000 });
+    const p3 = await page.context().newPage(); await p3.goto(URL_); await p3.waitForSelector('#app:not([hidden])', { timeout: 5000 }); await p3.close();
   });
   await t('інший браузер/вкладка без входу — бачить лише вхід', async () => {
     const ctxB = await browser.newContext(); const p2 = await ctxB.newPage(); watch(p2);
@@ -123,7 +124,7 @@ const URL_ = `http://localhost:${WEB}/admin.html`;
     await ctxB.close();
   });
   await t('крадений токен після виходу більше не діє', async () => {
-    const stolen = await page.evaluate(() => sessionStorage.getItem('stackup-crm-session'));
+    const stolen = await page.evaluate(() => localStorage.getItem('stackup-crm-session'));
     await page.click('#logoutBtn'); await page.waitForSelector('#login:not([hidden])');
     ok((await page.innerHTML('#board')).trim() === '', 'board not wiped');
     const r = g.post({ action: 'list', token: stolen }); ok(r.error === 'unauthorized', JSON.stringify(r).slice(0, 80));
@@ -137,8 +138,8 @@ const URL_ = `http://localhost:${WEB}/admin.html`;
     await page.fill('#codeInput', '48271593'); await page.click('#codeBtn'); await page.waitForSelector('#app:not([hidden])');
     ok(g.mails.filter(m => /Код входу/.test(m.subject)).length === before, 'otp mail sent for trusted device');
   });
-  await t('сесія спливає після 30 хв без дій → повернення на вхід', async () => {
-    await fetch(`http://localhost:${API}/__clock?add=${31 * 60000}`);
+  await t('сесія спливає через 24 год → повернення на вхід', async () => {
+    await fetch(`http://localhost:${API}/__clock?add=${24 * 3600000 + 60000}`);
     await page.click('#refreshBtn'); await page.waitForSelector('#login:not([hidden])', { timeout: 5000 });
     ok((await page.textContent('#loginError')).includes('Сесія завершилась'), await page.textContent('#loginError'));
   });

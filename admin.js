@@ -10,7 +10,6 @@ const LIVE_HOST = /(^|\.)stackup\.studio$/.test(location.hostname);
 const DEMO = qp.has('demo') || (!EP && !LIVE_HOST);
 const SESSION_STORE = 'stackup-crm-session', DEVICE_STORE = 'stackup-crm-device', SEEN_STORE = 'stackup-admin-seen', FILTER_STORE = 'stackup-admin-filters-v2', VIEW_STORE = 'stackup-admin-view';
 const POLL_MS = DEMO ? 15000 : 60000;
-const IDLE_MS = 30 * 60000; // автовихід після 30 хв без дій
 
 const DEFAULT_STAGES = [
   { id: 'new', name: 'Нові', tone: 'acid', hint: 'Щойно надійшли' },
@@ -51,12 +50,13 @@ const ext = n => { const m = String(n).match(/\.([a-z0-9]+)$/i); return m ? m[1]
 const initials = x => String(x.company || x.name || '?').split(/\s+/).map(w => w[0]).join('').slice(0, 2).toUpperCase();
 const store = { get(k, d) { try { const v = localStorage.getItem(k); return v == null ? d : JSON.parse(v); } catch (e) { return d; } }, set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} } };
 
-// сесія — лише в цій вкладці (sessionStorage), зникає після закриття браузера
-const sess = { get() { try { return sessionStorage.getItem(SESSION_STORE) || ''; } catch (e) { return ''; } }, set(v) { try { v ? sessionStorage.setItem(SESSION_STORE, v) : sessionStorage.removeItem(SESSION_STORE); } catch (e) {} } };
+// сесія діє 24 год від входу (перевіряє сервер) і переживає закриття вкладки
+try { sessionStorage.removeItem(SESSION_STORE); } catch (e) {}
+const sess = { get() { try { return localStorage.getItem(SESSION_STORE) || ''; } catch (e) { return ''; } }, set(v) { try { v ? localStorage.setItem(SESSION_STORE, v) : localStorage.removeItem(SESSION_STORE); } catch (e) {} } };
 const device = { get() { try { return localStorage.getItem(DEVICE_STORE) || ''; } catch (e) { return ''; } }, set(v) { try { v ? localStorage.setItem(DEVICE_STORE, v) : localStorage.removeItem(DEVICE_STORE); } catch (e) {} } };
 try { localStorage.removeItem('stackup-admin-key'); } catch (e) {} // старий ключ більше не потрібен
 let token = sess.get();
-let challenge = '', lastAct = Date.now(), idleTimer = null;
+let challenge = '';
 let items = [], current = null, cache = {}, pollTimer = null, firstLoad = true, flashIds = [];
 let seen = new Set(store.get(SEEN_STORE, null) || []);
 let seenInit = store.get(SEEN_STORE, null) !== null;
@@ -92,7 +92,7 @@ function showLogin(err) {
   $('#loginForm').hidden = false; $('#otpForm').hidden = true; challenge = '';
   $('#loginError').textContent = err || ''; $('#otpError').textContent = '';
   $('#codeInput').value = ''; $('#otpInput').value = '';
-  clearInterval(pollTimer); clearInterval(idleTimer);
+  clearInterval(pollTimer);
   setTimeout(() => $('#codeInput').focus(), 30);
 }
 /* прибрати всі дані з пам’яті і з екрана */
@@ -149,18 +149,12 @@ async function logout(all) {
   showLogin(all ? 'Ви вийшли на всіх пристроях.' : 'Ви вийшли з кабінету.');
   try { if (all) await call({ action: 'logoutAll', token: t }); else await call({ action: 'logout', token: t }); } catch (e) {}
 }
-function watchIdle() {
-  clearInterval(idleTimer); lastAct = Date.now();
-  idleTimer = setInterval(() => { if (Date.now() - lastAct > IDLE_MS) { clearInterval(idleTimer); logout(false).then(() => $('#loginError').textContent = 'Вас автоматично виведено після 30 хв без дій.'); } }, 15000);
-}
-['pointerdown', 'keydown', 'wheel', 'touchstart'].forEach(ev => document.addEventListener(ev, () => { lastAct = Date.now(); }, { passive: true }));
 async function enter() {
   try {
     await load();
     $('#login').hidden = true; $('#app').hidden = false;
     $('#logoutBtn').hidden = DEMO; $('#logoutAllBtn').hidden = DEMO; $('#demoTag').hidden = !DEMO;
     clearInterval(pollTimer); pollTimer = setInterval(poll, POLL_MS);
-    if (!DEMO) watchIdle();
     render();
     const id = location.hash.slice(1); if (id && items.some(x => x.id === id)) openDrawer(id);
   } catch (e) {

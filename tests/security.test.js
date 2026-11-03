@@ -140,14 +140,14 @@ t('без токена / з вигаданим токеном кабінет з�
 });
 t('GET-запити більше не віддають дані (токен не потрапляє в адресу)', () => { const g = fresh(); const s = signIn(g); eq(g.get({ action: 'list', token: s.token }).error, 'unauthorized'); eq(g.get({ action: 'ping' }).ok, true); });
 t('клієнтський токен брифу не відкриває кабінет', () => { const g = fresh(); const b = seedBrief(g); eq(g.post({ action: 'list', token: b.token }).error, 'unauthorized'); });
-t('сесія завершується після 30 хв без дій', () => { const g = fresh(); const s = signIn(g); g.clock.offset += 31 * MIN; eq(g.post({ action: 'list', token: s.token }).error, 'unauthorized'); });
-t('дії людини продовжують сесію, фонове оновлення — ні', () => {
+t('сесія діє 24 год від входу: годинами без дій не злітає, після 24 год — вихід', () => {
   const g = fresh(); const s = signIn(g);
-  for (let i = 0; i < 4; i++) { g.clock.offset += 20 * MIN; ok(g.post({ action: 'list', token: s.token }).ok, 'active session dropped at ' + i); }
-  for (let i = 0; i < 25; i++) { g.clock.offset += 1.5 * MIN; g.post({ action: 'list', token: s.token, background: true }); }
-  eq(g.post({ action: 'list', token: s.token }).error, 'unauthorized');
+  g.clock.offset += 8 * 3600000; ok(g.post({ action: 'list', token: s.token }).ok, '8h idle dropped');
+  g.clock.offset += 15 * 3600000; ok(g.post({ action: 'list', token: s.token }).ok, '23h dropped');
+  g.clock.offset += 61 * MIN; eq(g.post({ action: 'list', token: s.token }).error, 'unauthorized');
 });
-t('сесія не довша за 12 год навіть з активністю', () => { const g = fresh(); const s = signIn(g); for (let i = 0; i < 25; i++) { g.clock.offset += 29 * MIN; g.post({ action: 'list', token: s.token }); } eq(g.post({ action: 'list', token: s.token }).error, 'unauthorized'); });
+t('активність не продовжує сесію понад 24 год', () => { const g = fresh(); const s = signIn(g); for (let i = 0; i < 50; i++) { g.clock.offset += 29 * MIN; g.post({ action: 'list', token: s.token }); } eq(g.post({ action: 'list', token: s.token }).error, 'unauthorized'); });
+t('сесій не більше 10: найстаріша відключається', () => { const g = fresh(); g.props.TWO_FACTOR = 'off'; const first = g.post({ action: 'login', code: '48271593' }).token; for (let i = 0; i < 10; i++) g.post({ action: 'login', code: '48271593' }); eq(g.post({ action: 'list', token: first }).error, 'unauthorized'); });
 t('вихід скасовує сесію на сервері', () => { const g = fresh(); const s = signIn(g); g.post({ action: 'logout', token: s.token }); eq(g.post({ action: 'list', token: s.token }).error, 'unauthorized'); });
 t('«Вийти на всіх пристроях» скасовує всі сесії і довірені пристрої', () => {
   const g = fresh(); const a = signIn(g, { trust: true }); const b = signIn(g);
