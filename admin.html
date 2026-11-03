@@ -1,13 +1,15 @@
 <!doctype html>
-<html lang="uk">
+<html lang="uk" class="guard">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="robots" content="noindex,nofollow">
+<meta name="robots" content="noindex,nofollow,noarchive">
+<meta name="referrer" content="no-referrer">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'self' https://fonts.googleapis.com; style-src-attr 'unsafe-inline'; font-src https://fonts.gstatic.com; img-src 'self' data:; connect-src https://script.google.com https://script.googleusercontent.com; form-action 'none'; base-uri 'none'; object-src 'none'">
 <meta name="theme-color" content="#181917">
 <title>Заявки — STACKUP.</title>
 <link rel="stylesheet" href="brief.css?v=3">
-<link rel="stylesheet" href="admin.css?v=8">
+<link rel="stylesheet" href="admin.css?v=9">
 </head>
 <body class="adm">
 
@@ -16,11 +18,18 @@
     <a class="brand" href="admin.html">STACKUP<i class="dot"></i></a>
     <p class="eyebrow"><i></i> CRM / ВХІД</p>
     <h1 class="h2">Ваші заявки.<br><span class="serif">В одному місці.</span></h1>
-    <p class="lead">Введіть ключ кабінету. Він з’являється один раз під час налаштування і зберігається лише в цьому браузері.</p>
-    <form id="loginForm" class="login-form">
-      <label class="field"><span class="f-label">Ключ кабінету</span><input type="password" id="keyInput" autocomplete="current-password" placeholder="••••••••••••" required></label>
-      <button class="button primary" type="submit"><b>Увійти</b> <span>↗</span></button>
+    <p class="lead" id="loginLead">Введіть код кабінету. Після нього на вашу пошту прийде одноразовий код підтвердження.</p>
+    <form id="loginForm" class="login-form" autocomplete="off">
+      <label class="field"><span class="f-label">Код кабінету</span><input type="password" id="codeInput" name="code" autocomplete="current-password" inputmode="text" maxlength="64" placeholder="••••••" required></label>
+      <button class="button primary" type="submit" id="codeBtn"><b>Далі</b> <span>↗</span></button>
       <p class="step-error" id="loginError" role="alert"></p>
+    </form>
+    <form id="otpForm" class="login-form" autocomplete="off" hidden>
+      <label class="field"><span class="f-label">Код із листа <em class="mono" id="otpTo"></em></span><input type="text" id="otpInput" name="otp" autocomplete="one-time-code" inputmode="numeric" pattern="[0-9]{6}" maxlength="6" placeholder="000000" required></label>
+      <label class="check mono trust"><input type="checkbox" id="trustInput"> ДОВІРЯТИ ЦЬОМУ ПРИСТРОЮ 30 ДНІВ</label>
+      <button class="button primary" type="submit" id="otpBtn"><b>Увійти</b> <span>↗</span></button>
+      <button class="link mono back-step" type="button" id="otpBack">← ВВЕСТИ КОД ЗНОВУ</button>
+      <p class="step-error" id="otpError" role="alert"></p>
     </form>
   </div>
 </section>
@@ -44,6 +53,7 @@
       <span class="demo-tag mono" id="demoTag" hidden>ДЕМО-ДАНІ</span>
       <button type="button" class="link mono" id="bellBtn">🔔 СПОВІЩЕННЯ</button>
       <button type="button" class="link mono" id="logoutBtn">ВИЙТИ</button>
+      <button type="button" class="link mono" id="logoutAllBtn">ВИЙТИ НА ВСІХ ПРИСТРОЯХ</button>
     </div>
   </aside>
 
@@ -96,6 +106,6 @@
 <div class="toast" id="toast" role="status" hidden></div>
 
 <script src="config.js?v=1"></script>
-<script src="admin.js?v=7" defer></script>
+<script src="admin.js?v=8" defer></script>
 </body>
 </html>

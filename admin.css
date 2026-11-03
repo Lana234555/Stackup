@@ -257,3 +257,11 @@ button.kpi:hover,button.kpi[aria-pressed=true]{transform:translateY(-2px);box-sh
 .col-edit-bar .del{color:#b2481b;border-color:#d9825c}
 .icon-btn.sm{width:28px;height:28px;font-size:13px}
 .mini-ok{margin-left:auto;background:var(--ink);color:var(--paper);font-size:10px;letter-spacing:.08em;padding:8px 12px;border-radius:30px}
+
+/* security: hide until admin.js confirms the page is not framed */
+html.guard body{visibility:hidden}
+.login-form .trust{display:flex;gap:10px;align-items:center;margin:-6px 0 22px;font-size:12px}
+.login-form .trust input{width:auto}
+.login-form .back-step{display:block;margin:18px auto 0}
+.login-form .f-label em{font-style:normal;opacity:.6;margin-left:6px}
+#otpInput{letter-spacing:.5em;font-size:24px}
