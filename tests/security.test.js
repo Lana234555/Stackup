@@ -210,6 +210,14 @@ t('помилки сервера не розкривають деталей ре
 t('вимкнена 2FA (TWO_FACTOR=off): вхід лише за кодом, блокування працює', () => { const g = fresh(); g.props.TWO_FACTOR = 'off'; ok(g.post({ action: 'login', code: '48271593' }).token); for (let i = 0; i < 5; i++) g.post({ action: 'login', code: 'b' + i }); ok(/^locked/.test(g.post({ action: 'login', code: '48271593' }).error)); });
 t('журнал входів ведеться в аркуші «Журнал»', () => { const g = fresh(); g.post({ action: 'login', code: 'bad' }); signIn(g); const log = g.sheets['Журнал'].map(r => r[1]); ok(log.includes('bad-code') && log.includes('login'), log.join(',')); });
 
+t('старий формат хешу (2000 раундів) приймається і тихо оновлюється до швидкого', () => {
+  const g = fresh(); const salt = g.props.CODE_SALT;
+  g.props.CODE_HASH = g.ctx.stretchLegacy('48271593', salt); delete g.props.CODE_ROUNDS;
+  eq(g.post({ action: 'login', code: 'wrong123' }).error, 'bad code');
+  eq(g.post({ action: 'login', code: '48271593' }).step, 'otp');
+  eq(g.props.CODE_ROUNDS, '250'); eq(g.post({ action: 'login', code: '48271593' }).step, 'otp');
+});
+
 for (const [m, n] of results) console.log(m, n);
 console.log(`\n${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);

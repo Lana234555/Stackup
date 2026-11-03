@@ -9,7 +9,7 @@
  *  - віддає дані кабінету admin.html лише після входу за вашим кодом.
  *
  * Безпека CRM:
- *  - код зберігається лише як солений хеш (HMAC-SHA256, багато раундів), не текстом;
+ *  - код зберігається лише як солений хеш (HMAC-SHA256, 250 раундів), не текстом;
  *  - після правильного коду на вашу пошту приходить одноразовий код (2FA);
  *  - після 5 невдалих спроб вхід блокується, і кожне наступне блокування довше
  *    (15 хв → 30 хв → 1 год … до 24 год), вам приходить лист;
@@ -28,7 +28,7 @@ const STATUSES = ['new', 'review', 'quoted', 'work', 'done', 'archive'];
 
 const SEC = {
   CODE_MIN: 6, CODE_MAX: 64,
-  HASH_ROUNDS: 2000,
+  HASH_ROUNDS: 250,             // ~1 с в Apps Script; підбір онлайн зупиняє блокування
   MAX_FAILS: 5,                 // невдалих спроб до блокування
   LOCK_BASE_MIN: 15,            // перше блокування, хв; далі ×2
   LOCK_MAX_MIN: 24 * 60,
@@ -284,15 +284,26 @@ function codeProblem(code) {
 }
 function setCodeHash(code) {
   const salt = randomToken();
-  props().setProperties({ CODE_SALT: salt, CODE_HASH: stretch(code, salt), FAILS: '0', LOCK_UNTIL: '0', LOCK_LEVEL: '0' });
+  props().setProperties({ CODE_SALT: salt, CODE_HASH: stretch(code, salt, SEC.HASH_ROUNDS), CODE_ROUNDS: String(SEC.HASH_ROUNDS), FAILS: '0', LOCK_UNTIL: '0', LOCK_LEVEL: '0' });
 }
 function checkCode(code) {
   const p = props();
-  return safeEqual(stretch(code, p.getProperty('CODE_SALT') || ''), p.getProperty('CODE_HASH') || '');
+  const rounds = +p.getProperty('CODE_ROUNDS') || 0; // 0 = старий формат (2000 раундів, повільний)
+  const salt = p.getProperty('CODE_SALT') || '';
+  const okCode = safeEqual(rounds ? stretch(code, salt, rounds) : stretchLegacy(code, salt), p.getProperty('CODE_HASH') || '');
+  if (okCode && rounds !== SEC.HASH_ROUNDS) setCodeHash(code); // тихо переводимо на швидкий формат
+  return okCode;
 }
-function stretch(code, salt) {
+/** HMAC-SHA256, ключ — байти (сіль + код), обчислені один раз. */
+function stretch(code, salt, rounds) {
+  const key = Utilities.newBlob(salt + code).getBytes();
   let h = Utilities.computeHmacSha256Signature(code, salt);
-  for (let i = 1; i < SEC.HASH_ROUNDS; i++) h = Utilities.computeHmacSha256Signature(h, Utilities.newBlob(salt + code).getBytes());
+  for (let i = 1; i < rounds; i++) h = Utilities.computeHmacSha256Signature(h, key);
+  return Utilities.base64Encode(h);
+}
+function stretchLegacy(code, salt) {
+  let h = Utilities.computeHmacSha256Signature(code, salt);
+  for (let i = 1; i < 2000; i++) h = Utilities.computeHmacSha256Signature(h, Utilities.newBlob(salt + code).getBytes());
   return Utilities.base64Encode(h);
 }
 
