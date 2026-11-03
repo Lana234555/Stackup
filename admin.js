@@ -115,7 +115,7 @@ function loginError(e) {
 async function submitCode() {
   const code = $('#codeInput').value;
   if (!code) return;
-  const btn = $('#codeBtn'); btn.disabled = true; $('#loginError').textContent = '';
+  const btn = $('#codeBtn'); btn.disabled = true; $('#loginError').textContent = ''; btn.querySelector('b').textContent = 'Перевіряємо…';
   try {
     const j = await call({ action: 'login', code, device: device.get() });
     $('#codeInput').value = '';
@@ -125,12 +125,12 @@ async function submitCode() {
     $('#loginForm').hidden = true; $('#otpForm').hidden = false; $('#otpInput').value = '';
     setTimeout(() => $('#otpInput').focus(), 30);
   } catch (e) { $('#loginError').textContent = loginError(e); $('#codeInput').select(); }
-  finally { btn.disabled = false; }
+  finally { btn.disabled = false; btn.querySelector('b').textContent = 'Далі'; }
 }
 async function submitOtp() {
   const otp = $('#otpInput').value.replace(/\D/g, '');
   if (otp.length !== 6) { $('#otpError').textContent = 'Введіть 6 цифр із листа.'; return; }
-  const btn = $('#otpBtn'); btn.disabled = true; $('#otpError').textContent = '';
+  const btn = $('#otpBtn'); btn.disabled = true; $('#otpError').textContent = ''; btn.querySelector('b').textContent = 'Перевіряємо…';
   try {
     const j = await call({ action: 'verify', challenge, otp, trust: $('#trustInput').checked });
     if (j.device) device.set(j.device);
@@ -139,7 +139,7 @@ async function submitOtp() {
   } catch (e) {
     if (e.message === 'expired' || /^locked:/.test(e.message)) showLogin(loginError(e));
     else { $('#otpError').textContent = loginError(e); $('#otpInput').select(); }
-  } finally { btn.disabled = false; }
+  } finally { btn.disabled = false; btn.querySelector('b').textContent = 'Увійти'; }
 }
 async function logout(all) {
   if (all && !confirm('Вийти на всіх пристроях і забути всі довірені пристрої?')) return;
