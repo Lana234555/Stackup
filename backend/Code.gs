@@ -13,7 +13,7 @@
  *  - після правильного коду на вашу пошту приходить одноразовий код (2FA);
  *  - після 5 невдалих спроб вхід блокується, і кожне наступне блокування довше
  *    (15 хв → 30 хв → 1 год … до 24 год), вам приходить лист;
- *  - сесія живе 30 хв без дій і не довше 12 год, «Вийти всюди» скасовує всі сесії;
+ *  - сесія діє 24 год від входу, «Вийти всюди» скасовує всі сесії;
  *  - довірені пристрої (30 днів) зберігаються лише як хеші, їх можна відкликати;
  *  - журнал входів — окремий аркуш «Журнал» у таблиці.
  *
@@ -34,8 +34,8 @@ const SEC = {
   LOCK_MAX_MIN: 24 * 60,
   OTP_TTL_S: 600,               // одноразовий код діє 10 хв
   OTP_TRIES: 5,
-  SESSION_IDLE_S: 1800,         // 30 хв без дій
-  SESSION_MAX_MS: 12 * 3600 * 1000,
+  SESSION_MAX_MS: 24 * 3600 * 1000, // сесія діє 24 год від входу
+  SESSION_MAX: 10,              // одночасних сесій (старіші відключаються)
   TRUST_DAYS: 30, TRUST_MAX: 5,
   FAIL_DELAY_MS: 900,
   // публічний бриф
@@ -160,7 +160,7 @@ function login(d) {
       const s = newSession(d);
       audit('login', (p.getProperty('TWO_FACTOR') === 'off' ? '2FA вимкнено · ' : 'довірений пристрій · ') + ua(d));
       if (p.getProperty('TWO_FACTOR') !== 'off') notify('Вхід у CRM Stackup', 'Щойно виконано вхід у кабінет з довіреного пристрою.<br>' + esc(ua(d)) + '<br>' + esc(now()) + '<br><br>Якщо це були не ви — запустіть logoutEverywhere() і змініть код.');
-      return { ok: true, token: s, ttl: SEC.SESSION_IDLE_S };
+      return { ok: true, token: s, ttl: SEC.SESSION_MAX_MS / 1000 };
     }
     const otp = randomDigits(6);
     const challenge = randomToken();
@@ -191,7 +191,7 @@ function verify(d) {
     }
     cache().remove(k);
     resetFails();
-    const res = { ok: true, token: newSession(d), ttl: SEC.SESSION_IDLE_S };
+    const res = { ok: true, token: newSession(d), ttl: SEC.SESSION_MAX_MS / 1000 };
     if (d.trust) res.device = addTrusted(d);
     audit('login', '2FA ✓' + (d.trust ? ' · довірений пристрій 30 дн' : '') + ' · ' + ua(d));
     return res;
@@ -200,32 +200,34 @@ function verify(d) {
 
 function logout(d) {
   const t = typeof d.token === 'string' ? d.token : '';
-  if (t) cache().remove('S:' + sha(t));
+  if (t) withLock(() => saveSessions(sessions().filter(x => x.h !== sha(t))));
   if (d.device) removeTrusted(d.device);
   audit('logout', ua(d));
   return { ok: true };
 }
 
 /* ---------- сесії ---------- */
+// Сесії зберігаються як хеші у властивостях скрипта (кеш Google живе не довше 6 год).
+function sessions() {
+  try { const ep = epoch(); return JSON.parse(props().getProperty('SESSIONS') || '[]').filter(x => x.ep === ep && Date.now() - x.at < SEC.SESSION_MAX_MS); } catch (e) { return []; }
+}
+function saveSessions(list) { props().setProperty('SESSIONS', JSON.stringify(list.slice(-SEC.SESSION_MAX))); }
 function newSession(d) {
   const t = randomToken();
-  cache().put('S:' + sha(t), JSON.stringify({ ep: epoch(), at: Date.now() }), SEC.SESSION_IDLE_S);
+  saveSessions(sessions().concat([{ h: sha(t), ep: epoch(), at: Date.now() }]));
   return t;
 }
 function requireSession(d) {
   const t = typeof d.token === 'string' ? d.token : '';
   if (!t || t.length < 40 || t.length > 100) throw new Error('unauthorized');
-  const k = 'S:' + sha(t), raw = cache().get(k);
-  if (!raw) throw new Error('unauthorized');
-  const s = JSON.parse(raw);
-  if (s.ep !== epoch() || Date.now() - s.at > SEC.SESSION_MAX_MS) { cache().remove(k); throw new Error('unauthorized'); }
-  // фонове оновлення (опитування раз на хвилину) не продовжує сесію — лише дії людини
-  if (!d.background) cache().put(k, raw, SEC.SESSION_IDLE_S);
+  const h = sha(t);
+  if (!sessions().some(x => safeEqual(x.h, h))) throw new Error('unauthorized');
 }
 function epoch() { return props().getProperty('SESSION_EPOCH') || '0'; }
 function revokeEverything() {
   props().setProperty('SESSION_EPOCH', String(Date.now()) + randomDigits(4));
   props().setProperty('TRUSTED', '[]');
+  props().setProperty('SESSIONS', '[]');
 }
 
 /* ---------- довірені пристрої ---------- */
