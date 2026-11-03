@@ -24,7 +24,7 @@ function create(codePath) {
   function iter(arr) { let i = 0; return { hasNext: () => i < arr.length, next: () => arr[i++] }; }
   function folderApi(f) {
     return {
-      getId: () => f.id, getUrl: () => 'https://drive.google.com/drive/folders/' + f.id,
+      getId: () => f.id, getName: () => f.name, setTrashed: v => { f.trashed = v; }, getUrl: () => 'https://drive.google.com/drive/folders/' + f.id,
       createFolder: n => { const c = mkFolder(n); f.folders.push(c); return c; },
       getFoldersByName: n => iter(f.folders.filter(c => drive[c.getId()].name === n)),
       getFolders: () => iter(f.folders),
@@ -43,7 +43,7 @@ function create(codePath) {
   function sheetApi(name) {
     const rows = sheets[name];
     return {
-      setName() {}, setFrozenRows() {},
+      setName() {}, setFrozenRows() {}, deleteRow: i => rows.splice(i - 1, 1),
       appendRow: r => rows.push(r.map(v => (typeof v === 'string' && v[0] === "'") ? { text: v.slice(1) } : v)),
       getDataRange: () => ({ getValues: () => rows.map(r => r.map(v => v && v.text != null ? v.text : (typeof v === 'string' && /^=/.test(v) ? '#FORMULA:' + v : v))) }),
       getRange: (r, c) => ({ setValue: v => { rows[r - 1][c - 1] = (typeof v === 'string' && v[0] === "'") ? { text: v.slice(1) } : v; }, setValues(v) { rows[r - 1] = v[0].slice(); return this; }, setFontWeight() { return this; } }),
@@ -84,7 +84,7 @@ function create(codePath) {
     Logger: { log: m => logs.push(m) }
   };
   vm.createContext(ctx);
-  vm.runInContext(fs.readFileSync(codePath, 'utf8'), ctx, { filename: 'Code.gs' });
+  [].concat(codePath).forEach(f => vm.runInContext(fs.readFileSync(f, 'utf8'), ctx, { filename: require('path').basename(f) }));
   const post = body => JSON.parse(ctx.doPost({ postData: { contents: typeof body === 'string' ? body : JSON.stringify(body) } }).t);
   const get = params => JSON.parse(ctx.doGet({ parameter: params }).t);
   return { ctx, props, cacheStore, mails, logs, sheets, drive, clock, post, get };

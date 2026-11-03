@@ -1,6 +1,6 @@
 // Scenario tests for the CRM login & security in backend/Code.gs
 const { create } = require('./gas-mock');
-const CODE = process.argv[2] || require('path').join(__dirname, '../backend/Code.gs');
+const CODE = process.argv[2] ? [process.argv[2]] : ['Code.gs', 'TestBriefs.gs'].map(f => require('path').join(__dirname, '../backend', f));
 let pass = 0, fail = 0;
 const results = [];
 function t(name, fn) {
@@ -216,6 +216,20 @@ t('старий формат хешу (2000 раундів) приймаєтьс
   eq(g.post({ action: 'login', code: 'wrong123' }).error, 'bad code');
   eq(g.post({ action: 'login', code: '48271593' }).step, 'otp');
   eq(g.props.CODE_ROUNDS, '250'); eq(g.post({ action: 'login', code: '48271593' }).step, 'otp');
+});
+
+t('тестові заявки: seedTestBriefs додає 10 різних, без листів, повторно не дублює; removeTestBriefs прибирає лише їх', () => {
+  const g = fresh(); const s = signIn(g); const mails = g.mails.length;
+  const real = g.post({ action: 'submit', client: { name: 'Real', email: 'r@x.io' }, summary: {} });
+  g.ctx.seedTestBriefs(); g.ctx.seedTestBriefs();
+  const items = g.post({ action: 'list', token: s.token }).items;
+  eq(items.length, 11); eq(g.mails.length, mails);
+  const t = items.filter(x => /-TEST\d+$/.test(x.id)); eq(t.length, 10);
+  ok(new Set(t.map(x => x.status)).size >= 4, 'statuses'); ok(t.every(x => !x.token && !x.folderId));
+  const d = g.post({ action: 'get', token: s.token, id: t.find(x => x.files > 1).id });
+  ok(d.ok && d.record.sections.length && d.files.length > 1, JSON.stringify(d).slice(0, 200));
+  g.ctx.removeTestBriefs();
+  const left = g.post({ action: 'list', token: s.token }).items; eq(left.length, 1); eq(left[0].id, real.id);
 });
 
 for (const [m, n] of results) console.log(m, n);
