@@ -1,0 +1,192 @@
+<!doctype html>
+<html lang="uk">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<title>Work lab — STACKUP.</title>
+<link rel="icon" href="assets/icons/site.ico?v=2" sizes="any">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+:root{--paper:#eaece3;--ink:#181917;--acid:#ceff31;--muted:#6f7168;--line:#d3d6ca}
+*{box-sizing:border-box}html,body{margin:0;background:var(--paper);color:var(--ink);font-family:'DM Sans',Arial,sans-serif;-webkit-font-smoothing:antialiased;overflow-x:clip}
+a{color:inherit;text-decoration:none}button{font:inherit;color:inherit;cursor:pointer}
+.mono{font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.06em;text-transform:uppercase}
+.serif{font-family:Georgia,'Times New Roman',serif;font-style:italic;font-weight:400;letter-spacing:-.04em}
+.top{position:sticky;top:0;z-index:50;display:flex;gap:10px;align-items:center;justify-content:space-between;padding:14px 4%;background:#eaece3e8;backdrop-filter:blur(10px);border-bottom:1px solid var(--line)}
+.top b{font-weight:800;letter-spacing:-.04em;font-size:20px}.top b i{display:inline-block;width:6px;height:6px;background:var(--acid);margin-left:2px}
+.top nav{display:flex;gap:6px;flex-wrap:wrap}.top nav a,.top button{border:1px solid var(--ink);border-radius:99px;padding:7px 13px;background:transparent}
+.top button[aria-pressed=true]{background:var(--ink);color:var(--paper)}
+.lab{padding:90px 0 70px;border-bottom:1px solid var(--line);position:relative}
+.lab-head{padding:0 6.4%;display:flex;justify-content:space-between;align-items:flex-end;gap:30px;margin-bottom:38px;flex-wrap:wrap}
+.lab-head h2{font-size:clamp(40px,5vw,72px);letter-spacing:-.06em;line-height:.95;margin:10px 0 0;font-weight:650}
+.lab-head p{max-width:420px;color:var(--muted);line-height:1.55;margin:0;font-size:15px}
+.pill{display:inline-flex;gap:10px;align-items:center;background:var(--ink);color:#fff;border-radius:99px;padding:9px 16px;font-size:13px;white-space:nowrap}
+
+/* ---------- 01 FLOW ---------- */
+.flow{display:flex;flex-direction:column;gap:14px;user-select:none;cursor:grab;touch-action:pan-y}
+.flow.drag{cursor:grabbing}
+.row{display:flex;gap:14px;width:max-content;will-change:transform}
+.fc{position:relative;width:clamp(260px,26vw,420px);aspect-ratio:16/10;border-radius:14px;overflow:hidden;flex:none;background:var(--c);transition:width .6s cubic-bezier(.2,.7,.2,1),filter .4s,opacity .4s}
+.fc img{position:absolute;inset:8% 7% auto;width:86%;aspect-ratio:16/9;object-fit:cover;border-radius:6px;box-shadow:0 18px 40px #0004;transform:rotate(-2deg);transition:transform .6s cubic-bezier(.2,.7,.2,1)}
+.fc .cap{position:absolute;left:0;right:0;bottom:0;padding:14px 16px;display:flex;justify-content:space-between;align-items:flex-end;gap:10px;background:linear-gradient(transparent,#000a);color:#fff}
+.fc .cap b{font-size:20px;letter-spacing:-.04em;font-weight:650;display:block}.fc .cap .mono{opacity:.75;font-size:9.5px}
+.fc .pill{background:var(--acid);color:var(--ink);opacity:0;transform:translateY(8px);transition:.35s}
+.row:hover .fc{filter:saturate(.4) brightness(.92);opacity:.75}
+.row .fc:hover{width:clamp(320px,34vw,560px);filter:none;opacity:1}
+.row .fc:hover img{transform:rotate(0) scale(1.03)}.row .fc:hover .pill{opacity:1;transform:none}
+
+/* ---------- 02 INDEX ---------- */
+.idx{padding:0 6.4%}
+.chips{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:18px}
+.chips button{border:1px solid var(--ink);border-radius:99px;padding:6px 12px;background:transparent;font-size:12px}
+.chips button[aria-pressed=true]{background:var(--ink);color:var(--paper)}
+.ir{display:grid;grid-template-columns:60px 1fr auto 40px;align-items:center;gap:20px;padding:16px 0;border-top:1px solid #18191726;position:relative;transition:padding .35s,color .3s}
+.ir:last-child{border-bottom:1px solid #18191726}
+.ir .n{color:var(--muted)}
+.ir h3{margin:0;font-size:clamp(30px,4.6vw,68px);letter-spacing:-.06em;font-weight:650;line-height:1;transition:transform .45s cubic-bezier(.2,.7,.2,1)}
+.ir h3 em{font-family:Georgia,serif;font-weight:400;letter-spacing:-.04em}
+.ir .k{color:var(--muted);text-align:right}
+.ir .ar{font-size:26px;transition:transform .35s}
+.ir::before{content:'';position:absolute;left:-6.4vw;right:-6.4vw;top:0;bottom:0;background:var(--c);transform:scaleY(0);transform-origin:bottom;transition:transform .45s cubic-bezier(.2,.7,.2,1);z-index:-1}
+.ir:hover::before{transform:scaleY(1)}.ir:hover{color:var(--fg,#fff)}.ir:hover .n,.ir:hover .k{color:inherit;opacity:.75}
+.ir:hover h3{transform:translateX(24px)}.ir:hover .ar{transform:rotate(45deg)}
+.idx-list{position:relative;isolation:isolate}
+.ir.hide{display:none}
+.float{position:fixed;left:0;top:0;width:min(420px,34vw);aspect-ratio:16/9;border-radius:10px;overflow:hidden;pointer-events:none;z-index:40;opacity:0;transform:translate(-50%,-50%) scale(.6);transition:opacity .3s,scale .3s;box-shadow:0 30px 60px #0005}
+.float.on{opacity:1}
+.float img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:0;transition:opacity .45s}.float img.on{opacity:1}
+.ir .thumb{display:none}
+@media(hover:none),(max-width:700px){.float{display:none}.ir{grid-template-columns:1fr 84px;gap:6px 14px;padding:14px 0}.ir .n{grid-column:1;order:0}.ir h3{grid-column:1}.ir .k{grid-column:1;text-align:left}.ir .ar{display:none}.ir .thumb{display:block;grid-column:2;grid-row:1 / span 3;width:84px;aspect-ratio:1;border-radius:8px;object-fit:cover}}
+
+/* ---------- 03 WHEEL ---------- */
+.wheel{height:min(640px,78svh);perspective:1700px;overflow:hidden;position:relative;cursor:grab;touch-action:pan-y;user-select:none}
+.wheel.drag{cursor:grabbing}
+.ring{position:absolute;left:50%;top:46%;transform-style:preserve-3d;will-change:transform}
+.wc{position:absolute;width:var(--w);aspect-ratio:4/5;left:calc(var(--w) / -2);top:calc(var(--w) * -.625);border-radius:16px;overflow:hidden;background:var(--c);backface-visibility:hidden;transition:filter .4s}
+.wc img{position:absolute;left:8%;right:8%;top:7%;width:84%;aspect-ratio:16/10;object-fit:cover;border-radius:7px;box-shadow:0 16px 34px #0004}
+.wc .wi{position:absolute;left:0;right:0;bottom:0;padding:16px 18px;background:var(--ink2,#181917);color:#fff;min-height:44%}
+.wc .wi b{display:block;font-size:22px;letter-spacing:-.05em;font-weight:650;margin:6px 0 4px}
+.wc .wi p{margin:0;font-size:13px;opacity:.7;line-height:1.4}
+.wc .pill{position:absolute;right:16px;bottom:16px;background:var(--acid);color:var(--ink);opacity:0;transition:.3s}
+.wc.front .pill{opacity:1}
+.wheel-ui{position:absolute;left:0;right:0;bottom:22px;display:flex;justify-content:center;gap:14px;align-items:center;z-index:3}
+.wheel-ui button{width:44px;height:44px;border-radius:50%;border:1px solid var(--ink);background:var(--paper)}
+.wheel-name{min-width:220px;text-align:center}
+.note{padding:0 6.4%;margin-top:18px;color:var(--muted);font-size:13px}
+@media(prefers-reduced-motion:reduce){.row{transition:none}}
+</style>
+</head>
+<body>
+<header class="top"><b>STACKUP<i></i> <span class="mono" style="font-weight:400">WORK LAB</span></b>
+<nav><a href="#flow" class="mono">01 Потік</a><a href="#index" class="mono">02 Індекс</a><a href="#wheel" class="mono">03 Колесо</a><button type="button" class="mono" id="many" aria-pressed="false">Показати як 30 робіт</button></nav></header>
+
+<section class="lab" id="flow">
+  <div class="lab-head"><div><span class="mono">01 / Потік</span><h2>Нескінченна <span class="serif">стрічка.</span></h2></div>
+  <p>Два ряди робіт пливуть назустріч один одному без кінця і без пауз. Швидкість залежить від того, як швидко гортаєш сторінку. Наведи мишку, і ряд зупиниться, а робота розкриється. Можна тягнути мишкою або пальцем. Для 30 робіт просто довші ряди.</p></div>
+  <div class="flow" id="flowBox"></div>
+</section>
+
+<section class="lab" id="index">
+  <div class="lab-head"><div><span class="mono">02 / Індекс</span><h2>Список, що <span class="serif">оживає.</span></h2></div>
+  <p>Великі назви, як у журналі. Наведи на рядок: він заливається кольором проєкту, а поруч з мишкою летить обкладинка з кадрами сайту. Масштабується на сотні робіт, фільтр за категоріями вже вбудований.</p></div>
+  <div class="idx"><div class="chips" id="chips"></div><div class="idx-list" id="idxList"></div></div>
+  <div class="float" id="float"></div>
+</section>
+
+<section class="lab" id="wheel">
+  <div class="lab-head"><div><span class="mono">03 / Колесо</span><h2>3D <span class="serif">карусель.</span></h2></div>
+  <p>Роботи стоять по колу в просторі і повільно обертаються. Крути мишкою, тачпадом, пальцем або стрілками, наведення зупиняє. Що більше робіт, то більше коло.</p></div>
+  <div class="wheel" id="wheelBox"><div class="ring" id="ring"></div>
+  <div class="wheel-ui"><button type="button" id="wPrev" aria-label="Назад">←</button><span class="mono wheel-name" id="wName"></span><button type="button" id="wNext" aria-label="Вперед">→</button></div></div>
+</section>
+<p class="note">Тестова сторінка, у меню сайту її немає. Обери варіант, і я поставлю його на головну замість поточної стрічки.</p>
+
+<script>
+const BASE=[
+ {k:'reelly',n:'Reelly',cat:'Real estate',kick:'Real estate platform',d:'Finding a new perspective on real estate.',c:'#2b3a24',fg:'#fff',u:'https://reelly.io/',img:['work-reelly','work-reelly-2','work-reelly-3']},
+ {k:'trustmont',n:'Trustmont',cat:'Landing',kick:'Webinar landing',d:'An invitation that feels like a ticket.',c:'#2b3270',fg:'#fff',u:'https://lana234555.github.io/trustmont-webinar/',img:['work-trustmont','work-trustmont-2?v=2','work-trustmont-3?v=2']},
+ {k:'lina',n:'Lina’s Studio',cat:'Website',kick:'Music studio website',d:'A stage for every new voice.',c:'#7fd1c4',fg:'#111a18',u:'https://linasmusicgroup.org/',img:['work-lina','work-lina-2?v=2','work-lina-3?v=2']},
+ {k:'money24',n:'Money24',cat:'Real estate',kick:'Investment real estate',d:'Property abroad, returns made clear.',c:'#f29e1f',fg:'#181917',u:'https://money24-estate.webflow.io/',img:['work-money24','work-money24-2','work-money24-3']},
+ {k:'blissful',n:'Blissful Birthing',cat:'Courses',kick:'Online course platform',d:'A softer, golden path to birth.',c:'#d9b45a',fg:'#2a1d14',u:'https://courses.blissfulbirthing.com/',img:['work-blissful']},
+ {k:'agency',n:'Reelly Ambassadors',cat:'Landing',kick:'Referral platform',d:'Refer investors, track every step.',c:'#1f4dff',fg:'#fff',u:'https://reelly.io/agency-leaders',img:['work-reelly-agency','work-reelly-agency-2','work-reelly-agency-3']}
+];
+const src=s=>'assets/'+s.replace(/(\?|$)/,'.webp$1');
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+let LIST=BASE;
+const reduce=matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+/* ---------- 01 FLOW ---------- */
+const flowBox=document.getElementById('flowBox'); let rows=[];
+function buildFlow(){
+  const halves=[LIST.filter((_,i)=>i%2===0),LIST.filter((_,i)=>i%2===1)];
+  flowBox.innerHTML=halves.map(h=>{const card=p=>`<a class="fc" href="${p.u}" target="_blank" rel="noopener" style="--c:${p.c}" draggable="false"><img src="${src(p.img[0])}" alt="" draggable="false" loading="lazy"><span class="cap"><span><span class="mono">${esc(p.kick)}</span><b>${esc(p.n)}</b></span><span class="pill">Відкрити ↗</span></span></a>`;
+    let items=h.slice(); while(items.length<8)items=items.concat(h); const html=items.map(card).join(''); return `<div class="row">${html}${html}</div>`;}).join('');
+  rows=[...flowBox.querySelectorAll('.row')].map((el,i)=>({el,x:i?-200:0,dir:i?1:-1,speed:1,hover:false}));
+  rows.forEach(r=>{r.el.addEventListener('mouseenter',()=>r.hover=true);r.el.addEventListener('mouseleave',()=>r.hover=false);});
+}
+let lastY=scrollY,boost=0,dragging=null,moved=0;
+flowBox.addEventListener('pointerdown',e=>{dragging={x:e.clientX};moved=0;flowBox.classList.add('drag');});
+addEventListener('pointermove',e=>{if(!dragging)return;const dx=e.clientX-dragging.x;dragging.x=e.clientX;moved+=Math.abs(dx);rows.forEach(r=>r.x+=dx);});
+addEventListener('pointerup',()=>{dragging=null;flowBox.classList.remove('drag');});
+flowBox.addEventListener('click',e=>{if(moved>6){e.preventDefault();}},true);
+function flowTick(dt){
+  const dy=scrollY-lastY;lastY=scrollY;boost+=(Math.min(Math.abs(dy),80)/6-boost)*.08;
+  rows.forEach(r=>{const target=r.hover||dragging?0:1;r.speed+=(target-r.speed)*.08;
+    r.x+=r.dir*(0.6+boost)*r.speed*dt*0.06*(reduce?0:1);
+    const half=r.el.scrollWidth/2; if(r.x<-half)r.x+=half; if(r.x>0)r.x-=half;
+    r.el.style.transform=`translate3d(${r.x}px,0,0) skewX(${(r.dir*boost*-.6).toFixed(2)}deg)`;});
+}
+
+/* ---------- 02 INDEX ---------- */
+const idxList=document.getElementById('idxList'),chips=document.getElementById('chips'),fl=document.getElementById('float');
+let cat='Усі',flT=null,flX=0,flY=0,fx=0,fy=0,frot=0,cur=null;
+function buildIndex(){
+  const cats=['Усі',...new Set(LIST.map(p=>p.cat))];
+  chips.innerHTML=cats.map(c=>`<button type="button" aria-pressed="${c===cat}">${esc(c)} <span class="mono">${c==='Усі'?LIST.length:LIST.filter(p=>p.cat===c).length}</span></button>`).join('');
+  idxList.innerHTML=LIST.map((p,i)=>`<a class="ir${cat!=='Усі'&&p.cat!==cat?' hide':''}" href="${p.u}" target="_blank" rel="noopener" data-i="${i}" style="--c:${p.c};--fg:${p.fg}"><span class="n mono">${String(i+1).padStart(2,'0')}</span><h3>${esc(p.n).replace(/(Studio|Birthing|Ambassadors)/,'<em>$1</em>')}</h3><span class="k mono">${esc(p.kick)}</span><span class="ar">↗</span><img class="thumb" src="${src(p.img[0])}" alt="" loading="lazy"></a>`).join('');
+}
+chips.addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;cat=b.firstChild.textContent.trim();buildIndex();});
+idxList.addEventListener('mouseover',e=>{const r=e.target.closest('.ir');if(!r||r===cur)return;cur=r;const p=LIST[+r.dataset.i];
+  fl.innerHTML=p.img.map((s,j)=>`<img src="${src(s)}" alt=""${j?'':' class="on"'}>`).join('');fl.classList.add('on');
+  clearInterval(flT);let j=0;const im=fl.querySelectorAll('img');if(im.length>1)flT=setInterval(()=>{im[j].classList.remove('on');j=(j+1)%im.length;im[j].classList.add('on');},1100);});
+idxList.addEventListener('mouseleave',()=>{cur=null;fl.classList.remove('on');clearInterval(flT);});
+addEventListener('mousemove',e=>{flX=e.clientX;flY=e.clientY;});
+function floatTick(){const vx=flX-fx;fx+=vx*.14;fy+=(flY-fy)*.14;frot+=((Math.max(-12,Math.min(12,vx*.12)))-frot)*.15;
+  fl.style.transform=`translate(${fx+40}px,${fy-120}px) rotate(${frot}deg) scale(${fl.classList.contains('on')?1:.6})`;}
+
+/* ---------- 03 WHEEL ---------- */
+const ring=document.getElementById('ring'),wheelBox=document.getElementById('wheelBox'),wName=document.getElementById('wName');
+let ang=0,vel=0,wHover=false,wDrag=null,wMoved=0,N=0,W=300,R=600,lastAuto=0;
+function buildWheel(){
+  N=LIST.length;W=Math.min(300,innerWidth*.62);R=Math.max(W*1.15,(W+28)/(2*Math.tan(Math.PI/N)));
+  ring.innerHTML=LIST.map((p,i)=>`<a class="wc" href="${p.u}" target="_blank" rel="noopener" draggable="false" style="--c:${p.c};--w:${W}px;transform:rotateY(${i*360/N}deg) translateZ(${R}px)"><img src="${src(p.img[0])}" alt="" draggable="false" loading="lazy"><span class="wi"><span class="mono">${esc(p.kick)}</span><b>${esc(p.n)}</b><p>${esc(p.d)}</p></span><span class="pill">Відкрити ↗</span></a>`).join('');
+}
+wheelBox.addEventListener('mouseenter',()=>wHover=true);wheelBox.addEventListener('mouseleave',()=>wHover=false);
+wheelBox.addEventListener('pointerdown',e=>{if(e.target.closest('button'))return;wDrag={x:e.clientX,t:performance.now()};wMoved=0;wheelBox.classList.add('drag');});
+addEventListener('pointermove',e=>{if(!wDrag)return;const dx=e.clientX-wDrag.x;wDrag.x=e.clientX;wMoved+=Math.abs(dx);ang+=dx*.18;vel=dx*.18;lastAuto=performance.now();});
+addEventListener('pointerup',()=>{if(!wDrag)return;wDrag=null;wheelBox.classList.remove('drag');});
+wheelBox.addEventListener('click',e=>{if(wMoved>6)e.preventDefault();},true);
+wheelBox.addEventListener('wheel',e=>{if(Math.abs(e.deltaX)>Math.abs(e.deltaY)){e.preventDefault();vel-=e.deltaX*.04;lastAuto=performance.now();}},{passive:false});
+const snapTo=d=>{const step=360/N;const target=Math.round((ang+d*step)/step)*step;vel=0;const from=ang,t0=performance.now();lastAuto=t0+1500;
+  const go=t=>{const k=Math.min(1,(t-t0)/600),e=1-Math.pow(1-k,3);ang=from+(target-from)*e;if(k<1)requestAnimationFrame(go);};requestAnimationFrame(go);};
+document.getElementById('wPrev').onclick=()=>snapTo(1);document.getElementById('wNext').onclick=()=>snapTo(-1);
+function wheelTick(dt){
+  if(!wDrag){ang+=vel;vel*=.94;if(!wHover&&!reduce&&performance.now()-lastAuto>1200)ang-=dt*.006;}
+  ring.style.transform=`translateZ(${-R}px) rotateY(${ang}deg)`;
+  const step=360/N,front=((Math.round(-ang/step)%N)+N)%N;
+  ring.querySelectorAll('.wc').forEach((c,i)=>{const d=Math.abs((((i*step+ang)%360)+540)%360-180);c.classList.toggle('front',i===front);c.style.filter=`brightness(${1-Math.min(.55,d/260)})`;});
+  wName.textContent=String(front+1).padStart(2,'0')+' / '+String(N).padStart(2,'0')+' · '+LIST[front].n;
+}
+
+/* ---------- loop ---------- */
+function buildAll(){buildFlow();buildIndex();buildWheel();}
+document.getElementById('many').onclick=e=>{const on=e.currentTarget.getAttribute('aria-pressed')!=='true';e.currentTarget.setAttribute('aria-pressed',on);
+  LIST=on?Array.from({length:30},(_,i)=>BASE[i%BASE.length]):BASE;cat='Усі';buildAll();};
+addEventListener('resize',buildWheel);
+buildAll();
+let tPrev=performance.now();
+(function loop(t){const dt=Math.min(64,t-tPrev);tPrev=t;flowTick(dt);floatTick();wheelTick(dt);requestAnimationFrame(loop);})(tPrev);
+</script>
+</body>
+</html>
