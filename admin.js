@@ -112,24 +112,33 @@ function loginError(e) {
   if (m === 'mail failed') return 'Не вдалося надіслати лист із кодом. Спробуйте пізніше.';
   return 'Не вдалося з’єднатися. Перевірте інтернет і спробуйте ще раз.';
 }
+let loginBusy = false;
 async function submitCode() {
   const code = $('#codeInput').value;
-  if (!code) return;
+  if (!code || loginBusy) return;
+  loginBusy = true;
   const btn = $('#codeBtn'); btn.disabled = true; $('#loginError').textContent = ''; btn.querySelector('b').textContent = 'Перевіряємо…';
   try {
     const j = await call({ action: 'login', code, device: device.get() });
     $('#codeInput').value = '';
+    rememberPassword(code);
     if (j.token) { token = j.token; sess.set(token); return enter(); }
     challenge = j.challenge;
     $('#otpTo').textContent = j.to ? '· ' + j.to : '';
     $('#loginForm').hidden = true; $('#otpForm').hidden = false; $('#otpInput').value = '';
     setTimeout(() => $('#otpInput').focus(), 30);
   } catch (e) { $('#loginError').textContent = loginError(e); $('#codeInput').select(); }
-  finally { btn.disabled = false; btn.querySelector('b').textContent = 'Далі'; }
+  finally { loginBusy = false; btn.disabled = false; btn.querySelector('b').textContent = 'Далі'; }
+}
+/* запропонувати браузеру зберегти код кабінету (Chrome, Edge, Android) */
+function rememberPassword(code) {
+  try { if (window.PasswordCredential) navigator.credentials.store(new PasswordCredential({ id: 'Stackup CRM', password: code, name: 'Stackup CRM' })).catch(() => {}); } catch (e) {}
 }
 async function submitOtp() {
   const otp = $('#otpInput').value.replace(/\D/g, '');
+  if (loginBusy) return;
   if (otp.length !== 6) { $('#otpError').textContent = 'Введіть 6 цифр із листа.'; return; }
+  loginBusy = true;
   const btn = $('#otpBtn'); btn.disabled = true; $('#otpError').textContent = ''; btn.querySelector('b').textContent = 'Перевіряємо…';
   try {
     const j = await call({ action: 'verify', challenge, otp, trust: $('#trustInput').checked });
@@ -139,7 +148,7 @@ async function submitOtp() {
   } catch (e) {
     if (e.message === 'expired' || /^locked:/.test(e.message)) showLogin(loginError(e));
     else { $('#otpError').textContent = loginError(e); $('#otpInput').select(); }
-  } finally { btn.disabled = false; btn.querySelector('b').textContent = 'Увійти'; }
+  } finally { loginBusy = false; btn.disabled = false; btn.querySelector('b').textContent = 'Увійти'; }
 }
 async function logout(all) {
   if (all && !confirm('Вийти на всіх пристроях і забути всі довірені пристрої?')) return;
@@ -581,3 +590,8 @@ if (!EP && !DEMO) showLogin('Кабінет ще не підключено до 
 else if (DEMO || token) enter(); else showLogin();
 if (DEMO) { $('#logoutAllBtn').hidden = true; }
 })();
+
+// CRM як застосунок на телефоні/комп’ютері: «Додати на головний екран» / «Встановити»
+if ('serviceWorker' in navigator && location.protocol === 'https:') {
+  addEventListener('load', () => navigator.serviceWorker.register('/crm-sw.js', { scope: '/admin' }).catch(() => {}));
+}
