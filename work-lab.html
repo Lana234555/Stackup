@@ -73,13 +73,101 @@ a{color:inherit;text-decoration:none}button{font:inherit;color:inherit;cursor:po
 .wheel-ui{position:absolute;left:0;right:0;bottom:22px;display:flex;justify-content:center;gap:14px;align-items:center;z-index:3}
 .wheel-ui button{width:44px;height:44px;border-radius:50%;border:1px solid var(--ink);background:var(--paper)}
 .wheel-name{min-width:220px;text-align:center}
+.ui{display:flex;justify-content:center;gap:14px;align-items:center;margin-top:24px}
+.ui button{width:44px;height:44px;border-radius:50%;border:1px solid var(--ink);background:var(--paper)}
+.ui .mono{min-width:200px;text-align:center}
+.hint{position:absolute;left:18px;top:16px;z-index:5;opacity:.6;pointer-events:none}
+
+/* ---------- 04 DECK ---------- */
+.deck{position:relative;height:min(560px,72svh);display:grid;place-items:center;touch-action:pan-y;user-select:none}
+.dc{position:absolute;width:min(620px,86vw);aspect-ratio:4/3;border-radius:18px;background:var(--c);color:var(--fg);overflow:hidden;box-shadow:0 30px 60px -22px #0007;transition:transform .55s cubic-bezier(.2,.7,.2,1),opacity .45s;cursor:grab;will-change:transform}
+.dc.drag{transition:none;cursor:grabbing}
+.dc img{position:absolute;left:6%;top:5%;width:88%;aspect-ratio:16/9;object-fit:cover;border-radius:8px;box-shadow:0 14px 30px #0004}
+.dc .dcap{position:absolute;left:6%;right:6%;bottom:6%;display:flex;justify-content:space-between;align-items:flex-end;gap:12px}
+.dc .dcap b{font-size:clamp(22px,2.6vw,34px);letter-spacing:-.05em;font-weight:650;display:block;line-height:1;margin-top:6px}
+.dc .dcap .mono{opacity:.7}.dc .pill{background:var(--acid);color:var(--ink)}
+
+/* ---------- 05 CANVAS ---------- */
+.canvas{height:min(640px,78svh);overflow:hidden;position:relative;cursor:grab;touch-action:pan-y;user-select:none;border-block:1px solid var(--line);background-image:radial-gradient(circle,#18191730 1px,transparent 1.3px);background-size:26px 26px}
+.canvas.drag{cursor:grabbing}
+.ct{position:absolute;left:0;top:0;width:var(--tw);will-change:transform}
+.ct .im{display:block;aspect-ratio:4/3;border-radius:12px;overflow:hidden;background:var(--c);position:relative;transition:transform .5s cubic-bezier(.2,.7,.2,1),box-shadow .5s}
+.ct img{position:absolute;left:8%;top:10%;width:84%;aspect-ratio:16/10;object-fit:cover;border-radius:6px;box-shadow:0 10px 24px #0004}
+.ct .ctx{display:flex;justify-content:space-between;align-items:baseline;margin-top:9px;gap:8px}.ct b{font-size:15px;letter-spacing:-.03em;font-weight:600}.ct .mono{color:var(--muted);font-size:9.5px}
+.ct:hover .im{transform:scale(1.05) rotate(-1.2deg);box-shadow:0 24px 50px -12px #0006}
+
+/* ---------- 06 BLINDS ---------- */
+.blinds{display:flex;gap:8px;height:min(560px,72svh);padding:0 6.4%}
+.blinds.many{gap:5px}
+.bl{flex:1 1 0;min-width:0;position:relative;border-radius:14px;overflow:hidden;background:var(--c);color:var(--fg);transition:flex-grow .8s cubic-bezier(.2,.7,.2,1)}
+.bl.on{flex-grow:10}
+.bl img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:left top;opacity:.18;filter:grayscale(1);transition:opacity .6s,filter .6s}
+.bl.on img{opacity:1;filter:none}
+.bl .vn{position:absolute;left:50%;bottom:22px;transform:translateX(-50%) rotate(180deg);writing-mode:vertical-rl;white-space:nowrap;font-weight:650;font-size:20px;letter-spacing:-.03em;transition:opacity .3s}
+.blinds.many .vn{font-size:14px}
+.bl .num{position:absolute;top:14px;left:0;right:0;text-align:center;transition:opacity .3s}
+.bl.on .vn,.bl.on .num{opacity:0}
+.bl .bi{position:absolute;left:0;right:0;bottom:0;padding:60px 24px 22px;background:linear-gradient(transparent,#000d);color:#fff;display:flex;justify-content:space-between;align-items:flex-end;gap:16px;opacity:0;transform:translateY(14px);transition:opacity .3s,transform .3s}
+.bl.on .bi{opacity:1;transform:none;transition:opacity .45s .35s,transform .45s .35s}
+.bl .bi b{font-size:clamp(26px,3vw,44px);letter-spacing:-.05em;display:block;font-weight:650;line-height:1;margin-top:6px;white-space:nowrap}
+.bl .pill{background:var(--acid);color:var(--ink)}
+@media(max-width:700px){.blinds{flex-direction:column;height:auto}.bl,.blinds.many .bl{flex:none;height:54px;transition:height .7s cubic-bezier(.2,.7,.2,1)}.bl.on{height:320px}.bl .vn,.blinds.many .vn{writing-mode:horizontal-tb;transform:translateY(-50%);left:16px;top:50%;bottom:auto;font-size:17px}.bl .num{top:50%;transform:translateY(-50%);left:auto;right:16px;text-align:right}.bl .bi b{font-size:26px}}
+
+/* ---------- 07 LUPA ---------- */
+.lupa{display:flex;flex-wrap:wrap;gap:12px;justify-content:center;padding:70px 6.4% 90px;max-width:1200px;margin:0 auto}
+.lp{width:var(--s);aspect-ratio:1;border-radius:14px;overflow:hidden;background:var(--c);position:relative;will-change:transform;transition:transform .2s ease-out;flex:none}
+.lp img{position:absolute;left:10%;top:13%;width:80%;aspect-ratio:16/10;object-fit:cover;border-radius:5px;box-shadow:0 6px 14px #0004}
+.lp .ln{position:absolute;left:10%;right:10%;bottom:9%;font-weight:650;font-size:12px;color:var(--fg);letter-spacing:-.02em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.lupa-cap{text-align:center;min-height:90px;padding:0 6.4%}
+.lupa-cap h3{margin:0;font-size:clamp(34px,4.4vw,64px);letter-spacing:-.06em;font-weight:650;line-height:1}
+.lupa-cap .mono{color:var(--muted);display:block;margin-top:10px}
+@media(max-width:700px){.lupa{gap:8px;padding:20px 16px}.lp{width:calc((100% - 16px) / 3)}}
+
+/* ---------- 08 SPOTLIGHT ---------- */
+.spot{margin:0 6.4%;border-radius:22px;background:var(--c);color:var(--fg);transition:background .8s,color .8s;padding:clamp(20px,3vw,44px);display:grid;grid-template-columns:1fr 1.6fr;gap:clamp(20px,3vw,48px);align-items:center;min-height:520px}
+.sp-text .mono{opacity:.7}.sp-text h3{font-size:clamp(40px,5.2vw,84px);letter-spacing:-.06em;line-height:.92;margin:14px 0 16px;font-weight:650}
+.sp-text p{opacity:.8;line-height:1.5;margin:0 0 24px;max-width:340px}
+.sp-text .pill{background:var(--acid);color:var(--ink)}
+.sp-text>*{transition:opacity .35s,transform .35s}.spot.swap .sp-text>*{opacity:0;transform:translateY(10px)}
+.sp-stage{position:relative;aspect-ratio:16/10;border-radius:12px;overflow:hidden;box-shadow:0 30px 60px -20px #0008;background:#0002}
+.sp-stage img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:0;transform:scale(1.06);transition:opacity .8s,transform 3s ease-out}
+.sp-stage img.on{opacity:1;transform:scale(1)}
+.sp-strip{display:flex;gap:10px;overflow-x:auto;padding:18px 6.4% 6px;scrollbar-width:none}.sp-strip::-webkit-scrollbar{display:none}
+.sp-th{flex:none;width:150px;border:0;padding:0;background:none;text-align:left;opacity:.45;transition:opacity .3s}
+.sp-th.on,.sp-th:hover{opacity:1}
+.sp-th .i{display:block;aspect-ratio:16/10;border-radius:8px;overflow:hidden;background:var(--c)}.sp-th .i img{width:100%;height:100%;object-fit:cover;display:block}
+.sp-th .bar{display:block;height:2px;background:var(--line);margin-top:8px;position:relative;overflow:hidden}.sp-th .bar i{position:absolute;inset:0;background:var(--ink);transform:scaleX(0);transform-origin:left}
+.sp-th.on .bar i{animation:spbar 5s linear forwards}.spotwrap.pause .sp-th.on .bar i{animation-play-state:paused}
+@keyframes spbar{to{transform:scaleX(1)}}
+.sp-th b{display:block;font-size:13px;margin-top:6px;font-weight:600;letter-spacing:-.02em}
+@media(max-width:800px){.spot{grid-template-columns:1fr;min-height:0}.sp-stage{order:-1}.sp-th{width:120px}}
+
+/* ---------- 09 TUNNEL ---------- */
+.tunnel{height:min(660px,80svh);perspective:800px;perspective-origin:50% 42%;overflow:hidden;position:relative;background:#121311;color:#fff;cursor:grab;touch-action:pan-y;user-select:none}
+.tunnel.drag{cursor:grabbing}
+.tunnel .ui{position:absolute;left:0;right:0;bottom:20px;margin:0;z-index:99999}.tunnel .ui button{background:#121311;border-color:#fff;color:#fff}
+.tc{position:absolute;left:50%;top:44%;width:var(--w);margin-left:calc(var(--w) / -2);margin-top:calc(var(--w) * -.36);will-change:transform,opacity}
+.tc .im{display:block;aspect-ratio:16/10;border-radius:10px;overflow:hidden;background:var(--c);box-shadow:0 30px 70px #000b}.tc .im img{width:100%;height:100%;object-fit:cover;display:block}
+.tc .tx{display:flex;justify-content:space-between;margin-top:12px;align-items:baseline;gap:10px}.tc b{font-size:22px;letter-spacing:-.04em;font-weight:650}.tc .mono{opacity:.6}
+
+/* ---------- 10 TABLE ---------- */
+.table{position:relative;height:var(--h,min(680px,86svh));margin:0 6.4%;border-radius:22px;background:#d9dccf;overflow:hidden;box-shadow:inset 0 0 0 1px var(--line);transition:height .6s}
+.pc{position:absolute;left:0;top:0;width:var(--w);background:#fbfbf7;padding:9px 9px 0;border-radius:4px;box-shadow:0 10px 24px -8px #0005;cursor:grab;touch-action:none;transition:transform .9s cubic-bezier(.2,.7,.2,1),box-shadow .3s;user-select:none}
+.pc.drag{transition:box-shadow .3s;cursor:grabbing;box-shadow:0 34px 50px -12px #0007}
+.pc .im{aspect-ratio:4/3;background:var(--c);overflow:hidden;position:relative}.pc .im img{position:absolute;left:8%;top:12%;width:84%;aspect-ratio:16/10;object-fit:cover;box-shadow:0 8px 18px #0004;pointer-events:none}
+.pc .pt{display:flex;justify-content:space-between;align-items:center;padding:9px 2px 11px;gap:8px}.pc b{font-family:Georgia,serif;font-style:italic;font-weight:400;font-size:17px;letter-spacing:-.02em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pc .go{width:30px;height:30px;border-radius:50%;background:var(--ink);color:#fff;display:grid;place-items:center;font-size:13px;flex:none}
+.table-ui{position:absolute;right:16px;top:14px;z-index:99999}.table-ui button{border:1px solid var(--ink);border-radius:99px;padding:8px 14px;background:var(--paper)}
+@media(max-width:700px){.table,.spot{margin:0 16px}.pc b{font-size:14px}.pc .go{width:24px;height:24px}}
+
 .note{padding:0 6.4%;margin-top:18px;color:var(--muted);font-size:13px}
+@media(max-width:900px){.top{flex-wrap:wrap}.top nav{flex-wrap:nowrap;overflow-x:auto;max-width:100%;scrollbar-width:none;padding-bottom:2px}.top nav a,.top button{flex:none}}
 @media(prefers-reduced-motion:reduce){.row{transition:none}}
 </style>
 </head>
 <body>
 <header class="top"><b>STACKUP<i></i> <span class="mono" style="font-weight:400">WORK LAB</span></b>
-<nav><a href="#flow" class="mono">01 Потік</a><a href="#index" class="mono">02 Індекс</a><a href="#wheel" class="mono">03 Колесо</a><button type="button" class="mono" id="many" aria-pressed="false">Показати як 30 робіт</button></nav></header>
+<nav><a href="#flow" class="mono">01 Потік</a><a href="#index" class="mono">02 Індекс</a><a href="#wheel" class="mono">03 Колесо</a><a href="#deck" class="mono">04 Колода</a><a href="#canvas" class="mono">05 Полотно</a><a href="#blinds" class="mono">06 Жалюзі</a><a href="#lupa" class="mono">07 Лупа</a><a href="#spot" class="mono">08 Прожектор</a><a href="#tunnel" class="mono">09 Тунель</a><a href="#table" class="mono">10 Стіл</a><button type="button" class="mono" id="many" aria-pressed="false">Показати як 30 робіт</button></nav></header>
 
 <section class="lab" id="flow">
   <div class="lab-head"><div><span class="mono">01 / Потік</span><h2>Нескінченна <span class="serif">стрічка.</span></h2></div>
@@ -99,6 +187,51 @@ a{color:inherit;text-decoration:none}button{font:inherit;color:inherit;cursor:po
   <p>Роботи стоять по колу в просторі і повільно обертаються. Крути мишкою, тачпадом, пальцем або стрілками, наведення зупиняє. Що більше робіт, то більше коло.</p></div>
   <div class="wheel" id="wheelBox"><div class="ring" id="ring"></div>
   <div class="wheel-ui"><button type="button" id="wPrev" aria-label="Назад">←</button><span class="mono wheel-name" id="wName"></span><button type="button" id="wNext" aria-label="Вперед">→</button></div></div>
+</section>
+
+<section class="lab" id="deck">
+  <div class="lab-head"><div><span class="mono">04 / Колода</span><h2>Стос <span class="serif">карток.</span></h2></div>
+  <p>Роботи лежать стосом, як колода. Верхню можна змахнути вбік мишкою чи пальцем, і під нею відкривається наступна. Сама гортається, наведення зупиняє. Скільки б не було робіт, займає один екран.</p></div>
+  <div class="deck" id="deckBox"></div>
+  <div class="ui"><button type="button" id="dPrev" aria-label="Назад">←</button><span class="mono" id="dName"></span><button type="button" id="dNext" aria-label="Вперед">→</button></div>
+</section>
+
+<section class="lab" id="canvas">
+  <div class="lab-head"><div><span class="mono">05 / Полотно</span><h2>Безмежне <span class="serif">полотно.</span></h2></div>
+  <p>Роботи розкладені на нескінченному столі, який повільно пливе. Хапай мишкою і тягни в будь-який бік, кінця немає. Чим більше робіт, тим різноманітніше полотно.</p></div>
+  <div class="canvas" id="canvasBox"><span class="mono hint">Тягни в будь-який бік ✥</span></div>
+</section>
+
+<section class="lab" id="blinds">
+  <div class="lab-head"><div><span class="mono">06 / Жалюзі</span><h2>Смуги, що <span class="serif">розкриваються.</span></h2></div>
+  <p>Кожна робота стоїть вузькою кольоровою смугою з назвою. Наведи, і смуга розсувається на весь блок зі скріншотом. Сама перемикається по черзі. На телефоні смуги стають горизонтальними.</p></div>
+  <div class="blinds" id="blindsBox"></div>
+</section>
+
+<section class="lab" id="lupa">
+  <div class="lab-head"><div><span class="mono">07 / Лупа</span><h2>Сітка під <span class="serif">лупою.</span></h2></div>
+  <p>Компактна сітка маленьких плиток, як контактний аркуш. Під мишкою плитки плавно збільшуються, як док на Mac, а внизу з'являється назва. 30 робіт поміщаються на один екран.</p></div>
+  <div class="lupa" id="lupaBox"></div>
+  <div class="lupa-cap" id="lupaCap"></div>
+</section>
+
+<section class="lab spotwrap" id="spot">
+  <div class="lab-head"><div><span class="mono">08 / Прожектор</span><h2>Одна робота <span class="serif">в центрі.</span></h2></div>
+  <p>Великий показ однієї роботи з кадрами сайту, а фон перефарбовується в її колір. Знизу стрічка з усіма роботами та смужкою часу. Наведення зупиняє, клік по мініатюрі перемикає.</p></div>
+  <div class="spot" id="spotBox"><div class="sp-text" id="spText"></div><div class="sp-stage" id="spStage"></div></div>
+  <div class="sp-strip" id="spStrip"></div>
+</section>
+
+<section class="lab" id="tunnel">
+  <div class="lab-head"><div><span class="mono">09 / Тунель</span><h2>Політ крізь <span class="serif">роботи.</span></h2></div>
+  <p>Роботи летять тобі назустріч з глибини темного простору. Тягни, щоб прискорити або повернути назад, стрілки перемикають по одній. Наведення зупиняє політ.</p></div>
+  <div class="tunnel" id="tunnelBox"><div class="ui"><button type="button" id="tPrev" aria-label="Назад">←</button><span class="mono" id="tName"></span><button type="button" id="tNext" aria-label="Вперед">→</button></div></div>
+</section>
+
+<section class="lab" id="table">
+  <div class="lab-head"><div><span class="mono">10 / Стіл</span><h2>Розкидані <span class="serif">поляроїди.</span></h2></div>
+  <p>Роботи лежать на столі, як фотокартки. Кожну можна взяти й перетягнути, вона стає зверху. Кнопка в куті акуратно розкладає їх сіткою і розкидає назад.</p></div>
+  <div class="table" id="tableBox"><div class="table-ui"><button type="button" class="mono" id="tblBtn">Розкласти</button></div></div>
 </section>
 <p class="note">Тестова сторінка, у меню сайту її немає. Обери варіант, і я поставлю його на головну замість поточної стрічки.</p>
 
@@ -179,14 +312,140 @@ function wheelTick(dt){
   wName.textContent=String(front+1).padStart(2,'0')+' / '+String(N).padStart(2,'0')+' · '+LIST[front].n;
 }
 
+/* ---------- shared ---------- */
+const $=id=>document.getElementById(id), pad=n=>String(n).padStart(2,'0'), mod=(a,n)=>((a%n)+n)%n, clamp01=v=>Math.max(0,Math.min(1,v));
+const vis={};
+if('IntersectionObserver' in window){const io=new IntersectionObserver(es=>es.forEach(e=>vis[e.target.id]=e.isIntersecting),{threshold:.2});document.querySelectorAll('.lab').forEach(s=>io.observe(s));}
+const isVis=id=>vis[id]!==false&&vis[id]!==undefined;
+const cardInner=p=>`<img src="${src(p.img[0])}" alt="" draggable="false" loading="lazy">`;
+
+/* ---------- 04 DECK ---------- */
+const deckBox=$('deckBox'); let dk=0,dEls=[],dDrag=null,dHover=false;
+function buildDeck(){dk=0;
+  deckBox.innerHTML=LIST.map(p=>`<a class="dc" href="${p.u}" target="_blank" rel="noopener" draggable="false" style="--c:${p.c};--fg:${p.fg}">${cardInner(p)}<span class="dcap"><span><span class="mono">${esc(p.kick)}</span><b>${esc(p.n)}</b></span><span class="pill">Відкрити ↗</span></span></a>`).join('');
+  dEls=[...deckBox.children]; deckRender();}
+function deckRender(){const N=dEls.length;dEls.forEach((el,i)=>{const d=mod(i-dk,N);el.style.zIndex=N-d;el.style.opacity=d<4?1:0;el.style.pointerEvents=d?'none':'auto';
+  el.style.transform=`translate3d(0,${-d*20}px,0) scale(${1-d*.06}) rotate(${d?(i%2?1:-1)*(d*1.8):0}deg)`;});
+  $('dName').textContent=pad(dk+1)+' / '+pad(N)+' · '+LIST[dk].n;}
+function deckFling(dir){const el=dEls[dk];el.style.transform=`translate3d(${dir*130}%,-30px,0) rotate(${dir*20}deg)`;el.style.opacity=0;
+  setTimeout(()=>{dk=mod(dk+1,dEls.length);deckRender();},260);}
+$('dNext').onclick=()=>deckFling(-1);$('dPrev').onclick=()=>{dk=mod(dk-1,dEls.length);deckRender();};
+deckBox.addEventListener('mouseenter',()=>dHover=true);deckBox.addEventListener('mouseleave',()=>dHover=false);
+deckBox.addEventListener('pointerdown',e=>{const el=e.target.closest('.dc');if(!el||el!==dEls[dk])return;dDrag={el,x:e.clientX,y:e.clientY,dx:0,dy:0};});
+addEventListener('pointermove',e=>{if(!dDrag)return;dDrag.dx=e.clientX-dDrag.x;dDrag.dy=e.clientY-dDrag.y;if(Math.abs(dDrag.dx)>5)dDrag.el.classList.add('drag');
+  dDrag.el.style.transform=`translate3d(${dDrag.dx}px,${dDrag.dy*.3}px,0) rotate(${dDrag.dx*.05}deg)`;});
+addEventListener('pointerup',()=>{if(!dDrag)return;const {el,dx}=dDrag;el.classList.remove('drag');if(Math.abs(dx)>110)deckFling(Math.sign(dx));else deckRender();
+  if(Math.abs(dx)>6){el.addEventListener('click',ev=>ev.preventDefault(),{once:true,capture:true});}dDrag=null;});
+addEventListener('pointercancel',()=>{if(dDrag){dDrag.el.classList.remove('drag');dDrag=null;deckRender();}});
+setInterval(()=>{if(!dHover&&!dDrag&&!reduce&&isVis('deck'))deckFling(-1);},3600);
+
+/* ---------- 05 CANVAS ---------- */
+const cvBox=$('canvasBox'); let cvPool=[],cox=0,coy=0,cvx=0,cvy=0,cDrag=null,cMoved=0,cHover=false,cTW=240,cCW=0,cCH=0,cCols=0,cRows=0;
+function buildCanvas(){cvBox.querySelectorAll('.ct').forEach(e=>e.remove());
+  cTW=Math.round(Math.min(250,Math.max(170,innerWidth*.42)));cCW=cTW+44;cCH=Math.round(cTW*.75)+36+44;
+  cCols=Math.ceil(cvBox.clientWidth/cCW)+2;cRows=Math.ceil(cvBox.clientHeight/cCH)+2;cvPool=[];
+  for(let b=0;b<cRows;b++)for(let a=0;a<cCols;a++){const el=document.createElement('a');el.className='ct';el.target='_blank';el.rel='noopener';el.draggable=false;el.style.setProperty('--tw',cTW+'px');cvBox.appendChild(el);cvPool.push({el,a,b,idx:-1});}}
+function canvasTick(dt){
+  if(!cDrag){cox+=cvx;coy+=cvy;cvx*=.93;cvy*=.93;if(!cHover&&!reduce&&isVis('canvas')){cox-=dt*.025;coy-=dt*.012;}}
+  const N=LIST.length,K=N<=8?3:7,bx=Math.floor(-cox/cCW)-1,by=Math.floor(-coy/cCH)-1;
+  cvPool.forEach(t=>{const cx=bx+t.a,cy=by+t.b,idx=mod(cx+cy*K,N);
+    if(t.idx!==idx){t.idx=idx;const p=LIST[idx];t.el.href=p.u;t.el.innerHTML=`<span class="im" style="--c:${p.c}">${cardInner(p)}</span><span class="ctx"><b>${esc(p.n)}</b><span class="mono">${esc(p.cat)}</span></span>`;}
+    t.el.style.transform=`translate3d(${cx*cCW+cox+22}px,${cy*cCH+coy+(mod(cx,2)?cCH/2:0)}px,0)`;});
+  cvBox.style.backgroundPosition=`${cox}px ${coy}px`;}
+cvBox.addEventListener('mouseenter',()=>cHover=true);cvBox.addEventListener('mouseleave',()=>cHover=false);
+cvBox.addEventListener('pointerdown',e=>{cDrag={x:e.clientX,y:e.clientY,touch:e.pointerType!=='mouse'};cMoved=0;cvBox.classList.add('drag');});
+addEventListener('pointermove',e=>{if(!cDrag)return;const dx=e.clientX-cDrag.x,dy=cDrag.touch?0:e.clientY-cDrag.y;cDrag.x=e.clientX;cDrag.y=e.clientY;cMoved+=Math.abs(dx)+Math.abs(dy);cox+=dx;coy+=dy;cvx=dx;cvy=dy;});
+addEventListener('pointerup',()=>{if(!cDrag)return;cDrag=null;cvBox.classList.remove('drag');});
+addEventListener('pointercancel',()=>{cDrag=null;cvBox.classList.remove('drag');});
+cvBox.addEventListener('click',e=>{if(cMoved>6)e.preventDefault();},true);
+
+/* ---------- 06 BLINDS ---------- */
+const blBox=$('blindsBox'); let blOn=0,blHover=false;
+function buildBlinds(){blOn=0;blBox.classList.toggle('many',LIST.length>10);
+  blBox.innerHTML=LIST.map((p,i)=>`<a class="bl${i?'':' on'}" href="${p.u}" target="_blank" rel="noopener" style="--c:${p.c};--fg:${p.fg}"><img src="${src(p.img[0])}" alt="" loading="lazy"><span class="num mono">${pad(i+1)}</span><span class="vn">${esc(p.n.replace(/’/g,"'"))}</span><span class="bi"><span><span class="mono">${esc(p.kick)}</span><b>${esc(p.n)}</b></span><span class="pill">Відкрити ↗</span></span></a>`).join('');}
+const blSet=i=>{blOn=i;[...blBox.children].forEach((el,j)=>el.classList.toggle('on',j===i));};
+blBox.addEventListener('mouseover',e=>{const el=e.target.closest('.bl');if(el)blSet([...blBox.children].indexOf(el));});
+blBox.addEventListener('mouseenter',()=>blHover=true);blBox.addEventListener('mouseleave',()=>blHover=false);
+blBox.addEventListener('click',e=>{const el=e.target.closest('.bl');if(el&&!el.classList.contains('on')){e.preventDefault();blSet([...blBox.children].indexOf(el));}});
+setInterval(()=>{if(!blHover&&!reduce&&isVis('blinds'))blSet(mod(blOn+1,LIST.length));},3200);
+
+/* ---------- 07 LUPA ---------- */
+const lpBox=$('lupaBox'),lpCap=$('lupaCap'); let lpRects=[];
+function buildLupa(){lpBox.style.setProperty('--s',(LIST.length<=8?150:108)+'px');
+  lpBox.innerHTML=LIST.map((p,i)=>`<a class="lp" href="${p.u}" target="_blank" rel="noopener" data-i="${i}" style="--c:${p.c};--fg:${p.fg}">${cardInner(p)}<span class="ln">${esc(p.n)}</span></a>`).join('');lpCapSet(0);}
+const lpCapSet=i=>{const p=LIST[i];lpCap.innerHTML=`<h3>${esc(p.n)}</h3><span class="mono">${pad(i+1)} / ${pad(LIST.length)} · ${esc(p.kick)}</span>`;};
+const lpMeasure=()=>{lpRects=[...lpBox.children].map(el=>{el.style.transform='';const r=el.getBoundingClientRect();return {el,x:r.left+r.width/2,y:r.top+r.height/2+scrollY};});};
+lpBox.addEventListener('mouseenter',lpMeasure);
+lpBox.addEventListener('mousemove',e=>{if(matchMedia('(hover:none)').matches)return;let best=null,bd=1e9;
+  lpRects.forEach(t=>{const d=Math.hypot(e.clientX-t.x,e.clientY+scrollY-t.y),k=Math.pow(clamp01(1-d/240),2),s=1+.75*k;t.el.style.transform=`scale(${s.toFixed(3)})`;t.el.style.zIndex=Math.round(s*100);if(d<bd){bd=d;best=t;}});
+  if(best)lpCapSet(+best.el.dataset.i);});
+lpBox.addEventListener('mouseleave',()=>lpRects.forEach(t=>{t.el.style.transform='';t.el.style.zIndex='';}));
+
+/* ---------- 08 SPOTLIGHT ---------- */
+const spWrap=$('spot'),spBox=$('spotBox'),spText=$('spText'),spStage=$('spStage'),spStrip=$('spStrip'); let spI=0,spT=null;
+function buildSpot(){spStrip.innerHTML=LIST.map((p,i)=>`<button type="button" class="sp-th" data-i="${i}" style="--c:${p.c}"><span class="i"><img src="${src(p.img[0])}" alt="" loading="lazy"></span><span class="bar"><i></i></span><b>${esc(p.n)}</b></button>`).join('');spSet(0,true);}
+function spSet(i,first){spI=i;const p=LIST[i];spBox.style.setProperty('--c',p.c);spBox.style.setProperty('--fg',p.fg);
+  spBox.classList.add('swap');setTimeout(()=>{spText.innerHTML=`<span class="mono">${pad(i+1)} / ${pad(LIST.length)} · ${esc(p.kick)}</span><h3>${esc(p.n)}</h3><p>${esc(p.d)}</p><a class="pill" href="${p.u}" target="_blank" rel="noopener">Відкрити сайт ↗</a>`;spBox.classList.remove('swap');},first?0:300);
+  spStage.innerHTML=p.img.map(s=>`<img src="${src(s)}" alt="">`).join('');const ims=spStage.querySelectorAll('img');requestAnimationFrame(()=>requestAnimationFrame(()=>ims[0].classList.add('on')));
+  clearInterval(spT);let j=0;if(ims.length>1)spT=setInterval(()=>{if(spWrap.classList.contains('pause'))return;ims[j].classList.remove('on');j=(j+1)%ims.length;ims[j].classList.add('on');},1600);
+  [...spStrip.children].forEach((b,k)=>{b.classList.remove('on');if(k===i){void b.offsetWidth;b.classList.add('on');if(!first)spStrip.scrollTo({left:b.offsetLeft-spStrip.clientWidth/2+b.offsetWidth/2,behavior:'smooth'});}});}
+spStrip.addEventListener('click',e=>{const b=e.target.closest('.sp-th');if(b)spSet(+b.dataset.i);});
+spStrip.addEventListener('animationend',e=>{if(e.animationName==='spbar')spSet(mod(spI+1,LIST.length));});
+spWrap.addEventListener('mouseenter',()=>spWrap.classList.add('pause'));spWrap.addEventListener('mouseleave',()=>spWrap.classList.remove('pause'));
+setInterval(()=>{if(!spWrap.matches(':hover'))spWrap.classList.toggle('pause',!isVis('spot')||reduce);},500);
+
+/* ---------- 09 TUNNEL ---------- */
+const tnBox=$('tunnelBox'); let tEls=[],tz=0,tvel=0,tspeed=1,tHover=false,tDrag=null,tMoved=0,tGap=600,tL=3600,tW=420,tAnim=null;
+function buildTunnel(){tnBox.querySelectorAll('.tc').forEach(e=>e.remove());const N=LIST.length;tGap=Math.max(520,3600/N);tL=N*tGap;tW=Math.min(440,innerWidth*.7);tz=0;
+  tEls=LIST.map((p,i)=>{const el=document.createElement('a');el.className='tc';el.href=p.u;el.target='_blank';el.rel='noopener';el.draggable=false;el.style.setProperty('--w',tW+'px');
+    el.innerHTML=`<span class="im" style="--c:${p.c}">${cardInner(p)}</span><span class="tx"><b>${esc(p.n)}</b><span class="mono">${esc(p.kick)}</span></span>`;tnBox.appendChild(el);return el;});}
+function tunnelTick(dt){const target=tHover||tDrag||reduce||!isVis('tunnel')?0:1;tspeed+=(target-tspeed)*.06;
+  if(!tDrag&&!tAnim){tz+=dt*.16*tspeed+tvel;tvel*=.92;}
+  const near=320,sx=innerWidth<700?.32:1;let front=0,fz=-1e9;
+  tEls.forEach((el,i)=>{const zz=mod(i*tGap+tz,tL)-(tL-near),a=i*2.4,x=Math.cos(a)*tW*.95*sx,y=Math.sin(a)*tW*.22;
+    const op=clamp01((zz+4200)/1600)*clamp01((near-zz)/380);el.style.opacity=op.toFixed(3);el.style.zIndex=Math.round(zz+20000);
+    el.style.transform=`translate3d(${x}px,${y}px,${zz}px)`;el.style.pointerEvents=op>.6&&zz>-1400?'auto':'none';if(zz<near-200&&zz>fz){fz=zz;front=i;}});
+  $('tName').textContent=pad(front+1)+' / '+pad(tEls.length)+' · '+LIST[front].n;}
+const tStep=d=>{const from=tz,to=(Math.round(tz/tGap)+d)*tGap,t0=performance.now();tAnim=true;const go=t=>{const k=Math.min(1,(t-t0)/700);tz=from+(to-from)*(1-Math.pow(1-k,3));if(k<1)requestAnimationFrame(go);else tAnim=null;};requestAnimationFrame(go);};
+$('tNext').onclick=()=>tStep(1);$('tPrev').onclick=()=>tStep(-1);
+tnBox.addEventListener('mouseenter',()=>tHover=true);tnBox.addEventListener('mouseleave',()=>tHover=false);
+tnBox.addEventListener('pointerdown',e=>{if(e.target.closest('button'))return;tDrag={x:e.clientX};tMoved=0;tnBox.classList.add('drag');});
+addEventListener('pointermove',e=>{if(!tDrag)return;const dx=e.clientX-tDrag.x;tDrag.x=e.clientX;tMoved+=Math.abs(dx);tz-=dx*3;tvel=-dx*3;});
+addEventListener('pointerup',()=>{if(!tDrag)return;tDrag=null;tnBox.classList.remove('drag');});
+addEventListener('pointercancel',()=>{tDrag=null;tnBox.classList.remove('drag');});
+tnBox.addEventListener('click',e=>{if(tMoved>6)e.preventDefault();},true);
+
+/* ---------- 10 TABLE ---------- */
+const tbBox=$('tableBox'),tbBtn=$('tblBtn'); let tbSeed=1,tbCards=[],tbGrid=false,tbZ=10,tbDrag=null,tbShown=false;
+function buildTable(){tbBox.querySelectorAll('.pc').forEach(e=>e.remove());tbGrid=false;tbBtn.textContent='Розкласти';tbBox.style.removeProperty('--h');
+  const BW=tbBox.clientWidth,w=Math.round(LIST.length<=8?Math.min(240,BW*.42):Math.min(170,BW*.3));
+  tbCards=LIST.map((p,i)=>{const el=document.createElement('div');el.className='pc';el.style.setProperty('--w',w+'px');
+    el.innerHTML=`<span class="im" style="display:block;--c:${p.c}">${cardInner(p)}</span><span class="pt"><b>${esc(p.n)}</b><a class="go" href="${p.u}" target="_blank" rel="noopener" aria-label="Відкрити ${esc(p.n)}">↗</a></span>`;
+    tbBox.appendChild(el);return {el,x:BW/2-w/2,y:-400,r:0,w};});
+  tbCards.forEach(c=>tbPlace(c));tbShown=false;if(isVis('table'))tbScatter();}
+const tbPlace=c=>c.el.style.transform=`translate3d(${c.x}px,${c.y}px,0) rotate(${c.r}deg)`;
+function tbScatter(){tbShown=true;tbGrid=false;tbBox.style.removeProperty('--h');const rnd=k=>{const v=Math.sin(k*12.9898+tbSeed*78.233)*43758.5453;return v-Math.floor(v);};tbSeed++;
+  const BW=tbBox.clientWidth,BH=tbBox.clientHeight,N=tbCards.length,cols=Math.max(1,Math.ceil(Math.sqrt(N*BW/BH))),rows=Math.ceil(N/cols),cw=BW/cols,ch=(BH-40)/rows;
+  tbCards.forEach((c,i)=>{const h=c.el.offsetHeight,col=i%cols,row=Math.floor(i/cols);c.x=Math.max(8,Math.min(BW-c.w-8,col*cw+cw/2-c.w/2+(rnd(i)-.5)*cw*.5));c.y=Math.max(46,Math.min(BH-h-10,40+row*ch+ch/2-h/2+(rnd(i+50)-.5)*ch*.5));c.r=(rnd(i+99)-.5)*26;c.el.style.transitionDelay=(i*40)+'ms';tbPlace(c);});
+  setTimeout(()=>tbCards.forEach(c=>c.el.style.transitionDelay=''),1500);}
+function tbArrange(){tbGrid=true;const BW=tbBox.clientWidth,g=16,w=tbCards[0].w,h=tbCards[0].el.offsetHeight,cols=Math.max(1,Math.floor((BW-g)/(w+g))),rows=Math.ceil(tbCards.length/cols);
+  const left=(BW-(cols*(w+g)-g))/2;tbBox.style.setProperty('--h',Math.max(tbBox.clientHeight,rows*(h+g)+80)+'px');
+  tbCards.forEach((c,i)=>{c.x=left+(i%cols)*(w+g);c.y=62+Math.floor(i/cols)*(h+g);c.r=0;c.el.style.transitionDelay=(i*25)+'ms';tbPlace(c);});setTimeout(()=>tbCards.forEach(c=>c.el.style.transitionDelay=''),1200);}
+tbBtn.onclick=()=>{if(tbGrid){tbScatter();tbBtn.textContent='Розкласти';}else{tbArrange();tbBtn.textContent='Розкидати';}};
+tbBox.addEventListener('pointerdown',e=>{if(e.target.closest('.go'))return;const el=e.target.closest('.pc');if(!el)return;const c=tbCards.find(t=>t.el===el);
+  e.preventDefault();el.setPointerCapture(e.pointerId);el.style.zIndex=++tbZ;el.classList.add('drag');tbDrag={c,ox:e.clientX-c.x,oy:e.clientY-c.y};});
+tbBox.addEventListener('pointermove',e=>{if(!tbDrag)return;const c=tbDrag.c;c.x=e.clientX-tbDrag.ox;c.y=e.clientY-tbDrag.oy;tbPlace(c);});
+const tbUp=()=>{if(!tbDrag)return;tbDrag.c.el.classList.remove('drag');tbDrag=null;};tbBox.addEventListener('pointerup',tbUp);tbBox.addEventListener('pointercancel',tbUp);
+setInterval(()=>{if(!tbShown&&isVis('table'))tbScatter();},300);
+
 /* ---------- loop ---------- */
-function buildAll(){buildFlow();buildIndex();buildWheel();}
+function buildAll(){buildFlow();buildIndex();buildWheel();buildDeck();buildCanvas();buildBlinds();buildLupa();buildSpot();buildTunnel();buildTable();}
 document.getElementById('many').onclick=e=>{const on=e.currentTarget.getAttribute('aria-pressed')!=='true';e.currentTarget.setAttribute('aria-pressed',on);
   LIST=on?Array.from({length:30},(_,i)=>BASE[i%BASE.length]):BASE;cat='Усі';buildAll();};
-addEventListener('resize',buildWheel);
+let rzT=null,rzW=innerWidth;addEventListener('resize',()=>{clearTimeout(rzT);rzT=setTimeout(()=>{if(innerWidth===rzW)return;rzW=innerWidth;buildWheel();buildCanvas();buildTunnel();buildTable();},200);});
 buildAll();
 let tPrev=performance.now();
-(function loop(t){const dt=Math.min(64,t-tPrev);tPrev=t;flowTick(dt);floatTick();wheelTick(dt);requestAnimationFrame(loop);})(tPrev);
+(function loop(t){const dt=Math.min(64,t-tPrev);tPrev=t;flowTick(dt);floatTick();wheelTick(dt);canvasTick(dt);tunnelTick(dt);requestAnimationFrame(loop);})(tPrev);
 </script>
 </body>
 </html>
