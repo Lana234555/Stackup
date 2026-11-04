@@ -24,9 +24,11 @@ $$('.step').forEach((step,index) => { step.addEventListener('click',()=>selectSt
 renderStep(0,false);
 
 const projects = {
- reelly:{name:'Reelly',category:'REAL ESTATE PLATFORM',img:'assets/reelly.png',url:'https://reelly.io/',description:'A real estate platform built around discovering properties. A bold dark interface, property search and Dubai imagery come together in one clear entry point.'},
+ reelly:{name:'Reelly',category:'REAL ESTATE PLATFORM',img:'assets/work-reelly.webp',url:'https://reelly.io/',description:'An AI ecosystem for real estate sellers in the UAE: the largest broker community in the GCC, off-plan projects and a mobile property search, all in one clear, confident entry point.'},
  trustmont:{name:'Trustmont Capital',category:'WEBINAR LANDING',img:'assets/work-trustmont.webp',url:'https://lana234555.github.io/trustmont-webinar/',description:'A landing page for the Trustmont Capital × Wyndham Hotels & Resorts webinar on hotel real estate. An editorial dark look, a ticket-style hero and a short registration flow that turns interest into signed-up investors.'},
- lina:{name:'Lina’s Studio',category:'MUSIC STUDIO WEBSITE',img:'assets/work-lina.webp',url:'https://linasmusicgroup.org/',description:'A website for a music studio in Warsaw: vocal, guitar and piano lessons, live concerts and a creative community. Concert photography sets the mood, and a trial lesson is one tap away, in several languages.'}
+ lina:{name:'Lina’s Studio',category:'MUSIC STUDIO WEBSITE',img:'assets/work-lina.webp',url:'https://linasmusicgroup.org/',description:'A website for a music studio in Warsaw: vocal, guitar and piano lessons, live concerts and a creative community. Concert photography sets the mood, and a trial lesson is one tap away, in several languages.'},
+ money24:{name:'Money24 Estate',category:'INVESTMENT REAL ESTATE',img:'assets/work-money24.webp',url:'https://money24-estate.webflow.io/',description:'A website for an agency that invests in property abroad. A dark, confident layout, a bold orange promise of returns and a lead form that puts the client in touch with a manager in one step.'},
+ blissful:{name:'Blissful Birthing',category:'ONLINE COURSE PLATFORM',img:'assets/work-blissful.webp',url:'https://courses.blissfulbirthing.com/',description:'A course platform for expectant mothers. Warm photography, golden script typography and a calm sales page that turns a sensitive topic into an invitation.'}
 };
 const dialog = $('.project-dialog');
 $$('[data-project]').forEach(btn=>btn.addEventListener('click',()=>{const key = btn.dataset.project, p=projects[key];$('.dialog-body').innerHTML=`<span class="mono">SELECTED WORK / ${p.category}</span><h2>${p.name}<span class="serif">.</span></h2><img src="${p.img}" alt="${p.name} website"><div class="dialog-bottom"><p>${p.description}</p><a href="#contact" class="dialog-contact">Let’s build something like this ↗</a></div>${p.url?`<a class="dialog-note" href="${p.url}" target="_blank" rel="noopener">Visit the live site ↗</a>`:''}`; dialog.showModal();$('.dialog-contact').addEventListener('click',()=>dialog.close());}));
@@ -166,7 +168,7 @@ if(matchMedia('(hover: hover) and (pointer: fine)').matches&&!reduced){
  const aura=$('.cursor-aura');let targetX=0,targetY=0,auraX=0,auraY=0,cursorFrame=0,cursorSeen=false;
  function cursorColor(){
   const hit=document.elementFromPoint(targetX,targetY);if(!hit)return;
-  const dark=hit.closest('footer,.service-card.black,.project-reelly,.project-lina,.code-card,.develop-art')||(scrollY<metrics.diveRange&&scrollY/metrics.diveRange>.3);
+  const dark=hit.closest('footer,.service-card.black,.project-reelly,.project-lina,.project-blissful,.code-card,.develop-art')||(scrollY<metrics.diveRange&&scrollY/metrics.diveRange>.3);
   let color=dark?'#f6f6f0':'#a6c82f';
   if(!dark){if(hit.closest('.services'))color='#a4bc40';else if(hit.closest('.why'))color='#aaa0cf';else if(hit.closest('.work'))color='#70a892';else if(hit.closest('.process'))color='#78a8c8';}
   aura.style.setProperty('--cursor-color',color);
