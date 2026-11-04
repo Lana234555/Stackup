@@ -83,6 +83,7 @@ main{flex:1}
 .req{color:var(--soft)}
 .hint{display:block;font-size:13px;color:#8b8e80;line-height:1.5;margin:2px 0 6px}
 .hint.warn{color:#9a6a1e;margin-top:10px}
+.f-note{margin:-12px 0 34px;padding:16px 20px;background:var(--blue);border-radius:14px;font-size:15px;line-height:1.5}
 .field input[type=text],.field input[type=email],.field input[type=tel],.field input[type=url],.field textarea{width:100%;display:block;border:0;border-bottom:1px solid #cdd2c0;padding:15px 0;border-radius:0;background:transparent;font-size:16px;resize:vertical;transition:border-color .2s}
 .field input:focus,.field textarea:focus{outline:0;border-bottom-color:var(--ink)}
 .field input::placeholder,.field textarea::placeholder{color:#a0a594;font-size:15px}
