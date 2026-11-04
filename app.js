@@ -99,7 +99,7 @@ function updateScroll(){
   layers[0].style.transform=`translate3d(${-flow*75}%,${-flow*20}%,0) scale(${1+flow*.5})`;
   layers[1].style.transform=`translate3d(${flow*75}%,${-flow*35}%,0) scale(${1+flow*.7})`;
   layers[2].style.transform=`translate3d(0,${flow*85}%,0) scale(${1+flow*.6})`;
-  const clear=smooth((approach-.3)/.6);
+  const clear=smooth((sy+vh-metrics.arrivalTop-vh*.15)/(vh*.5));
   workHeading.style.opacity=.2+clear*.8;
   workHeading.style.filter=`blur(${(1-clear)*12}px)`;
   workHeading.style.transform=`translate3d(0,${(1-clear)*40}px,0) scale(${.88+clear*.12})`;
@@ -233,6 +233,16 @@ $$('.project-image').forEach(btn=>{
  rail.addEventListener('dragstart',e=>e.preventDefault());
  // keyboard
  rail.tabIndex=0; rail.addEventListener('keydown',e=>{if(e.key==='ArrowRight'){e.preventDefault();next.click();}if(e.key==='ArrowLeft'){e.preventDefault();prev.click();}});
+ // autoplay: one card every 3.5 s, loops; pauses while hovered, dragged, touched, focused or off-screen
+ const reduce=matchMedia('(prefers-reduced-motion: reduce)').matches;
+ let hover=false,visible=false,touchUntil=0;
+ rail.addEventListener('mouseenter',()=>hover=true); rail.addEventListener('mouseleave',()=>hover=false);
+ rail.addEventListener('touchstart',()=>touchUntil=Date.now()+8000,{passive:true});
+ rail.addEventListener('wheel',()=>touchUntil=Date.now()+6000,{passive:true});
+ [prev,next].forEach(b=>b.addEventListener('click',()=>touchUntil=Date.now()+8000));
+ if(!reduce)setInterval(()=>{if(hover||down||!visible||document.hidden||Date.now()<touchUntil||rail.contains(document.activeElement))return;
+  const max=rail.scrollWidth-rail.clientWidth; rail.scrollTo({left:rail.scrollLeft>=max-4?0:rail.scrollLeft+step(),behavior:'smooth'});},3500);
+ if('IntersectionObserver' in window)new IntersectionObserver(es=>es.forEach(en=>visible=en.isIntersecting&&en.intersectionRatio>.35),{threshold:[0,.35,.7]}).observe(rail);
  // slide-in on arrival
  if('IntersectionObserver' in window){const io=new IntersectionObserver(es=>es.forEach(en=>{if(en.isIntersecting){rail.classList.add('in');io.disconnect();}}),{threshold:.15});io.observe(rail);}else rail.classList.add('in');
 })();
