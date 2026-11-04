@@ -233,7 +233,7 @@ function filtered(ignoreStatus) {
     if (F.budget !== 'all' && x.budget !== F.budget) return false;
     if (F.unread && !isUnread(x)) return false;
     if (!inPeriod(x)) return false;
-    if (q && ![x.name, x.company, x.email, x.phone, x.id, x.type, x.notes].join(' ').toLowerCase().includes(q)) return false;
+    if (q && ![x.name, x.company, x.email, x.phone, x.id, x.type, notesText(x.notes)].join(' ').toLowerCase().includes(q)) return false;
     return true;
   });
   const dl = x => { const i = DL_ORDER.indexOf(x.deadline); return i < 0 ? 99 : i; };
@@ -412,8 +412,10 @@ function renderDetail(d) {
     ${spec.length ? `<div class="spec-box"><span class="mono">ТЗ КЛІЄНТА</span>${spec.map(f => `<a href="${esc(safeUrl(f.url))}" target="_blank" rel="noopener noreferrer"><span class="mono">${esc(ext(f.name))}</span><b>${esc(f.name)}</b><em>${size(f.size)}</em><i>↗</i></a>`).join('')}</div>` : ''}
 
     <section class="d-sec notes"><h3><span class="mono">✎</span>Мої нотатки</h3>
-      <textarea id="notes" rows="4" placeholder="Оцінка, години, ціна, питання до клієнта…">${esc(live.notes || '')}</textarea>
-      <div class="notes-bar"><button type="button" class="link mono" id="saveNotes">ЗБЕРЕГТИ НОТАТКИ</button><span class="mono" id="notesState"></span></div>
+      <ol class="nt-list" id="noteList">${notesHTML(live.notes)}</ol>
+      <div class="nt-compose"><textarea id="notes" rows="2" placeholder="Нова нотатка: оцінка, години, ціна, питання до клієнта…">${esc(noteDraft[current] || '')}</textarea>
+      <button type="button" class="nt-send" id="saveNotes" aria-label="Додати нотатку">↑</button></div>
+      <div class="notes-bar"><span class="mono">ENTER: ДОДАТИ · SHIFT+ENTER: НОВИЙ РЯДОК</span><span class="mono" id="notesState"></span></div>
     </section>
 
     ${rec.estimate && rec.estimate.length ? `<section class="d-sec d-est"><h3><span class="mono">✱</span>Для оцінки</h3><div class="est">${rec.estimate.map(([k, v]) => `<div><span class="mono">${esc(k)}</span><b>${esc(v)}</b></div>`).join('')}</div></section>` : ''}
@@ -434,14 +436,41 @@ async function setStatus(id, st) {
   try { await apiPost({ action: 'update', id, status: st }); }
   catch (e) { row.status = prev; if (cache[id]) cache[id].row.status = prev; render(); if (current === id && cache[id]) renderDetail(cache[id]); alert('Не вдалося змінити етап: ' + e.message); }
 }
+/* ---------- нотатки: стрічка записів з датою і часом, як повідомлення ---------- */
+const noteDraft = {};
+// у таблиці нотатки лежать у тій самій колонці: JSON-масив [{t, text}]; старий звичайний текст стає першим записом без дати
+function parseNotes(v) {
+  const raw = String(v || '').trim(); if (!raw) return [];
+  if (raw[0] === '[') { try { const a = JSON.parse(raw); if (Array.isArray(a)) return a.filter(n => n && typeof n.text === 'string'); } catch (e) {} }
+  return [{ t: '', text: raw }];
+}
+const notesText = v => parseNotes(v).map(n => n.text).join(' ');
+function notesHTML(v) {
+  const list = parseNotes(v);
+  if (!list.length) return '<li class="nt-empty mono">ЩЕ НЕМАЄ НОТАТОК</li>';
+  return list.map((n, i) => `<li class="nt"><div class="nt-meta mono"><span>${n.t ? esc(fmtDate(n.t)) : 'РАНІШЕ'}</span><button type="button" class="nt-del" data-del="${i}" aria-label="Видалити нотатку">×</button></div><p>${esc(n.text)}</p></li>`).join('');
+}
+async function writeNotes(id, list, okMsg) {
+  const s = $('#notesState'), row = items.find(x => x.id === id), prev = row ? row.notes : '';
+  const v = list.length ? JSON.stringify(list) : '';
+  if (row) row.notes = v; if (cache[id]) cache[id].row.notes = v;
+  if (current === id) { $('#noteList').innerHTML = notesHTML(v); const l = $('#noteList'); l.lastElementChild && l.lastElementChild.scrollIntoView({ block: 'nearest' }); }
+  if (s) s.textContent = 'ЗБЕРІГАЄМО…';
+  try { await apiPost({ action: 'update', id, notes: v }); if (s && current === id) s.textContent = okMsg; render(); return true; }
+  catch (e) { if (row) row.notes = prev; if (cache[id]) cache[id].row.notes = prev; if (current === id) $('#noteList').innerHTML = notesHTML(prev); if (s) s.textContent = 'ПОМИЛКА: ' + e.message; return false; }
+}
 async function saveNotes() {
-  const v = $('#notes').value, s = $('#notesState'), id = current;
-  s.textContent = 'ЗБЕРІГАЄМО…';
-  try {
-    await apiPost({ action: 'update', id, notes: v });
-    const row = items.find(x => x.id === id); row.notes = v; if (cache[id]) cache[id].row.notes = v;
-    s.textContent = '✓ ЗБЕРЕЖЕНО'; render();
-  } catch (e) { s.textContent = 'ПОМИЛКА: ' + e.message; }
+  const id = current, ta = $('#notes'), text = ta.value.trim();
+  if (!text) { ta.focus(); return; }
+  const row = items.find(x => x.id === id);
+  const list = parseNotes(row && row.notes).concat([{ t: new Date().toISOString(), text: text.slice(0, 4000) }]);
+  ta.value = ''; delete noteDraft[id];
+  if (!(await writeNotes(id, list, '✓ ДОДАНО'))) { ta.value = text; noteDraft[id] = text; }
+}
+async function deleteNote(i) {
+  const id = current, row = items.find(x => x.id === id), list = parseNotes(row && row.notes);
+  if (!list[i] || !confirm('Видалити цю нотатку?')) return;
+  list.splice(i, 1); writeNotes(id, list, '✓ ВИДАЛЕНО');
 }
 
 /* ---------- events ---------- */
@@ -482,12 +511,14 @@ document.addEventListener('click', e => {
   if (cp) { const url = new URL(cp.dataset.copy, location.href).href; navigator.clipboard && navigator.clipboard.writeText(url).then(() => { const s = cp.querySelector('span'); s.textContent = '✓ СКОПІЙОВАНО'; setTimeout(() => s.textContent = 'КОПІЮВАТИ', 1600); }); return; }
   const st = e.target.closest('[data-st]'); if (st && current) { setStatus(current, st.dataset.st); return; }
   if (e.target.closest('#saveNotes')) { saveNotes(); return; }
+  if (e.target.closest('.nt-del')) { deleteNote(+e.target.closest('.nt-del').dataset.del); return; }
   const o = e.target.closest('[data-open]'); if (o) { $('#toast').hidden = true; openDrawer(o.dataset.open); }
 });
 document.addEventListener('keydown', e => {
   if (e.key === 'Escape' && current) closeDrawer();
   if (e.key === 'Enter' && e.target.matches('[data-open].card, tr.row')) openDrawer(e.target.dataset.open);
   if ((e.metaKey || e.ctrlKey) && e.key === 's' && document.activeElement && document.activeElement.id === 'notes') { e.preventDefault(); saveNotes(); }
+  if (e.key === 'Enter' && !e.shiftKey && !e.isComposing && document.activeElement && document.activeElement.id === 'notes') { e.preventDefault(); saveNotes(); }
 });
 document.addEventListener('visibilitychange', () => { if (!document.hidden && !$('#app').hidden) poll(); });
 
@@ -585,6 +616,7 @@ if (DEMO) setTimeout(() => {
 
 /* ---------- init ---------- */
 if (!DEMO) setStages(store.get('stackup-stages-cache', null));
+document.addEventListener('input', e => { if (e.target.id === 'notes' && current) noteDraft[current] = e.target.value; });
 bellState();
 if (!EP && !DEMO) showLogin('Кабінет ще не підключено до Google-скрипта. Додайте адресу /exec у config.js (див. backend/README.md).');
 else if (DEMO || token) enter(); else showLogin();
@@ -595,3 +627,4 @@ if (DEMO) { $('#logoutAllBtn').hidden = true; }
 if ('serviceWorker' in navigator && location.protocol === 'https:') {
   addEventListener('load', () => navigator.serviceWorker.register('/crm-sw.js', { scope: '/admin' }).catch(() => {}));
 }
+
