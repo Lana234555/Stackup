@@ -169,7 +169,7 @@ if(matchMedia('(hover: hover) and (pointer: fine)').matches&&!reduced){
  const aura=$('.cursor-aura');let targetX=0,targetY=0,auraX=0,auraY=0,cursorFrame=0,cursorSeen=false;
  function cursorColor(){
   const hit=document.elementFromPoint(targetX,targetY);if(!hit)return;
-  const dark=hit.closest('footer,.service-card.black,.project-reelly,.project-lina,.project-blissful,.code-card,.develop-art')||(scrollY<metrics.diveRange&&scrollY/metrics.diveRange>.3);
+  const dark=hit.closest('footer,.service-card.black,.bl-reelly,.bl-trustmont,.bl-agency,.code-card,.develop-art')||(scrollY<metrics.diveRange&&scrollY/metrics.diveRange>.3);
   let color=dark?'#f6f6f0':'#a6c82f';
   if(!dark){if(hit.closest('.services'))color='#a4bc40';else if(hit.closest('.why'))color='#aaa0cf';else if(hit.closest('.work'))color='#70a892';else if(hit.closest('.process'))color='#78a8c8';}
   aura.style.setProperty('--cursor-color',color);
@@ -245,4 +245,22 @@ $$('.project-image').forEach(btn=>{
  if('IntersectionObserver' in window)new IntersectionObserver(es=>es.forEach(en=>visible=en.isIntersecting&&en.intersectionRatio>.35),{threshold:[0,.35,.7]}).observe(rail);
  // slide-in on arrival
  if('IntersectionObserver' in window){const io=new IntersectionObserver(es=>es.forEach(en=>{if(en.isIntersecting){rail.classList.add('in');io.disconnect();}}),{threshold:.15});io.observe(rail);}else rail.classList.add('in');
+})();
+
+
+// Selected work blinds: hover or tap opens a strip; it cycles through its shots; strips advance on their own until the visitor takes over.
+(()=>{
+ const box=document.querySelector('.work-blinds'); if(!box)return;
+ const strips=[...box.querySelectorAll('.bl')]; let on=0,hover=false,touched=0,seen=false,shotT=null;
+ const reduce=matchMedia('(prefers-reduced-motion: reduce)').matches;
+ const set=i=>{on=i;strips.forEach((el,j)=>el.classList.toggle('on',j===i));
+  clearInterval(shotT);strips.forEach(el=>el.querySelectorAll('img').forEach(im=>im.classList.remove('cur')));
+  const ims=strips[i].querySelectorAll('img');let k=0;ims[0].classList.add('cur');
+  if(ims.length>1&&!reduce)shotT=setInterval(()=>{ims[k].classList.remove('cur');k=(k+1)%ims.length;ims[k].classList.add('cur');},1700);};
+ box.addEventListener('mouseover',e=>{const el=e.target.closest('.bl');if(el&&matchMedia('(hover:hover)').matches){const i=strips.indexOf(el);if(i!==on)set(i);}});
+ box.addEventListener('mouseenter',()=>hover=true);box.addEventListener('mouseleave',()=>hover=false);
+ box.addEventListener('click',e=>{const el=e.target.closest('.bl');if(el&&!el.classList.contains('on')){e.preventDefault();touched=Date.now();set(strips.indexOf(el));}});
+ if('IntersectionObserver' in window){new IntersectionObserver(es=>es.forEach(en=>seen=en.isIntersecting),{threshold:.3}).observe(box);}else seen=true;
+ setInterval(()=>{if(!hover&&!reduce&&seen&&Date.now()-touched>9000)set((on+1)%strips.length);},3600);
+ set(0);
 })();
