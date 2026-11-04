@@ -268,6 +268,7 @@ function failed(kind, d) {
     const until = Date.now() + mins * 60000;
     p.setProperties({ FAILS: '0', LOCK_UNTIL: String(until), LOCK_LEVEL: String(level + 1) });
     audit('locked', mins + ' хв');
+    try { telegram('🔒 <b>CRM: забагато невдалих спроб входу</b>\nВхід заблоковано на ' + mins + ' хв. Якщо це не ви, змініть код кабінету.'); } catch (e) {}
     notify('CRM Stackup: вхід заблоковано на ' + mins + ' хв',
       'Було ' + SEC.MAX_FAILS + ' невдалих спроб входу в кабінет. Вхід заблоковано на ' + mins + ' хв.<br>Останній пристрій: ' + esc(ua(d)) +
       '<br><br>Якщо це не ви — змініть код (NEW_CODE + setup()). Розблокувати раніше: запустіть unlockLogin() у редакторі скрипта.');
@@ -389,7 +390,39 @@ function finish(d) {
       });
     }
   } catch (e) { /* лист не критичний */ }
+  try {
+    const o = r.obj, adminUrl = props().getProperty('ADMIN_URL') || '';
+    telegram('🟢 <b>Нова заявка</b>\n' + esc(o.name) + (o.company ? ' · ' + esc(o.company) : '') +
+      '\n' + esc(o.email) + (o.phone ? ' · ' + esc(o.phone) : '') +
+      '\n' + (o.mode === 'has' ? 'Готове ТЗ' : 'ТЗ з брифу') + (o.type ? ' · ' + esc(o.type) : '') + (o.budget ? ' · ' + esc(o.budget) : '') + (o.deadline ? ' · ' + esc(o.deadline) : ''),
+      /^https:\/\//.test(adminUrl) ? adminUrl + '#' + o.id : '');
+  } catch (e) { /* сповіщення не критичне */ }
   return { ok: true };
+}
+
+/* ---------- сповіщення в Telegram (миттєві push на телефон) ----------
+   1) У Telegram напишіть @BotFather → /newbot → отримаєте токен бота.
+   2) Властивості скрипта: TG_TOKEN = цей токен.
+   3) Напишіть своєму боту будь-що (наприклад /start).
+   4) Запустіть connectTelegram() у редакторі — бот надішле «Підключено». */
+function connectTelegram() {
+  const token = props().getProperty('TG_TOKEN');
+  if (!token) throw new Error('Спершу додайте властивість TG_TOKEN (токен від @BotFather).');
+  const res = JSON.parse(UrlFetchApp.fetch('https://api.telegram.org/bot' + token + '/getUpdates', { muteHttpExceptions: true }).getContentText());
+  const msgs = (res.result || []).map(u => u.message).filter(m => m && m.chat && m.chat.type === 'private');
+  if (!msgs.length) throw new Error('Бот ще не отримав повідомлень. Напишіть йому /start і запустіть connectTelegram() знову.');
+  const chat = msgs[msgs.length - 1].chat;
+  props().setProperty('TG_CHAT', String(chat.id));
+  telegram('✅ Підключено. Сюди приходитимуть нові заявки зі stackup.studio.');
+  Logger.log('Telegram підключено: ' + (chat.username || chat.first_name || chat.id));
+}
+function telegram(html, url) {
+  const p = props(), token = p.getProperty('TG_TOKEN'), chat = p.getProperty('TG_CHAT');
+  if (!token || !chat) return false;
+  const body = { chat_id: chat, text: html, parse_mode: 'HTML', disable_web_page_preview: true };
+  if (url) body.reply_markup = { inline_keyboard: [[{ text: 'Відкрити в CRM ↗', url }]] };
+  UrlFetchApp.fetch('https://api.telegram.org/bot' + token + '/sendMessage', { method: 'post', contentType: 'application/json', payload: JSON.stringify(body), muteHttpExceptions: true });
+  return true;
 }
 
 function ownRow(d) {

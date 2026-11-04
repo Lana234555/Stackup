@@ -176,6 +176,17 @@ t('вигаданий токен пристрою не дає пропустит
 t('не більше 5 довірених пристроїв', () => { const g = fresh(); const devs = []; for (let i = 0; i < 7; i++) devs.push(signIn(g, { trust: true }).device); eq(JSON.parse(g.props.TRUSTED).length, 5); eq(g.post({ action: 'login', code: '48271593', device: devs[0] }).step, 'otp'); ok(g.post({ action: 'login', code: '48271593', device: devs[6] }).token); });
 
 /* ---------- публічний бриф ---------- */
+t('Telegram: connectTelegram запам’ятовує чат, нова заявка приходить push-повідомленням з кнопкою в CRM', () => {
+  const g = fresh(); g.props.TG_TOKEN = '123:abc'; g.props.ADMIN_URL = 'https://stackup.studio/admin.html';
+  g.ctx.connectTelegram(); eq(g.props.TG_CHAT, '777');
+  const b = seedBrief(g); g.post({ action: 'finish', id: b.id, token: b.token, fileCount: 0 });
+  const sent = g.fetches.filter(f => /sendMessage/.test(f.url)).map(f => JSON.parse(f.o.payload));
+  ok(sent.length === 2 && /Нова заявка/.test(sent[1].text), JSON.stringify(sent));
+  eq(sent[1].reply_markup.inline_keyboard[0][0].url, 'https://stackup.studio/admin.html#' + b.id);
+});
+t('без TG_TOKEN бриф працює і нічого не надсилає в Telegram', () => {
+  const g = fresh(); const b = seedBrief(g); ok(g.post({ action: 'finish', id: b.id, token: b.token }).ok); eq(g.fetches.length, 0);
+});
 t('бриф працює як раніше: submit → file → finish → лист', () => {
   const g = fresh(); const b = seedBrief(g); ok(b.ok && b.token, JSON.stringify(b));
   ok(g.post({ action: 'file', id: b.id, token: b.token, field: 'specFiles', name: 'tz.pdf', type: 'application/pdf', data: Buffer.from('pdf').toString('base64') }).ok);

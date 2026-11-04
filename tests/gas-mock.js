@@ -6,7 +6,8 @@ function create(codePath) {
   const now = () => Date.now() + clock.offset;
   const props = {};
   const cacheStore = {};
-  const mails = [];
+  const mails = [], fetches = [];
+  const fetchReply = url => /getUpdates/.test(url) ? { ok: true, result: [{ message: { chat: { id: 777, type: 'private', first_name: 'Lana' } } }] } : { ok: true };
   const logs = [];
   let idn = 0;
   const signed = buf => Array.from(buf).map(b => (b > 127 ? b - 256 : b));
@@ -76,6 +77,7 @@ function create(codePath) {
       newBlob: (bytes, type, name) => ({ bytes: typeof bytes === 'string' ? signed(Buffer.from(bytes)) : bytes, type, name, getBytes() { return this.bytes; } })
     },
     MailApp: { sendEmail: o => mails.push(o) },
+    UrlFetchApp: { fetch: (url, o) => { fetches.push({ url, o }); return { getContentText: () => JSON.stringify(fetchReply(url)) }; } },
     Session: { getEffectiveUser: () => ({ getEmail: () => 'lana@example.com' }), getScriptTimeZone: () => 'Etc/GMT' },
     DriveApp: { createFolder: n => mkFolder(n), getFolderById: id => folderApi(drive[id]), getFileById: () => ({ moveTo() {} }) },
     SpreadsheetApp: { create: () => { sheets['Заявки'] = []; return ss; }, openById: () => ss },
@@ -87,6 +89,6 @@ function create(codePath) {
   [].concat(codePath).forEach(f => vm.runInContext(fs.readFileSync(f, 'utf8'), ctx, { filename: require('path').basename(f) }));
   const post = body => JSON.parse(ctx.doPost({ postData: { contents: typeof body === 'string' ? body : JSON.stringify(body) } }).t);
   const get = params => JSON.parse(ctx.doGet({ parameter: params }).t);
-  return { ctx, props, cacheStore, mails, logs, sheets, drive, clock, post, get };
+  return { ctx, props, cacheStore, mails, logs, sheets, drive, clock, post, get, fetches };
 }
 module.exports = { create };
