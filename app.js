@@ -192,3 +192,17 @@ document.addEventListener('click',e=>{
  if(location.hash)history.replaceState(null,'',location.pathname.replace(/index\.html$/,'')+location.search);
 });
 if(location.hash||/index\.html$/.test(location.pathname)){const h=location.hash.slice(1);history.replaceState(null,'',location.pathname.replace(/index\.html$/,'')+location.search);if(h){const el=document.getElementById(h);if(el)requestAnimationFrame(()=>el.scrollIntoView({block:'start'}));}}
+
+
+// Project covers: on hover (or while in view on touch screens) flip through the extra screenshots.
+$$('.project-image').forEach(btn=>{
+ const imgs=[...btn.querySelectorAll('.shots img')]; if(imgs.length<2)return;
+ const dots=document.createElement('span'); dots.className='shot-dots'; dots.setAttribute('aria-hidden','true');
+ dots.innerHTML=imgs.map((_,i)=>'<i'+(i?'':' class="on"')+'></i>').join(''); btn.append(dots);
+ let i=0,t=null;
+ const show=n=>{i=n;imgs.forEach((im,k)=>im.classList.toggle('on',k===n&&k>0));[...dots.children].forEach((d,k)=>d.classList.toggle('on',k===n));};
+ const start=()=>{if(t||matchMedia('(prefers-reduced-motion: reduce)').matches)return;btn.classList.add('playing');show((i+1)%imgs.length);t=setInterval(()=>show((i+1)%imgs.length),1500);};
+ const stop=()=>{clearInterval(t);t=null;btn.classList.remove('playing');show(0);};
+ btn.addEventListener('mouseenter',start);btn.addEventListener('mouseleave',stop);btn.addEventListener('focus',start);btn.addEventListener('blur',stop);
+ if(matchMedia('(hover: none)').matches)new IntersectionObserver(es=>es.forEach(e=>e.isIntersecting&&e.intersectionRatio>.6?start():stop()),{threshold:[0,.6]}).observe(btn);
+});
