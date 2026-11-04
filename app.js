@@ -207,3 +207,32 @@ $$('.project-image').forEach(btn=>{
  btn.addEventListener('mouseenter',start);btn.addEventListener('mouseleave',stop);btn.addEventListener('focus',start);btn.addEventListener('blur',stop);
  if(matchMedia('(hover: none)').matches)new IntersectionObserver(es=>es.forEach(e=>e.isIntersecting&&e.intersectionRatio>.6?start():stop()),{threshold:[0,.6]}).observe(btn);
 });
+
+
+// Selected work rail: arrows, counter, progress, mouse drag, and a slide-in when the section arrives.
+(()=>{
+ const rail=document.querySelector('.work-stack'); if(!rail)return;
+ const cards=[...rail.querySelectorAll('.project')], prev=document.querySelector('.work-prev'), next=document.querySelector('.work-next');
+ const count=document.querySelector('.work-count b'), bar=document.querySelector('.work-bar i');
+ document.documentElement.classList.add('js-rail');
+ cards.forEach((c,i)=>c.style.setProperty('--i',i));
+ const step=()=>cards[1]?cards[1].offsetLeft-cards[0].offsetLeft:rail.clientWidth;
+ const update=()=>{const max=rail.scrollWidth-rail.clientWidth, x=rail.scrollLeft;
+  const i=Math.min(cards.length-1,Math.round(x/step())); count.textContent=String(i+1).padStart(2,'0');
+  const vis=rail.clientWidth/rail.scrollWidth; bar.style.width=(vis*100)+'%'; bar.style.transform=`translateX(${max>0?(x/max)*(1/vis-1)*100:0}%)`;
+  prev.disabled=x<=4; next.disabled=x>=max-4;};
+ prev.addEventListener('click',()=>rail.scrollBy({left:-step(),behavior:'smooth'}));
+ next.addEventListener('click',()=>rail.scrollBy({left:step(),behavior:'smooth'}));
+ rail.addEventListener('scroll',update,{passive:true}); addEventListener('resize',update); update();
+ // mouse drag (touch and trackpads scroll natively)
+ let down=null,moved=false;
+ rail.addEventListener('pointerdown',e=>{if(e.pointerType!=='mouse'||e.button)return;down={x:e.clientX,l:rail.scrollLeft};moved=false;});
+ addEventListener('pointermove',e=>{if(!down)return;const dx=e.clientX-down.x;if(!moved&&Math.abs(dx)>6){moved=true;rail.classList.add('dragging');}if(moved)rail.scrollLeft=down.l-dx;});
+ addEventListener('pointerup',()=>{if(!down)return;down=null;if(moved){rail.classList.remove('dragging');const i=Math.round(rail.scrollLeft/step());rail.scrollTo({left:i*step(),behavior:'smooth'});}});
+ rail.addEventListener('click',e=>{if(moved){e.preventDefault();e.stopPropagation();moved=false;}},true);
+ rail.addEventListener('dragstart',e=>e.preventDefault());
+ // keyboard
+ rail.tabIndex=0; rail.addEventListener('keydown',e=>{if(e.key==='ArrowRight'){e.preventDefault();next.click();}if(e.key==='ArrowLeft'){e.preventDefault();prev.click();}});
+ // slide-in on arrival
+ if('IntersectionObserver' in window){const io=new IntersectionObserver(es=>es.forEach(en=>{if(en.isIntersecting){rail.classList.add('in');io.disconnect();}}),{threshold:.15});io.observe(rail);}else rail.classList.add('in');
+})();
