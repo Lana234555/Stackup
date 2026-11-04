@@ -6,10 +6,10 @@ menu.addEventListener('click', () => { const open = menu.getAttribute('aria-expa
 $$('.header nav a').forEach(a => a.addEventListener('click', () => { menu.setAttribute('aria-expanded', 'false'); menu.setAttribute('aria-label', 'Open menu'); $('.header nav').classList.remove('open'); menu.textContent = '☰'; }));
 
 const scenes = [
- { label: '01 / FIND THE FOCUS', caption: 'Every great thing starts here.', html: `<div class="brief-art"><div class="art-meta"><span>STACKUP / DISCOVERY</span><span>01</span></div><h4>A little<br>clarity.<br><em>A big idea.</em></h4><div class="art-line"></div><div class="art-line short"></div><div class="art-checks"><span>Your goals</span><span>Your people</span><span>Our direction</span></div><div class="art-sticker">✳</div></div>` },
- { label: '02 / GIVE IT CHARACTER', caption: 'A little structure. A lot of possibility.', html: `<div class="design-art"><div class="art-browser-bar"><span>● ● ●</span><span>DESIGN / EXPLORATION</span></div><div class="design-body"><div><div class="art-meta">YOUR NEXT CHAPTER</div><h4>Build<br>what’s<br>next.</h4><div class="art-line"></div><div class="art-line short"></div><div style="background:var(--acid);width:45px;height:12px;margin-top:15px"></div></div><div class="mini-visual">✳</div><div class="design-swatch"><i></i><i></i><i></i></div></div></div>` },
+ { label: '01 / FIND THE FOCUS', caption: 'Every great thing starts here.', html: `<div class="brief-art"><div class="art-meta"><span>STACKUP / DISCOVERY</span><span>01</span></div><h4>A little<br>clarity.<br><em>A big idea.</em></h4><div class="art-line"></div><div class="art-line short"></div><div class="art-checks"><span>Your goals</span><span>Your people</span><span>Our direction</span></div><div class="art-sticker">✳︎</div></div>` },
+ { label: '02 / GIVE IT CHARACTER', caption: 'A little structure. A lot of possibility.', html: `<div class="design-art"><div class="art-browser-bar"><span>● ● ●</span><span>DESIGN / EXPLORATION</span></div><div class="design-body"><div><div class="art-meta">YOUR NEXT CHAPTER</div><h4>Build<br>what’s<br>next.</h4><div class="art-line"></div><div class="art-line short"></div><div style="background:var(--acid);width:45px;height:12px;margin-top:15px"></div></div><div class="mini-visual">✳︎</div><div class="design-swatch"><i></i><i></i><i></i></div></div></div>` },
  { label: '03 / BRING IT TO LIFE', caption: 'Where the idea becomes real.', html: `<div class="develop-art"><div class="art-browser-bar"><span>● ● ●</span><span>BUILD / IN PROGRESS</span></div><pre><em>&lt;YourNextChapter</em>\n  design=<b>"considered"</b>\n  experience=<b>"seamless"</b>\n  responsive=<b>{true}</b>\n<em>/&gt;</em>\n\n<span style="color:#7e8971">// Good things take shape.</span></pre><div class="develop-bottom">✓ COMPILED WITH CARE <span style="float:right">100%</span></div></div>` },
- { label: '04 / OUT INTO THE WORLD', caption: 'This is just the beginning. ↗', html: `<div class="launch-art"><div class="art-meta"><span>STACKUP / DEPLOY</span><span>04</span></div><div class="launch-icon">↗</div><h4>Hello,<br><span class="serif">world.</span></h4><p>From a spark to something real.</p><div class="launch-url">● YOUR NEXT CHAPTER IS LIVE</div></div>` }
+ { label: '04 / OUT INTO THE WORLD', caption: 'This is just the beginning. ↗︎', html: `<div class="launch-art"><div class="art-meta"><span>STACKUP / DEPLOY</span><span>04</span></div><div class="launch-icon">↗︎</div><h4>Hello,<br><span class="serif">world.</span></h4><p>From a spark to something real.</p><div class="launch-url">● YOUR NEXT CHAPTER IS LIVE</div></div>` }
 ];
 let activeStep = 0, sceneTimer;
 function renderStep(index, animate = true) {
@@ -32,11 +32,11 @@ const projects = {
  blissful:{name:'Blissful Birthing',category:'ONLINE COURSE PLATFORM',img:'assets/work-blissful.webp',url:'https://courses.blissfulbirthing.com/',description:'A course platform for expectant mothers. Warm photography, golden script typography and a calm sales page that turns a sensitive topic into an invitation.'}
 };
 const dialog = $('.project-dialog');
-$$('[data-project]').forEach(btn=>btn.addEventListener('click',()=>{const key = btn.dataset.project, p=projects[key];$('.dialog-body').innerHTML=`<span class="mono">SELECTED WORK / ${p.category}</span><h2>${p.name}<span class="serif">.</span></h2><img src="${p.img}" alt="${p.name} website"><div class="dialog-bottom"><p>${p.description}</p><a href="#contact" class="dialog-contact">Let’s build something like this ↗</a></div>${p.url?`<a class="dialog-note" href="${p.url}" target="_blank" rel="noopener">Visit the live site ↗</a>`:''}`; dialog.showModal();$('.dialog-contact').addEventListener('click',()=>dialog.close());}));
+$$('[data-project]').forEach(btn=>btn.addEventListener('click',()=>{const key = btn.dataset.project, p=projects[key];$('.dialog-body').innerHTML=`<span class="mono">SELECTED WORK / ${p.category}</span><h2>${p.name}<span class="serif">.</span></h2><img src="${p.img}" alt="${p.name} website"><div class="dialog-bottom"><p>${p.description}</p><a href="#contact" class="dialog-contact">Let’s build something like this ↗︎</a></div>${p.url?`<a class="dialog-note" href="${p.url}" target="_blank" rel="noopener">Visit the live site ↗︎</a>`:''}`; dialog.showModal();$('.dialog-contact').addEventListener('click',()=>dialog.close());}));
 $('.dialog-close').addEventListener('click',()=>dialog.close());
 dialog.addEventListener('click',e=>{ if(e.target===dialog){const r=dialog.getBoundingClientRect();if(e.clientX<r.left||e.clientX>r.right||e.clientY<r.top||e.clientY>r.bottom)dialog.close();} });
-$$('[data-service]').forEach(link=>link.addEventListener('click',()=>{const service=link.dataset.service;const value=service.includes('redesign')?'Redesign':service.includes('prototype')?'Digital product':service.includes('website')||service.includes('page')?'Website':'Something else';const checkbox=$(`input[name="service"][value="${value}"]`);if(checkbox)checkbox.checked=true;const message=$('textarea[name="message"]');if(!message.value)message.value=`I’m interested in ${service.toLowerCase()}. `;}));
-$('.contact-form').addEventListener('submit',e=>{e.preventDefault();const data=new FormData(e.currentTarget);const services=data.getAll('service').join(', ')||'Let’s discuss';const subject=`A new spark — ${data.get('name')}`;const body=`Hi STACKUP,\n\nName: ${data.get('name')}\nEmail: ${data.get('email')}\nPhone: ${data.get('phone')}\nInterested in: ${services}\n\n${data.get('message')||'I’d love to talk about a new project.'}`;window.location.href=`mailto:hello@stackup.dev?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;$('.form-status').textContent='Your email draft is ready to open in your mail app. Review it and press send there. The address should be confirmed before launch.';});
+$$('[data-service]').forEach(link=>link.addEventListener('click',()=>{const n=$('.contact-form input[name="name"]');if(n)setTimeout(()=>n.focus({preventScroll:true}),900);}));
+$('.contact-form').addEventListener('submit',e=>{e.preventDefault();const data=new FormData(e.currentTarget);const subject=`A new spark — ${data.get('name')}`;const body=`Hi STACKUP,\n\nName: ${data.get('name')}\nEmail: ${data.get('email')}\nPhone: ${data.get('phone')}\n\nI’d love to talk about a new project.`;window.location.href=`mailto:hello@stackup.dev?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;$('.form-status').textContent='Your email draft is ready to open in your mail app. Review it and press send there. The address should be confirmed before launch.';});
 
 const observer = new IntersectionObserver(entries=>entries.forEach(e=>{if(e.isIntersecting){e.target.classList.add('in-view');observer.unobserve(e.target);}}),{threshold:.12});
 $$('.section-heading,.why-intro,.benefits article,.process-layout,.contact-intro,.contact-form').forEach(el=>{el.classList.add('reveal');observer.observe(el);});observer.observe($('footer'));observer.observe($('.why'));
@@ -45,6 +45,7 @@ $$('.section-heading,.why-intro,.benefits article,.process-layout,.contact-intro
 // Native scrolling drives the scenes. No wheel interception or scroll locking.
 function clamp(n,a=0,b=1){return Math.min(b,Math.max(a,n));}
 function smooth(n){const t=clamp(n);return t*t*(3-2*t);}
+const liteFx=matchMedia('(max-width:700px)').matches;
 const diveTrack=$('.dive-track'), hero=$('.dive-pin .hero'), depth=$('.dive-depth'), manifesto=$('.manifesto');
 const arrival=$('.work-arrival'), cloud=$('.cloud-field'), workHeading=$('.work-arrival .section-heading');
 const processTrack=$('.process-track'), wayfinder=$('.wayfinder');
@@ -74,7 +75,7 @@ function updateScroll(){
   const d=clamp((sy-metrics.diveTop)/Math.max(1,metrics.diveRange));
   const sink=smooth((d-.025)/.39), entry=smooth((d-.31)/.17);
   hero.style.transform=`translate3d(0,${-sink*vh*.12}px,0) scale(${1-sink*.16})`;
-  hero.style.filter=`blur(${sink*15}px)`;
+  hero.style.filter=liteFx?'none':`blur(${sink*15}px)`;
   hero.style.opacity=1-smooth((d-.16)/.25);
   hero.style.pointerEvents=d>.31?'none':'';
   hero.inert=d>.39;
@@ -83,7 +84,7 @@ function updateScroll(){
   depth.style.setProperty('--depth-cloud',Math.sin(sink*Math.PI));
   manifesto.style.opacity=entry;
   manifesto.style.transform=`translate3d(0,${(1-entry)*vh*.07}px,0) scale(${1.08-entry*.08})`;
-  manifesto.style.filter=`blur(${(1-entry)*10}px)`;
+  manifesto.style.filter=liteFx?'none':`blur(${(1-entry)*10}px)`;
   manifesto.inert=d<.32;
   const reveal=clamp((d-.43)/.45);
   words.forEach((word,i)=>{const lit=smooth((reveal*(words.length+1)-i)/2);const c=[71,76,64].map((v,j)=>Math.round(v+((word.closest('em')?[206,255,49]:[249,250,244])[j]-v)*lit));word.style.color=`rgb(${c.join(',')})`;});
@@ -130,7 +131,7 @@ function updatePlaybackUI(){
  const label=playbackPaused?'Play automatic process slides':'Pause automatic process slides';
  if(playButton.getAttribute('aria-label')!==label||!playButton.dataset.ready){
   playButton.setAttribute('aria-pressed',String(playbackPaused));playButton.setAttribute('aria-label',label);
-  playButton.innerHTML=playbackPaused?'▶ <span>PLAY SEQUENCE</span>':'Ⅱ <span>AUTO PLAY</span>';playButton.dataset.ready='true';
+  playButton.innerHTML=playbackPaused?'▶︎ <span>PLAY SEQUENCE</span>':'Ⅱ <span>AUTO PLAY</span>';playButton.dataset.ready='true';
  }
  const count=`0${activeStep+1} / 04`;if($('.process-count').textContent!==count)$('.process-count').textContent=count;
  $('.process-progress i').style.width=`${playbackElapsed/playbackDuration*100}%`;
@@ -255,14 +256,19 @@ $$('.project-image').forEach(btn=>{
  const reduce=matchMedia('(prefers-reduced-motion: reduce)').matches;
  document.documentElement.classList.add('js-blinds'); strips.forEach((el,i)=>el.style.setProperty('--i',i));
  if('IntersectionObserver' in window){const io=new IntersectionObserver(es=>{if(es.some(en=>en.isIntersecting)){box.classList.add('in');io.disconnect();}},{threshold:.2});io.observe(box);}else box.classList.add('in');
+ const SHOT=2400; let tick=null;
  const set=i=>{on=i;strips.forEach((el,j)=>el.classList.toggle('on',j===i));
-  clearInterval(shotT);strips.forEach(el=>el.querySelectorAll('img').forEach(im=>im.classList.remove('cur')));
-  const ims=strips[i].querySelectorAll('img');let k=0;ims[0].classList.add('cur');
-  if(ims.length>1&&!reduce)shotT=setInterval(()=>{ims[k].classList.remove('cur');k=(k+1)%ims.length;ims[k].classList.add('cur');},1700);};
+  clearTimeout(tick);strips.forEach(el=>el.querySelectorAll('img').forEach(im=>im.classList.remove('cur')));
+  const ims=[...strips[i].querySelectorAll('img')];let k=0;ims[0].classList.add('cur');
+  const step=()=>{tick=setTimeout(()=>{
+    if(k<ims.length-1&&!reduce){ims[k].classList.remove('cur');k++;ims[k].classList.add('cur');return step();}
+    if(!hover&&!reduce&&seen&&Date.now()-touched>9000)return set((on+1)%strips.length);
+    if(ims.length>1&&!reduce){ims[k].classList.remove('cur');k=0;ims[0].classList.add('cur');}
+    step();},SHOT);};
+  step();};
  box.addEventListener('mouseover',e=>{const el=e.target.closest('.bl');if(el&&matchMedia('(hover:hover)').matches){const i=strips.indexOf(el);if(i!==on)set(i);}});
  box.addEventListener('mouseenter',()=>hover=true);box.addEventListener('mouseleave',()=>hover=false);
  box.addEventListener('click',e=>{const el=e.target.closest('.bl');if(el&&!el.classList.contains('on')){e.preventDefault();touched=Date.now();set(strips.indexOf(el));}});
  if('IntersectionObserver' in window){new IntersectionObserver(es=>es.forEach(en=>seen=en.isIntersecting),{threshold:.3}).observe(box);}else seen=true;
- setInterval(()=>{if(!hover&&!reduce&&seen&&Date.now()-touched>9000)set((on+1)%strips.length);},3600);
  set(0);
 })();
