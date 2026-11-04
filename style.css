@@ -154,3 +154,10 @@
  .bl-shots img:first-child{opacity:0;filter:none}
  .bl-info{top:56.25cqw;bottom:0;padding:18px;background:var(--c);color:var(--fg);justify-content:flex-start}
  .bl-tags span{border-color:currentColor}}
+/* Blinds entrance: strips rise one after another when the section arrives; on phones they slide in from the side */
+.js-blinds .bl{clip-path:inset(100% 0 0 0 round 16px);transform:translateY(60px)}
+.js-blinds .work-blinds.in .bl{clip-path:inset(0 0 0 0 round 16px);transform:none;transition:clip-path 1s cubic-bezier(.7,0,.2,1) calc(var(--i,0) * 90ms),transform 1s cubic-bezier(.2,.7,.2,1) calc(var(--i,0) * 90ms),flex-grow .8s cubic-bezier(.2,.7,.2,1),height .7s cubic-bezier(.2,.7,.2,1)}
+.js-blinds .bl .bl-vn,.js-blinds .bl .bl-num{opacity:0}
+.js-blinds .work-blinds.in .bl:not(.on) .bl-vn,.js-blinds .work-blinds.in .bl:not(.on) .bl-num{opacity:1;transition:opacity .5s calc(var(--i,0) * 90ms + 600ms)}
+@media(max-width:700px){.js-blinds .bl{clip-path:inset(0 100% 0 0 round 16px);transform:translateX(-40px)}}
+@media(prefers-reduced-motion:reduce){.js-blinds .bl{clip-path:none;transform:none}.js-blinds .bl .bl-vn,.js-blinds .bl .bl-num{opacity:1}}

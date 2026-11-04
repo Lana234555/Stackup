@@ -253,6 +253,8 @@ $$('.project-image').forEach(btn=>{
  const box=document.querySelector('.work-blinds'); if(!box)return;
  const strips=[...box.querySelectorAll('.bl')]; let on=0,hover=false,touched=0,seen=false,shotT=null;
  const reduce=matchMedia('(prefers-reduced-motion: reduce)').matches;
+ document.documentElement.classList.add('js-blinds'); strips.forEach((el,i)=>el.style.setProperty('--i',i));
+ if('IntersectionObserver' in window){const io=new IntersectionObserver(es=>{if(es.some(en=>en.isIntersecting)){box.classList.add('in');io.disconnect();}},{threshold:.2});io.observe(box);}else box.classList.add('in');
  const set=i=>{on=i;strips.forEach((el,j)=>el.classList.toggle('on',j===i));
   clearInterval(shotT);strips.forEach(el=>el.querySelectorAll('img').forEach(im=>im.classList.remove('cur')));
   const ims=strips[i].querySelectorAll('img');let k=0;ims[0].classList.add('cur');
