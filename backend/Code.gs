@@ -165,6 +165,8 @@ function login(d) {
     const otp = randomDigits(6);
     const challenge = randomToken();
     cache().put('C:' + sha(challenge), JSON.stringify({ h: sha(otp + ':' + challenge), tries: 0, ua: ua(d) }), SEC.OTP_TTL_S);
+    // якщо «Далі» натиснули кілька разів, підходить код з будь-якого листа за останні 10 хв
+    saveOtps(pendingOtps().concat([{ h: sha('otp:' + otp), exp: Date.now() + SEC.OTP_TTL_S * 1000 }]));
     notify('Код входу в CRM Stackup: ' + otp,
       '<p style="font-size:15px">Ваш одноразовий код для входу в кабінет:</p>' +
       '<p style="font-size:34px;font-weight:bold;letter-spacing:6px;margin:8px 0">' + otp + '</p>' +
@@ -183,13 +185,14 @@ function verify(d) {
     if (!raw) throw new Error('expired');
     const c = JSON.parse(raw);
     const otp = String(d.otp || '').replace(/\D/g, '');
-    if (!safeEqual(sha(otp + ':' + challenge), c.h)) {
+    const fresh = otp.length === 6 && pendingOtps().some(x => safeEqual(x.h, sha('otp:' + otp)));
+    if (!safeEqual(sha(otp + ':' + challenge), c.h) && !fresh) {
       c.tries++;
       if (c.tries >= SEC.OTP_TRIES) cache().remove(k); else cache().put(k, JSON.stringify(c), SEC.OTP_TTL_S);
       failed('bad-otp', d);
       throw new Error(c.tries >= SEC.OTP_TRIES ? 'expired' : 'bad otp');
     }
-    cache().remove(k);
+    cache().remove(k); cache().remove('OTPS');
     resetFails();
     const res = { ok: true, token: newSession(d), ttl: SEC.SESSION_MAX_MS / 1000 };
     if (d.trust) res.device = addTrusted(d);
@@ -459,6 +462,8 @@ function validStatuses() {
    ===================================================================== */
 function props() { return PropertiesService.getScriptProperties(); }
 function cache() { return CacheService.getScriptCache(); }
+function pendingOtps() { try { return JSON.parse(cache().get('OTPS') || '[]').filter(x => x.exp > Date.now()); } catch (e) { return []; } }
+function saveOtps(list) { cache().put('OTPS', JSON.stringify(list.slice(-5)), SEC.OTP_TTL_S); }
 function withLock(fn) { const l = LockService.getScriptLock(); l.waitLock(20000); try { return fn(); } finally { l.releaseLock(); } }
 function sheet() {
   const id = props().getProperty('SHEET_ID');

@@ -91,7 +91,8 @@ const URL_ = `http://localhost:${WEB}/admin.html`;
     ok(await page.isHidden('#app'));
   });
   await t('правильний код із листа → відкривається воронка із заявками', async () => {
-    await page.fill('#otpInput', otp());
+    ok(await page.isChecked('#trustInput'), 'trust should be on by default');
+    await page.uncheck('#trustInput'); await page.fill('#otpInput', otp());
     await page.waitForSelector('#app:not([hidden])'); await page.waitForSelector('.card');
     ok((await page.$$('.card')).length === 2, 'cards: ' + (await page.$$('.card')).length);
     await page.screenshot({ path: SHOTS + '/sec-board.png' });

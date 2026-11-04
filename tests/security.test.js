@@ -83,11 +83,16 @@ t('код із листа діє лише 10 хв', () => {
   const g = fresh(); const a = g.post({ action: 'login', code: '48271593' }); const otp = otpOf(g);
   g.clock.offset += 11 * MIN; eq(g.post({ action: 'verify', challenge: a.challenge, otp }).error, 'expired');
 });
-t('код із листа не підходить до чужого виклику (підміна challenge)', () => {
-  const g = fresh(); const a = g.post({ action: 'login', code: '48271593' }); const otp1 = otpOf(g);
+t('повторне «Далі»: підходить код з будь-якого свіжого листа, але лише з правильним кодом кабінету', () => {
+  const g = fresh(); g.post({ action: 'login', code: '48271593' }); const otp1 = otpOf(g);
   const b = g.post({ action: 'login', code: '48271593' });
-  eq(g.post({ action: 'verify', challenge: b.challenge, otp: otp1 }).ok, otpOf(g) === otp1, 'cross challenge');
   eq(g.post({ action: 'verify', challenge: 'forged-challenge', otp: otp1 }).error, 'expired');
+  ok(g.post({ action: 'verify', challenge: b.challenge, otp: otp1 }).token, 'older mail code rejected');
+});
+t('старий код із листа не діє після 10 хв навіть з новим викликом', () => {
+  const g = fresh(); g.post({ action: 'login', code: '48271593' }); const otp1 = otpOf(g);
+  g.clock.offset += 11 * MIN; const b = g.post({ action: 'login', code: '48271593' });
+  if (otpOf(g) !== otp1) eq(g.post({ action: 'verify', challenge: b.challenge, otp: otp1 }).error, 'bad otp');
 });
 t('без коду кабінету не можна одразу вгадувати код із листа', () => { const g = fresh(); eq(g.post({ action: 'verify', challenge: '', otp: '123456' }).error, 'expired'); });
 
