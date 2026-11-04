@@ -73,7 +73,7 @@ const UI = {
   docEstimate: ['Для оцінки Stackup', 'Stackup estimate notes'],
   estPages: ['Сторінок / екранів', 'Pages / screens'],
   estFeatures: ['Функцій', 'Features'],
-  estCopy: ['Тексти', 'Copy'],
+  estCopy: ['Контент і тексти', 'Content and copy'],
   estDesign: ['Дизайн-основа', 'Design base'],
   estDeadline: ['Терміни', 'Deadline'],
   estLangs: ['Мов', 'Languages'],
@@ -177,14 +177,15 @@ const SECTIONS = [
     doc: ['Контент', 'Content'],
     lead: ['Якщо матеріали вже є, додайте їх тут. Великі папки можна дати посиланням.', 'If you already have materials, add them here. Large folders can be shared as a link.'],
     fields: [
-      { id: 'texts', type: 'radio', label: ['Тексти для сайту', 'Website copy'],
-        options: [['ready', ['Готові', 'Ready']], ['partly', ['Частково', 'Partly']], ['need', ['Потрібен копірайтинг', 'Need copywriting']]] },
-      { id: 'textFiles', type: 'files', label: ['Тексти', 'Copy files'], accept: '.doc,.docx,.pdf,.txt,.md,.rtf,.odt,.pages', show: a => a.texts && a.texts !== 'need' },
+      { id: 'contentReady', type: 'radio', req: true, label: ['Чи є у вас зібраний контент і тексти для сайту?', 'Do you have content and copy ready for the site?'],
+        hint: ['Тексти, фото, документи, все, що ви хочете показати і написати на сайті.', 'Copy, photos, documents: everything you want to show and say on the site.'],
+        options: [['yes', ['Так, є', 'Yes, I have it']], ['no', ['Ні, ще немає', 'Not yet']]] },
+      { id: 'contentFiles', type: 'files', big: true, cta: ['ДОДАТИ ФАЙЛИ', 'ADD FILES'], label: ['Ваш контент і тексти', 'Your content and copy'], hint: ['Будь-які файли: Word, PDF, Google Docs (завантажений), фото, архів. До 25 МБ на файл.', 'Any files: Word, PDF, exported Google Docs, photos, an archive. Up to 25 MB per file.'], accept: '', show: a => a.contentReady === 'yes' },
+      { id: 'materialsLink', type: 'url', label: ['Посилання на папку з матеріалами', 'Link to a materials folder'], hint: ['Якщо файлів багато: одна папка на Google Drive або Dropbox. Можна разом із файлами або замість них.', 'If there are many files: one Google Drive or Dropbox folder. Together with the files or instead of them.'], ph: ['Google Drive, Dropbox…', 'Google Drive, Dropbox…'], show: a => a.contentReady === 'yes' },
+      { id: 'contentNote', type: 'note', text: ['Нічого страшного. Ми зв’яжемося з вами і разом обговоримо, які тексти і матеріали потрібні.', 'No problem. We’ll get in touch and work out together what copy and materials are needed.'], show: a => a.contentReady === 'no' },
       { id: 'media', type: 'radio', label: ['Фото і відео', 'Photos and video'],
         options: [['ready', ['Є власні', 'We have our own']], ['stock', ['Підібрати стокові', 'Use stock']], ['shoot', ['Потрібна зйомка', 'Need a shoot']], ['ai', ['Згенерувати / ілюстрації', 'Generate / illustrate']]] },
-      { id: 'mediaFiles', type: 'files', label: ['Фото, відео, ілюстрації', 'Photos, video, illustrations'], accept: 'image/*,video/*,.zip', show: a => a.media === 'ready' },
-      { id: 'materialsLink', type: 'url', label: ['Посилання на папку з матеріалами', 'Link to a materials folder'], hint: ['Найзручніше: одна папка на Google Drive або Dropbox з усіма текстами, фото і відео.', 'Easiest: one Google Drive or Dropbox folder with all copy, photos and video.'], ph: ['Google Drive, Dropbox…', 'Google Drive, Dropbox…'] },
-      { id: 'materialsFiles', type: 'files', label: ['Файли з матеріалами', 'Material files'], hint: ['Можна разом із посиланням або замість нього. Тексти, фото, відео, документи, архіви, до 25 МБ на файл.', 'Together with the link or instead of it. Copy, photos, video, documents, archives, up to 25 MB per file.'], accept: '' }
+      { id: 'mediaFiles', type: 'files', label: ['Фото, відео, ілюстрації', 'Photos, video, illustrations'], accept: 'image/*,video/*,.zip', show: a => a.media === 'ready' }
     ]
   },
   {
@@ -299,7 +300,7 @@ function fileBox(f) {
   return `<div class="drop${f.big ? ' big' : ''}" data-drop="${f.id}">
       <input type="file" id="in-${f.id}" multiple${f.accept ? ` accept="${f.accept}"` : ''}>
       <label for="in-${f.id}"><span class="drop-icon" aria-hidden="true">${f.big ? '＋' : '↑'}</span>
-        <span>${f.big ? `<b>${esc(T('pathHasCta'))}</b><br>` : ''}${esc(T('drop'))} <u>${esc(T('browse'))}</u></span></label>
+        <span>${f.big ? `<b>${esc(f.cta ? L(f.cta) : T('pathHasCta'))}</b><br>` : ''}${esc(T('drop'))} <u>${esc(T('browse'))}</u></span></label>
     </div>
     <ul class="file-list" data-list="${f.id}">${list.map((file, i) => `<li><span class="mono">${esc(ext(file.name))}</span><b>${esc(file.name)}</b><em>${size(file.size)}</em><button type="button" data-rm="${f.id}" data-i="${i}" aria-label="${esc(T('remove'))}">×</button></li>`).join('')}</ul>
     ${lost ? `<p class="hint warn">${esc(T('filesLost'))} (${esc(names.join(', '))})</p>` : ''}`;
@@ -347,6 +348,7 @@ function fieldHTML(f) {
     case 'links': inner = linksBox(f); break;
     case 'colors': inner = colorsBox(f); break;
     case 'styles': inner = stylesBox(f); break;
+    case 'note': return `<p class="field f-note" data-field="${f.id}" role="note">${esc(L(f.text))}</p>`;
     default: inner = `<input type="${f.type}" name="${f.id}" value="${esc(v)}" placeholder="${esc(L(f.ph))}"${f.auto ? ` autocomplete="${f.auto}"` : ''}>`;
   }
   const group = ['radio', 'chips', 'pages', 'files', 'links', 'colors', 'styles'].includes(f.type);
@@ -508,7 +510,7 @@ function estimate() {
   if (state.mode === 'none') {
     out.push([T('estPages'), a.pagesHelp === 'help' ? (lang === 'en' ? 'to propose' : 'запропонувати') : String((a.pages || []).length || T('docEmpty'))]);
     out.push([T('estFeatures'), String((a.features || []).length)]);
-    out.push([T('estCopy'), opt('texts', a.texts)]);
+    out.push([T('estCopy'), a.contentReady ? opt('contentReady', a.contentReady) : a.texts ? opt('texts', a.texts) : T('docEmpty')]);
     out.push([T('estLangs'), (a.features || []).includes('multilang') ? (a.languages || '2+') : '1']);
   }
   const design = a.brand === 'full' ? opt('brand', 'full') : a.styleKnow === 'trust' ? opt('styleKnow', 'trust') : a.styleKnow === 'no' ? (lang === 'en' ? 'direction needed' : 'потрібен напрям') : opt('brand', a.brand);
