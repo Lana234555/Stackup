@@ -40,6 +40,13 @@ const UI = {
   modeHas: ['A / Є ТЗ', 'A / HAVE A SPEC'], modeNone: ['B / СТВОРЮЄМО ТЗ', 'B / BUILDING A SPEC'],
   switchToNone: ['↺ ТЗ НЕМАЄ? ПРОЙТИ ПОВНИЙ БРИФ', '↺ NO SPEC? TAKE THE FULL BRIEF'],
   switchToHas: ['↺ МАЄТЕ ТЗ? ДОДАТИ ФАЙЛ', '↺ HAVE A SPEC? UPLOAD IT'],
+  addOwn: ['+ ДОДАТИ', '+ ADD'],
+  needData: ['Не можемо надіслати бриф: не заповнено {fields}. Поверніться до кроку «{step}» і заповніть ці поля.', 'We can’t send the brief: {fields} not filled in. Go back to the “{step}” step and fill them in.'],
+  fixBtn: ['Заповнити', 'Fill in'],
+  errNet: ['Не вдалося з’єднатися з сервером. Перевірте інтернет і натисніть «Надіслати бриф» ще раз.', 'Couldn’t reach the server. Check your connection and press “Send brief” again.'],
+  errBusy: ['Зараз забагато заявок. Спробуйте ще раз за кілька хвилин.', 'Too many briefs right now. Please try again in a few minutes.'],
+  errFile: ['Файл завеликий або файлів забагато (до 25 МБ на файл, до 80 файлів). Приберіть зайве і надішліть ще раз.', 'A file is too large or there are too many (up to 25 MB each, 80 files). Remove some and send again.'],
+  errServer: ['Сталася помилка на нашому боці. Спробуйте ще раз за хвилину. Якщо не вийде, завантажте ZIP і надішліть його на {email}.', 'Something went wrong on our side. Try again in a minute. If it still fails, download the ZIP and email it to {email}.'],
   required: ['Заповніть, будь ласка, поля з позначкою * (файли теж)', 'Please fill in the fields marked * (files too)'],
   optional: ['необов’язково', 'optional'],
   drop: ['Перетягніть файли сюди або', 'Drop files here or'],
@@ -160,11 +167,11 @@ const SECTIONS = [
     doc: ['Структура і функціонал', 'Structure and features'],
     lead: ['Відмітьте, що знадобиться. Не впевнені — ми запропонуємо структуру самі.', 'Tick what you need. Not sure? We’ll propose a structure.'],
     fields: [
-      { id: 'pages', type: 'pages', label: ['Сторінки / блоки', 'Pages / sections'],
+      { id: 'pages', type: 'pages', label: ['Сторінки / блоки', 'Pages / sections'], custom: ['Свій блок або сторінка, наприклад «Партнери»', 'Your own section, e.g. “Partners”'],
         options: [['home', ['Головна', 'Home']], ['about', ['Про нас', 'About']], ['services', ['Послуги', 'Services']], ['service1', ['Окрема сторінка кожної послуги', 'Page per service']], ['catalog', ['Каталог / товари', 'Catalogue / products']], ['cases', ['Кейси / портфоліо', 'Cases / portfolio']], ['prices', ['Ціни', 'Pricing']], ['reviews', ['Відгуки', 'Reviews']], ['team', ['Команда', 'Team']], ['blog', ['Блог / новини', 'Blog / news']], ['faq', ['FAQ', 'FAQ']], ['contacts', ['Контакти', 'Contacts']], ['careers', ['Вакансії', 'Careers']], ['legal', ['Політика / оферта', 'Privacy / terms']]] },
       { id: 'pagesHelp', type: 'radio', label: ['Структура', 'Structure'],
         options: [['mine', ['Знаю, що потрібно', 'I know what I need']], ['help', ['Запропонуйте ви', 'Please suggest one']]] },
-      { id: 'features', type: 'chips', label: ['Функції', 'Features'],
+      { id: 'features', type: 'chips', label: ['Функції', 'Features'], custom: ['Своя функція, наприклад «Розсилка»', 'Your own feature, e.g. “Newsletter”'],
         options: [['form', ['Форма заявки', 'Contact form']], ['booking', ['Онлайн-запис', 'Online booking']], ['payments', ['Оплата онлайн', 'Online payments']], ['cart', ['Кошик / замовлення', 'Cart / checkout']], ['account', ['Особистий кабінет', 'User accounts']], ['multilang', ['Кілька мов', 'Multiple languages']], ['cms', ['Адмінка, щоб редагувати самим', 'CMS to edit content yourself']], ['crm', ['Інтеграція з CRM', 'CRM integration']], ['analytics', ['Аналітика / пікселі', 'Analytics / pixels']], ['chat', ['Чат / месенджери', 'Chat / messengers']], ['map', ['Карта', 'Map']], ['calc', ['Калькулятор', 'Calculator']], ['search', ['Пошук / фільтри', 'Search / filters']], ['anim', ['Виразна анімація', 'Expressive animation']], ['seo', ['SEO-основа', 'SEO foundation']]] },
       { id: 'languages', type: 'text', label: ['Які мови?', 'Which languages?'], ph: ['UA, EN, PL…', 'UA, EN, PL…'], show: a => (a.features || []).includes('multilang') },
       { id: 'integrations', type: 'textarea', label: ['Сервіси, з якими треба поєднати', 'Services to connect with'], ph: ['CRM, платіжка, пошта, Google Sheets, 1С, Telegram-бот…', 'CRM, payments, email, Google Sheets, Telegram bot…'], show: a => (a.features || []).some(f => ['crm', 'payments', 'booking', 'account'].includes(f)) }
@@ -224,9 +231,10 @@ const SECTIONS = [
         options: [['asap', ['Якнайшвидше', 'ASAP']], ['1m', ['До 1 місяця', 'Within 1 month']], ['2m', ['1–2 місяці', '1–2 months']], ['3m', ['2–3 місяці', '2–3 months']], ['flex', ['Гнучко', 'Flexible']]] },
       { id: 'deadlineWhy', type: 'text', label: ['Є конкретна дата або подія?', 'A specific date or event?'], ph: ['Наприклад: виставка 15 березня', 'E.g. trade show on 15 March'] },
       { id: 'budget', type: 'radio', label: ['Орієнтовний бюджет', 'Approximate budget'],
-        options: [['s', ['до $1 000', 'under $1,000']], ['m', ['$1 000–3 000', '$1,000–3,000']], ['l', ['$3 000–7 000', '$3,000–7,000']], ['xl', ['$7 000+', '$7,000+']], ['idk', ['Потрібна оцінка', 'Need an estimate']]] },
+        options: [['xs', ['до $500', 'under $500']], ['s5', ['$500–1 000', '$500–1,000']], ['s', ['до $1 000', 'under $1,000']], ['m', ['$1 000–3 000', '$1,000–3,000']], ['l', ['$3 000–7 000', '$3,000–7,000']], ['xl', ['$7 000+', '$7,000+']], ['idk', ['Потрібна оцінка', 'Need an estimate']]] },
       { id: 'domain', type: 'radio', label: ['Домен і хостинг', 'Domain and hosting'],
         options: [['have', ['Вже є', 'Already have']], ['help', ['Допоможіть налаштувати', 'Please set them up']], ['idk', ['Не знаю', 'Not sure']]] },
+      { id: 'domainNote', type: 'note', text: ['Добре. Ми зв’яжемося з вами напряму: для запуску знадобиться доступ до домену і хостингу.', 'Great. We’ll contact you directly: we’ll need access to the domain and hosting for launch.'], show: a => a.domain === 'have' },
       { id: 'support', type: 'radio', label: ['Підтримка після запуску', 'Support after launch'],
         options: [['yes', ['Потрібна', 'Needed']], ['no', ['Не потрібна', 'Not needed']], ['later', ['Вирішимо пізніше', 'Decide later']]] }
     ]
@@ -287,10 +295,12 @@ function applyLang() {
 /* ---------- field renderers ---------- */
 function optionList(f, multi) {
   const val = state.a[f.id];
+  const own = multi && f.custom ? (val || []).filter(v => !f.options.some(o => o[0] === v)) : [];
   return `<div class="opts${f.type === 'pages' ? ' opts-grid' : ''}">` + f.options.map(([v, lbl]) => {
     const on = multi ? (val || []).includes(v) : val === v;
     return `<label class="opt"><input type="${multi ? 'checkbox' : 'radio'}" name="${f.id}" value="${v}"${on ? ' checked' : ''}><span>${esc(L(lbl))}</span></label>`;
-  }).join('') + `</div>`;
+  }).join('') + own.map(v => `<label class="opt own"><input type="checkbox" name="${f.id}" value="${esc(v)}" checked><span>${esc(v)}</span></label>`).join('') + `</div>` +
+    (f.custom ? `<div class="opt-add"><input type="text" data-addopt="${f.id}" maxlength="80" placeholder="${esc(L(f.custom))}"><button type="button" class="link mono" data-addoptbtn="${f.id}">${esc(T('addOwn'))}</button></div>` : '');
 }
 
 function fileBox(f) {
@@ -430,6 +440,18 @@ function addFiles(id, list) {
   save(); rerenderKeepFocus();
   if (err) $('#stepError').textContent = err;
   void f;
+}
+
+function addOwn(id) {
+  const inp = $(`[data-addopt="${id}"]`); const v = (inp && inp.value || '').trim().replace(/\s+/g, ' ').slice(0, 80);
+  if (!v) { inp && inp.focus(); return; }
+  const f = SECTIONS.flatMap(s => s.fields).find(x => x.id === id);
+  const arr = state.a[id] || [];
+  const known = f.options.find(o => L(o[1]).toLowerCase() === v.toLowerCase());
+  const val = known ? known[0] : v;
+  if (!arr.includes(val)) arr.push(val);
+  state.a[id] = arr; save(); renderStep();
+  const next = $(`[data-addopt="${id}"]`); next && next.focus({ preventScroll: true });
 }
 
 function validate() {
@@ -623,12 +645,43 @@ async function sendToInbox(st) {
   await api({ action: 'finish', id: sub.id, token: sub.token, fileCount: all.length });
 }
 
+function missingAll() {
+  const secs = sections();
+  for (let i = 0; i < secs.length; i++) {
+    const miss = secs[i].fields.filter(visible).filter(f => {
+      if (!f.req) return false;
+      if (f.type === 'files') return !(files[f.id] || []).length;
+      const v = state.a[f.id];
+      if (v == null || (Array.isArray(v) ? !v.length : !String(v).trim())) return true;
+      return f.type === 'email' && !/^[^\s@<>]+@[^\s@<>]+\.[^\s@<>]+$/.test(v);
+    });
+    if (miss.length) return { step: i, sec: secs[i], fields: miss };
+  }
+  return null;
+}
+function needData(st, m) {
+  const step = m || { step: 0, sec: sections()[0], fields: sections()[0].fields.filter(f => f.req) };
+  st.classList.add('bad');
+  st.innerHTML = esc(T('needData', { fields: step.fields.map(f => '«' + L(f.label) + '»').join(', '), step: L(step.sec.nav) })) + ` <button type="button" class="link mono" id="fixBtn">${esc(T('fixBtn'))} →</button>`;
+  $('#fixBtn').addEventListener('click', () => { $('#result').hidden = true; startMode(state.mode, step.step); setTimeout(validate, 50); });
+}
 async function send() {
   const st = $('#sendStatus');
+  st.classList.remove('bad');
+  const miss = missingAll();
+  if (miss) return needData(st, miss);
   st.textContent = T('sending');
   if (CONFIG.endpoint) {
-    try { await sendToInbox(st); st.textContent = T('sentOk'); try { localStorage.removeItem(STORE); } catch (e) {} $('#sendBtn').disabled = true; return; }
-    catch (e) { console.error(e); st.textContent = T('sentFail', { email: CONFIG.email }) + ' [' + String(e && e.message || e).slice(0, 60) + ']'; return; }
+    $('#sendBtn').disabled = true;
+    try { await sendToInbox(st); st.textContent = T('sentOk'); try { localStorage.removeItem(STORE); } catch (e) {} return; }
+    catch (e) {
+      console.error(e); $('#sendBtn').disabled = false;
+      const m = String(e && e.message || e);
+      if (m === 'name and email required' || m === 'bad email') return needData(st, null);
+      st.classList.add('bad');
+      st.textContent = /failed to fetch|networkerror|load failed|network request/i.test(m) ? T('errNet') : m === 'too many requests' ? T('errBusy') : /file too large|too many files|payload too large/.test(m) ? T('errFile') : T('errServer', { email: CONFIG.email }) + ' [' + m.slice(0, 40) + ']';
+      return;
+    }
   }
   try { const z = await buildZip(); download(z.blob, z.name); } catch (e) { /* still open mail */ }
   const subject = `${T('mailSubject')}: ${state.a.company || state.a.name || ''}`;
@@ -662,10 +715,12 @@ function bind() {
   body.addEventListener('click', e => {
     const t = e.target.closest('button'); if (!t) return;
     if (t.dataset.rm) { files[t.dataset.rm].splice(+t.dataset.i, 1); state.a[t.dataset.rm + '__names'] = files[t.dataset.rm].map(x => x.name); save(); rerenderKeepFocus(); }
+    if (t.dataset.addoptbtn) addOwn(t.dataset.addoptbtn);
     if (t.dataset.addlink) { const id = t.dataset.addlink; const rows = state.a[id] && state.a[id].length ? state.a[id] : [{ url: '', note: '' }]; rows.push({ url: '', note: '' }); state.a[id] = rows; save(); renderStep(); $$(`[data-link="${id}"][data-k="url"]`).pop().focus(); }
     if (t.dataset.addcolor) { const id = t.dataset.addcolor; const c = state.a[id] && state.a[id].length ? state.a[id] : ['#131412', '#c5ff27']; if (c.length < 8) c.push('#90b336'); state.a[id] = c; save(); renderStep(); }
     if (t.dataset.rmcolor) { e.preventDefault(); const id = t.dataset.rmcolor; const c = state.a[id] && state.a[id].length ? state.a[id] : ['#131412', '#c5ff27']; c.splice(+t.dataset.i, 1); state.a[id] = c; save(); renderStep(); }
   });
+  body.addEventListener('keydown', e => { if (e.key === 'Enter' && e.target.dataset.addopt) { e.preventDefault(); addOwn(e.target.dataset.addopt); } });
   ['dragenter', 'dragover'].forEach(ev => body.addEventListener(ev, e => { const d = e.target.closest('.drop'); if (d) { e.preventDefault(); d.classList.add('over'); } }));
   ['dragleave', 'drop'].forEach(ev => body.addEventListener(ev, e => { const d = e.target.closest('.drop'); if (d) { e.preventDefault(); d.classList.remove('over'); if (ev === 'drop') addFiles(d.dataset.drop, [...e.dataTransfer.files]); } }));
   $('#stepsList').addEventListener('click', e => { const b = e.target.closest('[data-go]'); if (b) go(+b.dataset.go); });

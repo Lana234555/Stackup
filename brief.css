@@ -239,3 +239,9 @@ body.standalone .doc{max-width:900px;margin:0 auto}
   .d-est{-webkit-print-color-adjust:exact;print-color-adjust:exact}
   .d-sec h3 .mono{-webkit-print-color-adjust:exact;print-color-adjust:exact}
 }
+.send-status.bad{color:#b2481b}
+.send-status .link{margin-left:6px;color:var(--ink)}
+.opt-add{display:flex;align-items:center;gap:14px;margin-top:12px;max-width:520px}
+.opt-add input{flex:1;min-width:0;border:0;border-bottom:1px solid #cdd2c0;padding:10px 0;background:transparent;font-size:15px}
+.opt-add input:focus{outline:0;border-bottom-color:var(--ink)}
+.opt-add .link{flex:none;white-space:nowrap}
