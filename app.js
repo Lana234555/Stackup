@@ -24,13 +24,12 @@ $$('.step').forEach((step,index) => { step.addEventListener('click',()=>selectSt
 renderStep(0,false);
 
 const projects = {
- reelly:{name:'Reelly',category:'REAL ESTATE PLATFORM',description:'A real estate experience built around discovering properties. The supplied concept brings a bold dark interface, property search and Dubai imagery into one clear entry point.'},
- stackup:{name:'Stackup',category:'CORPORATE WEBSITE',description:'A studio website built around confident typography, architectural imagery and a clear invitation to start a conversation. Strategy, UI/UX and Webflow are the disciplines listed in the original portfolio.'},
- nexa:{name:'Nexa',category:'FINTECH PRODUCT',description:'A finance product concept with a focused dark interface, vibrant green accents and a mobile dashboard. A visual exploration of making complex information feel more approachable.'},
- lume:{name:'Lume',category:'HOSPITALITY WEBSITE',description:'A hospitality website concept that lets the destination lead. Expansive photography, calm typography and a clear booking entry point create an inviting first impression.'}
+ reelly:{name:'Reelly',category:'REAL ESTATE PLATFORM',img:'assets/reelly.png',url:'https://reelly.io/',description:'A real estate platform built around discovering properties. A bold dark interface, property search and Dubai imagery come together in one clear entry point.'},
+ trustmont:{name:'Trustmont Capital',category:'WEBINAR LANDING',img:'assets/work-trustmont.webp',url:'https://lana234555.github.io/trustmont-webinar/',description:'A landing page for the Trustmont Capital × Wyndham Hotels & Resorts webinar on hotel real estate. An editorial dark look, a ticket-style hero and a short registration flow that turns interest into signed-up investors.'},
+ lina:{name:'Lina’s Studio',category:'MUSIC STUDIO WEBSITE',img:'assets/work-lina.webp',url:'https://linasmusicgroup.org/',description:'A website for a music studio in Warsaw: vocal, guitar and piano lessons, live concerts and a creative community. Concert photography sets the mood, and a trial lesson is one tap away, in several languages.'}
 };
 const dialog = $('.project-dialog');
-$$('[data-project]').forEach(btn=>btn.addEventListener('click',()=>{const key = btn.dataset.project, p=projects[key];$('.dialog-body').innerHTML=`<span class="mono">SELECTED WORK / ${p.category}</span><h2>${p.name}<span class="serif">.</span></h2><img src="assets/${key}.png" alt="${p.name} website preview from the original portfolio"><div class="dialog-bottom"><p>${p.description}</p><a href="#contact" class="dialog-contact">Let’s build something like this ↗</a></div><p class="dialog-note">Preview from the supplied portfolio artwork. Full case study assets can be added here.</p>`; dialog.showModal();$('.dialog-contact').addEventListener('click',()=>dialog.close());}));
+$$('[data-project]').forEach(btn=>btn.addEventListener('click',()=>{const key = btn.dataset.project, p=projects[key];$('.dialog-body').innerHTML=`<span class="mono">SELECTED WORK / ${p.category}</span><h2>${p.name}<span class="serif">.</span></h2><img src="${p.img}" alt="${p.name} website"><div class="dialog-bottom"><p>${p.description}</p><a href="#contact" class="dialog-contact">Let’s build something like this ↗</a></div>${p.url?`<a class="dialog-note" href="${p.url}" target="_blank" rel="noopener">Visit the live site ↗</a>`:''}`; dialog.showModal();$('.dialog-contact').addEventListener('click',()=>dialog.close());}));
 $('.dialog-close').addEventListener('click',()=>dialog.close());
 dialog.addEventListener('click',e=>{ if(e.target===dialog){const r=dialog.getBoundingClientRect();if(e.clientX<r.left||e.clientX>r.right||e.clientY<r.top||e.clientY>r.bottom)dialog.close();} });
 $$('[data-service]').forEach(link=>link.addEventListener('click',()=>{const service=link.dataset.service;const value=service.includes('redesign')?'Redesign':service.includes('prototype')?'Digital product':service.includes('website')||service.includes('page')?'Website':'Something else';const checkbox=$(`input[name="service"][value="${value}"]`);if(checkbox)checkbox.checked=true;const message=$('textarea[name="message"]');if(!message.value)message.value=`I’m interested in ${service.toLowerCase()}. `;}));
@@ -167,7 +166,7 @@ if(matchMedia('(hover: hover) and (pointer: fine)').matches&&!reduced){
  const aura=$('.cursor-aura');let targetX=0,targetY=0,auraX=0,auraY=0,cursorFrame=0,cursorSeen=false;
  function cursorColor(){
   const hit=document.elementFromPoint(targetX,targetY);if(!hit)return;
-  const dark=hit.closest('footer,.service-card.black,.project-reelly,.project-nexa,.code-card,.develop-art')||(scrollY<metrics.diveRange&&scrollY/metrics.diveRange>.3);
+  const dark=hit.closest('footer,.service-card.black,.project-reelly,.project-lina,.code-card,.develop-art')||(scrollY<metrics.diveRange&&scrollY/metrics.diveRange>.3);
   let color=dark?'#f6f6f0':'#a6c82f';
   if(!dark){if(hit.closest('.services'))color='#a4bc40';else if(hit.closest('.why'))color='#aaa0cf';else if(hit.closest('.work'))color='#70a892';else if(hit.closest('.process'))color='#78a8c8';}
   aura.style.setProperty('--cursor-color',color);
