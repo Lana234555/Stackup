@@ -180,3 +180,13 @@ if(matchMedia('(hover: hover) and (pointer: fine)').matches&&!reduced){
  document.documentElement.addEventListener('pointerleave',()=>aura.classList.remove('cursor-visible'));
  window.addEventListener('blur',()=>aura.classList.remove('cursor-visible'));
 }
+
+// Keep the address clean on the home page: stackup.studio, without #section.
+document.addEventListener('click',e=>{
+ const a=e.target.closest('a[href^="#"]'); if(!a||e.defaultPrevented||e.metaKey||e.ctrlKey||e.shiftKey||e.button)return;
+ const id=a.getAttribute('href').slice(1), el=id?document.getElementById(id):null; if(!el)return;
+ e.preventDefault();
+ el.scrollIntoView({behavior:matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth',block:'start'});
+ if(location.hash)history.replaceState(null,'',location.pathname.replace(/index\.html$/,'')+location.search);
+});
+if(location.hash||/index\.html$/.test(location.pathname)){const h=location.hash.slice(1);history.replaceState(null,'',location.pathname.replace(/index\.html$/,'')+location.search);if(h){const el=document.getElementById(h);if(el)requestAnimationFrame(()=>el.scrollIntoView({block:'start'}));}}
