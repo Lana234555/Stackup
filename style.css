@@ -50,3 +50,24 @@
 }
 @media(max-width:360px){.service-grid{grid-template-columns:1fr}.service-card{min-height:340px}.service-card>.mono{min-height:0}.service-card p{font-size:15px}.service-bottom{font-size:11px}.header-cta{font-size:10px;margin-right:12px}.hero-actions{gap:12px}.hero-actions .button,.hero-actions .text-link{font-size:12px}}
 .brief-links{display:flex;flex-wrap:wrap;gap:10px;margin-top:34px}.brief-btn{display:inline-flex;align-items:center;gap:8px;padding:14px 20px;border-radius:40px;font-size:14px;transition:transform .25s}.brief-btn:hover{transform:translateY(-3px)}.brief-btn b{font-weight:650}.brief-btn span{margin-left:10px;font-size:16px}.brief-btn.acid{background:var(--acid)}.brief-btn.ink{background:var(--ink);color:#fff}
+
+/* Selected work: two-column grid, cards link straight to the live sites */
+.work-stack{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:28px;padding-bottom:20px}
+.work-stack .project{position:relative;top:auto;display:flex;flex-direction:column;min-height:0;margin:0;grid-template-columns:none}
+.work-stack .project-image{order:-1;padding:42px 38px;min-height:0;color:inherit}
+.work-stack .project-image .shots{transform:rotate(-2deg)}
+.work-stack .project-image:hover .shots{transform:rotate(0) scale(1.03)}
+.work-stack .project-image>span:not(.shots):not(.shot-dots){display:block;color:#fff;right:20px;bottom:14px}
+.work-stack .project-info{padding:28px 32px 30px;flex:1;display:flex;flex-direction:column;align-items:flex-start}
+.work-stack .project h3{font-size:clamp(30px,2.7vw,42px);margin:20px 0 10px}
+.work-stack .project h3>span{font-size:.6em}
+.work-stack .project-info>p{font-size:16px}
+.work-stack .project-open{margin-top:24px;padding:11px 20px;border:1px solid currentColor;border-radius:999px;font-size:14px;gap:14px;transition:background .25s,color .25s}
+.work-stack .project-open:hover{background:currentColor}
+.work-stack .project-open:hover,.work-stack .project-open:hover span{color:var(--paper)}
+.work-stack .project-trustmont .project-open:hover,.work-stack .project-money24 .project-open:hover,.work-stack .project-agency .project-open:hover{background:var(--ink)}
+.work-stack .project-reelly .project-open:hover,.work-stack .project-lina .project-open:hover,.work-stack .project-blissful .project-open:hover{background:var(--paper)}
+.work-stack .project-reelly .project-open:hover,.work-stack .project-reelly .project-open:hover span,.work-stack .project-lina .project-open:hover,.work-stack .project-lina .project-open:hover span,.work-stack .project-blissful .project-open:hover,.work-stack .project-blissful .project-open:hover span{color:var(--ink)}
+.work-stack .project-index{padding-top:24px}
+@media(max-width:850px){.work-stack{grid-template-columns:1fr;gap:22px}.work-stack .project-image{padding:28px 24px}}
+@media(max-width:560px){.work-stack .project-info{display:flex;padding:22px 22px 24px}.work-stack .project h3{font-size:32px;margin:14px 0 8px}.work-stack .project-image>span:not(.shots):not(.shot-dots){display:none}}
