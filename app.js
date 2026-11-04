@@ -35,8 +35,8 @@ const dialog = $('.project-dialog');
 $$('[data-project]').forEach(btn=>btn.addEventListener('click',()=>{const key = btn.dataset.project, p=projects[key];$('.dialog-body').innerHTML=`<span class="mono">SELECTED WORK / ${p.category}</span><h2>${p.name}<span class="serif">.</span></h2><img src="${p.img}" alt="${p.name} website"><div class="dialog-bottom"><p>${p.description}</p><a href="#contact" class="dialog-contact">Let’s build something like this ↗</a></div>${p.url?`<a class="dialog-note" href="${p.url}" target="_blank" rel="noopener">Visit the live site ↗</a>`:''}`; dialog.showModal();$('.dialog-contact').addEventListener('click',()=>dialog.close());}));
 $('.dialog-close').addEventListener('click',()=>dialog.close());
 dialog.addEventListener('click',e=>{ if(e.target===dialog){const r=dialog.getBoundingClientRect();if(e.clientX<r.left||e.clientX>r.right||e.clientY<r.top||e.clientY>r.bottom)dialog.close();} });
-$$('[data-service]').forEach(link=>link.addEventListener('click',()=>{const service=link.dataset.service;const value=service.includes('redesign')?'Redesign':service.includes('prototype')?'Digital product':service.includes('website')||service.includes('page')?'Website':'Something else';const checkbox=$(`input[name="service"][value="${value}"]`);if(checkbox)checkbox.checked=true;const message=$('textarea[name="message"]');if(!message.value)message.value=`I’m interested in ${service.toLowerCase()}. `;}));
-$('.contact-form').addEventListener('submit',e=>{e.preventDefault();const data=new FormData(e.currentTarget);const services=data.getAll('service').join(', ')||'Let’s discuss';const subject=`A new spark — ${data.get('name')}`;const body=`Hi STACKUP,\n\nName: ${data.get('name')}\nEmail: ${data.get('email')}\nPhone: ${data.get('phone')}\nInterested in: ${services}\n\n${data.get('message')||'I’d love to talk about a new project.'}`;window.location.href=`mailto:hello@stackup.dev?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;$('.form-status').textContent='Your email draft is ready to open in your mail app. Review it and press send there. The address should be confirmed before launch.';});
+$$('[data-service]').forEach(link=>link.addEventListener('click',()=>{const n=$('.contact-form input[name="name"]');if(n)setTimeout(()=>n.focus({preventScroll:true}),900);}));
+$('.contact-form').addEventListener('submit',e=>{e.preventDefault();const data=new FormData(e.currentTarget);const subject=`A new spark — ${data.get('name')}`;const body=`Hi STACKUP,\n\nName: ${data.get('name')}\nEmail: ${data.get('email')}\nPhone: ${data.get('phone')}\n\nI’d love to talk about a new project.`;window.location.href=`mailto:hello@stackup.dev?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;$('.form-status').textContent='Your email draft is ready to open in your mail app. Review it and press send there. The address should be confirmed before launch.';});
 
 const observer = new IntersectionObserver(entries=>entries.forEach(e=>{if(e.isIntersecting){e.target.classList.add('in-view');observer.unobserve(e.target);}}),{threshold:.12});
 $$('.section-heading,.why-intro,.benefits article,.process-layout,.contact-intro,.contact-form').forEach(el=>{el.classList.add('reveal');observer.observe(el);});observer.observe($('footer'));observer.observe($('.why'));
@@ -45,6 +45,7 @@ $$('.section-heading,.why-intro,.benefits article,.process-layout,.contact-intro
 // Native scrolling drives the scenes. No wheel interception or scroll locking.
 function clamp(n,a=0,b=1){return Math.min(b,Math.max(a,n));}
 function smooth(n){const t=clamp(n);return t*t*(3-2*t);}
+const liteFx=matchMedia('(max-width:700px)').matches;
 const diveTrack=$('.dive-track'), hero=$('.dive-pin .hero'), depth=$('.dive-depth'), manifesto=$('.manifesto');
 const arrival=$('.work-arrival'), cloud=$('.cloud-field'), workHeading=$('.work-arrival .section-heading');
 const processTrack=$('.process-track'), wayfinder=$('.wayfinder');
@@ -74,7 +75,7 @@ function updateScroll(){
   const d=clamp((sy-metrics.diveTop)/Math.max(1,metrics.diveRange));
   const sink=smooth((d-.025)/.39), entry=smooth((d-.31)/.17);
   hero.style.transform=`translate3d(0,${-sink*vh*.12}px,0) scale(${1-sink*.16})`;
-  hero.style.filter=`blur(${sink*15}px)`;
+  hero.style.filter=liteFx?'none':`blur(${sink*15}px)`;
   hero.style.opacity=1-smooth((d-.16)/.25);
   hero.style.pointerEvents=d>.31?'none':'';
   hero.inert=d>.39;
@@ -83,7 +84,7 @@ function updateScroll(){
   depth.style.setProperty('--depth-cloud',Math.sin(sink*Math.PI));
   manifesto.style.opacity=entry;
   manifesto.style.transform=`translate3d(0,${(1-entry)*vh*.07}px,0) scale(${1.08-entry*.08})`;
-  manifesto.style.filter=`blur(${(1-entry)*10}px)`;
+  manifesto.style.filter=liteFx?'none':`blur(${(1-entry)*10}px)`;
   manifesto.inert=d<.32;
   const reveal=clamp((d-.43)/.45);
   words.forEach((word,i)=>{const lit=smooth((reveal*(words.length+1)-i)/2);const c=[71,76,64].map((v,j)=>Math.round(v+((word.closest('em')?[206,255,49]:[249,250,244])[j]-v)*lit));word.style.color=`rgb(${c.join(',')})`;});
@@ -255,14 +256,19 @@ $$('.project-image').forEach(btn=>{
  const reduce=matchMedia('(prefers-reduced-motion: reduce)').matches;
  document.documentElement.classList.add('js-blinds'); strips.forEach((el,i)=>el.style.setProperty('--i',i));
  if('IntersectionObserver' in window){const io=new IntersectionObserver(es=>{if(es.some(en=>en.isIntersecting)){box.classList.add('in');io.disconnect();}},{threshold:.2});io.observe(box);}else box.classList.add('in');
+ const SHOT=2400; let tick=null;
  const set=i=>{on=i;strips.forEach((el,j)=>el.classList.toggle('on',j===i));
-  clearInterval(shotT);strips.forEach(el=>el.querySelectorAll('img').forEach(im=>im.classList.remove('cur')));
-  const ims=strips[i].querySelectorAll('img');let k=0;ims[0].classList.add('cur');
-  if(ims.length>1&&!reduce)shotT=setInterval(()=>{ims[k].classList.remove('cur');k=(k+1)%ims.length;ims[k].classList.add('cur');},1700);};
+  clearTimeout(tick);strips.forEach(el=>el.querySelectorAll('img').forEach(im=>im.classList.remove('cur')));
+  const ims=[...strips[i].querySelectorAll('img')];let k=0;ims[0].classList.add('cur');
+  const step=()=>{tick=setTimeout(()=>{
+    if(k<ims.length-1&&!reduce){ims[k].classList.remove('cur');k++;ims[k].classList.add('cur');return step();}
+    if(!hover&&!reduce&&seen&&Date.now()-touched>9000)return set((on+1)%strips.length);
+    if(ims.length>1&&!reduce){ims[k].classList.remove('cur');k=0;ims[0].classList.add('cur');}
+    step();},SHOT);};
+  step();};
  box.addEventListener('mouseover',e=>{const el=e.target.closest('.bl');if(el&&matchMedia('(hover:hover)').matches){const i=strips.indexOf(el);if(i!==on)set(i);}});
  box.addEventListener('mouseenter',()=>hover=true);box.addEventListener('mouseleave',()=>hover=false);
  box.addEventListener('click',e=>{const el=e.target.closest('.bl');if(el&&!el.classList.contains('on')){e.preventDefault();touched=Date.now();set(strips.indexOf(el));}});
  if('IntersectionObserver' in window){new IntersectionObserver(es=>es.forEach(en=>seen=en.isIntersecting),{threshold:.3}).observe(box);}else seen=true;
- setInterval(()=>{if(!hover&&!reduce&&seen&&Date.now()-touched>9000)set((on+1)%strips.length);},3600);
  set(0);
 })();

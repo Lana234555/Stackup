@@ -9,7 +9,7 @@ const qp = new URLSearchParams(location.search);
 const LIVE_HOST = /(^|\.)stackup\.studio$/.test(location.hostname);
 const DEMO = qp.has('demo') || (!EP && !LIVE_HOST);
 const SESSION_STORE = 'stackup-crm-session', DEVICE_STORE = 'stackup-crm-device', SEEN_STORE = 'stackup-admin-seen', FILTER_STORE = 'stackup-admin-filters-v2', VIEW_STORE = 'stackup-admin-view';
-const POLL_MS = DEMO ? 15000 : 60000;
+const POLL_MS = DEMO ? 15000 : 30000;
 
 const DEFAULT_STAGES = [
   { id: 'new', name: 'Нові', tone: 'acid', hint: 'Щойно надійшли' },
@@ -164,6 +164,7 @@ async function enter() {
     $('#login').hidden = true; $('#app').hidden = false;
     $('#logoutBtn').hidden = DEMO; $('#logoutAllBtn').hidden = DEMO; $('#demoTag').hidden = !DEMO;
     clearInterval(pollTimer); pollTimer = setInterval(poll, POLL_MS);
+    document.onvisibilitychange = () => { if (!document.hidden) poll(); };
     render();
     const id = location.hash.slice(1); if (id && items.some(x => x.id === id)) openDrawer(id);
   } catch (e) {
@@ -207,8 +208,25 @@ function announce(fresh) {
   const x = fresh[0], t = $('#toast');
   t.innerHTML = `<span class="mono">НОВА ЗАЯВКА${fresh.length > 1 ? ' · ' + fresh.length : ''}</span><b>${esc(x.company || x.name)}</b><button type="button" data-open="${esc(x.id)}">Відкрити ↗</button><button type="button" class="x" aria-label="Закрити">×</button>`;
   t.hidden = false; clearTimeout(t._h); t._h = setTimeout(() => t.hidden = true, 12000);
-  try { const a = new (window.AudioContext || window.webkitAudioContext)(), o = a.createOscillator(), g = a.createGain(); o.frequency.value = 880; g.gain.setValueAtTime(.08, a.currentTime); g.gain.exponentialRampToValueAtTime(.0001, a.currentTime + .5); o.connect(g).connect(a.destination); o.start(); o.stop(a.currentTime + .5); } catch (e) {}
-  try { if ('Notification' in window && Notification.permission === 'granted') new Notification('STACKUP. Нова заявка', { body: (x.company || x.name) + (x.type ? ' · ' + x.type : '') }); } catch (e) {}
+  chime();
+  try {
+    if ('Notification' in window && Notification.permission === 'granted') {
+      const n = new Notification('STACKUP. Нова заявка', { body: (x.company || x.name) + (x.type ? ' · ' + x.type : ''), tag: 'brief-' + x.id, requireInteraction: true });
+      n.onclick = () => { window.focus(); openDrawer(x.id); n.close(); };
+    }
+  } catch (e) {}
+}
+// A two-note chime. Browsers only allow sound after the page was clicked once, so the audio is unlocked on the first click or key press.
+let audioCtx = null;
+function unlockAudio() { try { audioCtx = audioCtx || new (window.AudioContext || window.webkitAudioContext)(); if (audioCtx.state === 'suspended') audioCtx.resume(); } catch (e) {} }
+['pointerdown', 'keydown'].forEach(ev => addEventListener(ev, unlockAudio, { passive: true }));
+function chime() {
+  try {
+    unlockAudio(); const a = audioCtx; if (!a) return; const t0 = a.currentTime;
+    [[784, 0], [1175, .16], [1568, .32]].forEach(([f, d]) => { const o = a.createOscillator(), g = a.createGain(); o.type = 'sine'; o.frequency.value = f;
+      g.gain.setValueAtTime(.0001, t0 + d); g.gain.exponentialRampToValueAtTime(.14, t0 + d + .02); g.gain.exponentialRampToValueAtTime(.0001, t0 + d + .7);
+      o.connect(g).connect(a.destination); o.start(t0 + d); o.stop(t0 + d + .75); });
+  } catch (e) {}
 }
 function bellState() {
   const b = $('#bellBtn');
@@ -483,7 +501,7 @@ $('#otpBack').addEventListener('click', () => showLogin());
 $('#logoutBtn').addEventListener('click', () => logout(false));
 $('#logoutAllBtn').addEventListener('click', () => logout(true));
 $('#refreshBtn').addEventListener('click', () => { cache = {}; poll(); });
-$('#bellBtn').addEventListener('click', async () => { try { await Notification.requestPermission(); } catch (e) {} bellState(); });
+$('#bellBtn').addEventListener('click', async () => { unlockAudio(); try { await Notification.requestPermission(); } catch (e) {} bellState(); chime(); });
 $('#search').addEventListener('input', e => { F.q = e.target.value; render(); });
 $('#fMode').addEventListener('change', e => setF('mode', e.target.value));
 $('#fType').addEventListener('change', e => setF('type', e.target.value));

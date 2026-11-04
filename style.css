@@ -161,3 +161,14 @@
 .js-blinds .work-blinds.in .bl:not(.on) .bl-vn,.js-blinds .work-blinds.in .bl:not(.on) .bl-num{opacity:1;transition:opacity .5s calc(var(--i,0) * 90ms + 600ms)}
 @media(max-width:700px){.js-blinds .bl{clip-path:inset(0 100% 0 0 round 16px);transform:translateX(-40px)}}
 @media(prefers-reduced-motion:reduce){.js-blinds .bl{clip-path:none;transform:none}.js-blinds .bl .bl-vn,.js-blinds .bl .bl-num{opacity:1}}
+
+/* Service icons are drawn line icons now */
+.service-symbol svg{width:1em;height:1em;display:block}
+.service-symbol{opacity:.2}
+/* Phones: one service card per row, full-width stacked buttons, a shorter and lighter dive between the first two blocks */
+@media(max-width:700px){.service-grid{grid-template-columns:1fr}.service-grid .service-card{min-height:250px;padding:22px 20px}.service-grid .service-bottom{left:20px;right:20px}.service-symbol{font-size:84px}
+ .brief-links{flex-direction:column;align-items:stretch}.brief-btn{justify-content:center;width:100%;padding:16px 20px}
+ .hero-actions{flex-direction:column;align-items:stretch;width:min(100%,340px);margin-inline:auto;gap:10px}
+ .hero-actions .button,.hero-actions .text-link{justify-content:center;width:100%;padding:15px 18px;border-radius:40px}
+ .hero-actions .text-link{border:1px solid var(--ink)}
+ .dive-track{height:200svh}}
