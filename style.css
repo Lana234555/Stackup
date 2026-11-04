@@ -145,3 +145,12 @@
  .bl-vn{writing-mode:horizontal-tb;transform:translateY(-50%);left:18px;top:50%;bottom:auto;font-size:18px}.bl-num{top:50%;transform:translateY(-50%);left:auto;right:18px;text-align:right}
  .bl-info{flex-direction:column;align-items:flex-start;gap:14px;padding:70px 18px 18px}.bl-text b{font-size:30px;white-space:normal}.bl-desc{font-size:14px}.bl-go{padding:9px 15px;font-size:13px}}
 @media(prefers-reduced-motion:reduce){.bl,.bl-info{transition:none}}
+/* Blinds on phones: the open strip shows the whole 16:9 screenshot on top, copy below on the project colour; closed strips are plain colour */
+@media(max-width:700px){.work-blinds{container-type:inline-size}
+ .bl.on{height:calc(56.25cqw + 185px)}
+ .bl-shots{bottom:auto;aspect-ratio:16/9;transition:opacity .4s}
+ .bl:not(.on) .bl-shots{opacity:0}
+ .bl-shots img{object-position:center top}
+ .bl-shots img:first-child{opacity:0;filter:none}
+ .bl-info{top:56.25cqw;bottom:0;padding:18px;background:var(--c);color:var(--fg);justify-content:flex-start}
+ .bl-tags span{border-color:currentColor}}
