@@ -172,3 +172,6 @@
  .hero-actions .button,.hero-actions .text-link{justify-content:center;width:100%;padding:15px 18px;border-radius:40px}
  .hero-actions .text-link{border:1px solid var(--ink)}
  .dive-track{height:200svh}}
+
+/* iOS draws arrows and asterisks as emoji unless told otherwise */
+html{font-variant-emoji:text}

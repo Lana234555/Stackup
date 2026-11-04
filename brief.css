@@ -245,3 +245,6 @@ body.standalone .doc{max-width:900px;margin:0 auto}
 .opt-add input{flex:1;min-width:0;border:0;border-bottom:1px solid #cdd2c0;padding:10px 0;background:transparent;font-size:15px}
 .opt-add input:focus{outline:0;border-bottom-color:var(--ink)}
 .opt-add .link{flex:none;white-space:nowrap}
+
+/* iOS draws arrows and asterisks as emoji unless told otherwise */
+html{font-variant-emoji:text}

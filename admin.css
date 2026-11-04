@@ -277,3 +277,6 @@ html.guard body{visibility:hidden}
 .nt-compose{position:relative}
 .nt-send{position:absolute;right:8px;bottom:8px;width:34px;height:34px;border-radius:50%;border:0;background:#181917;color:#fff;font-size:17px;cursor:pointer;display:grid;place-items:center}
 .nt-send:hover{background:#000}
+
+/* iOS draws arrows and asterisks as emoji unless told otherwise */
+html{font-variant-emoji:text}

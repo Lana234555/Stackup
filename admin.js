@@ -206,7 +206,7 @@ function updateBadge() {
 }
 function announce(fresh) {
   const x = fresh[0], t = $('#toast');
-  t.innerHTML = `<span class="mono">НОВА ЗАЯВКА${fresh.length > 1 ? ' · ' + fresh.length : ''}</span><b>${esc(x.company || x.name)}</b><button type="button" data-open="${esc(x.id)}">Відкрити ↗</button><button type="button" class="x" aria-label="Закрити">×</button>`;
+  t.innerHTML = `<span class="mono">НОВА ЗАЯВКА${fresh.length > 1 ? ' · ' + fresh.length : ''}</span><b>${esc(x.company || x.name)}</b><button type="button" data-open="${esc(x.id)}">Відкрити ↗︎</button><button type="button" class="x" aria-label="Закрити">×</button>`;
   t.hidden = false; clearTimeout(t._h); t._h = setTimeout(() => t.hidden = true, 12000);
   chime();
   try {
@@ -405,10 +405,10 @@ function valueHTML(r) {
 }
 function contactLinks(c) {
   const out = [];
-  if (c.email) out.push(`<a class="button primary" href="mailto:${esc(c.email)}"><b>Написати</b> <span>↗</span></a>`);
+  if (c.email) out.push(`<a class="button primary" href="mailto:${esc(c.email)}"><b>Написати</b> <span>↗︎</span></a>`);
   const ph = String(c.phone || '').trim();
-  if (/^@?[a-z0-9_]{4,}$/i.test(ph) && !/^\d+$/.test(ph.replace('@', ''))) out.push(`<a class="button ghost" href="https://t.me/${esc(ph.replace('@', ''))}" target="_blank" rel="noopener"><b>Telegram</b> <span>↗</span></a>`);
-  else if (ph) out.push(`<a class="button ghost" href="tel:${esc(ph.replace(/[^\d+]/g, ''))}"><b>${esc(ph)}</b> <span>↗</span></a>`);
+  if (/^@?[a-z0-9_]{4,}$/i.test(ph) && !/^\d+$/.test(ph.replace('@', ''))) out.push(`<a class="button ghost" href="https://t.me/${esc(ph.replace('@', ''))}" target="_blank" rel="noopener"><b>Telegram</b> <span>↗︎</span></a>`);
+  else if (ph) out.push(`<a class="button ghost" href="tel:${esc(ph.replace(/[^\d+]/g, ''))}"><b>${esc(ph)}</b> <span>↗︎</span></a>`);
   return out.join('');
 }
 function renderDetail(d) {
@@ -425,9 +425,9 @@ function renderDetail(d) {
     <p class="contact-line">${esc(c.email || '')}${c.phone ? ' · ' + esc(c.phone) : ''}</p>
     <p class="mono d-label">ЕТАП</p>
     <div class="stage" role="group" aria-label="Етап">${STATUS.map(([v, l, t], i) => `<button type="button" class="${t}${PIPE.indexOf(v) <= PIPE.indexOf(live.status) && PIPE.includes(live.status) && PIPE.includes(v) ? ' passed' : ''}" data-st="${esc(v)}" aria-pressed="${live.status === v}"><span class="mono">${v === 'archive' ? '×' : String(i + 1).padStart(2, '0')}</span>${esc(l)}</button>`).join('')}</div>
-    <div class="act-row">${contactLinks(c)}${safeUrl(d.folderUrl) ? `<a class="button ghost" href="${esc(safeUrl(d.folderUrl))}" target="_blank" rel="noopener noreferrer"><b>Папка на Drive</b> <span>↗</span></a>` : ''}</div>
+    <div class="act-row">${contactLinks(c)}${safeUrl(d.folderUrl) ? `<a class="button ghost" href="${esc(safeUrl(d.folderUrl))}" target="_blank" rel="noopener noreferrer"><b>Папка на Drive</b> <span>↗︎</span></a>` : ''}</div>
 
-    ${spec.length ? `<div class="spec-box"><span class="mono">ТЗ КЛІЄНТА</span>${spec.map(f => `<a href="${esc(safeUrl(f.url))}" target="_blank" rel="noopener noreferrer"><span class="mono">${esc(ext(f.name))}</span><b>${esc(f.name)}</b><em>${size(f.size)}</em><i>↗</i></a>`).join('')}</div>` : ''}
+    ${spec.length ? `<div class="spec-box"><span class="mono">ТЗ КЛІЄНТА</span>${spec.map(f => `<a href="${esc(safeUrl(f.url))}" target="_blank" rel="noopener noreferrer"><span class="mono">${esc(ext(f.name))}</span><b>${esc(f.name)}</b><em>${size(f.size)}</em><i>↗︎</i></a>`).join('')}</div>` : ''}
 
     <section class="d-sec notes"><h3><span class="mono">✎</span>Мої нотатки</h3>
       <ol class="nt-list" id="noteList">${notesHTML(live.notes)}</ol>

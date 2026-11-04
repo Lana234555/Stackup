@@ -17,7 +17,7 @@ const STORE = 'stackup-brief-v1';
 /* ---------- ui strings ---------- */
 const UI = {
   headerMid: ['БРИФ НА ПРОЄКТ', 'PROJECT BRIEF'],
-  back: ['НА САЙТ ↗', 'BACK TO SITE ↗'],
+  back: ['НА САЙТ ↗︎', 'BACK TO SITE ↗︎'],
   introEyebrow: ['00 / БРИФ', '00 / BRIEF'],
   introTitle1: ['Розкажіть про ідею.', 'Tell us about your idea.'],
   introTitle2: ['Решту зробимо разом.', 'We’ll shape the rest together.'],
@@ -35,7 +35,7 @@ const UI = {
   pathNoneText: ['Відповідайте на прості питання крок за кроком. На виході отримаєте готове ТЗ, а ми — все для точної оцінки.', 'Answer simple questions step by step. You get a ready spec, we get everything for an accurate estimate.'],
   pathNoneCta: ['ПОЧАТИ БРИФ', 'START BRIEF'],
   resumeText: ['У вас є незавершений бриф.', 'You have an unfinished brief.'],
-  resumeBtn: ['ПРОДОВЖИТИ ↗', 'CONTINUE ↗'],
+  resumeBtn: ['ПРОДОВЖИТИ ↗︎', 'CONTINUE ↗︎'],
   prev: ['Назад', 'Back'], next: ['Далі', 'Next'], finish: ['Сформувати бриф', 'Build my brief'],
   modeHas: ['A / Є ТЗ', 'A / HAVE A SPEC'], modeNone: ['B / СТВОРЮЄМО ТЗ', 'B / BUILDING A SPEC'],
   switchToNone: ['↺ ТЗ НЕМАЄ? ПРОЙТИ ПОВНИЙ БРИФ', '↺ NO SPEC? TAKE THE FULL BRIEF'],
@@ -86,7 +86,7 @@ const UI = {
   estLangs: ['Мов', 'Languages'],
   estBudget: ['Бюджет', 'Budget'],
   footerMid: ['СТРАТЕГІЯ. ДИЗАЙН. РОЗРОБКА.', 'STRATEGY. DESIGN. DEVELOPMENT.'],
-  footerBack: ['STACKUP.STUDIO ↗', 'STACKUP.STUDIO ↗'],
+  footerBack: ['STACKUP.STUDIO ↗︎', 'STACKUP.STUDIO ↗︎'],
   mailSubject: ['Бриф на проєкт', 'Project brief']
 };
 

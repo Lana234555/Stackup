@@ -17,8 +17,8 @@
 <meta name="apple-mobile-web-app-title" content="Stackup CRM">
 <meta name="apple-mobile-web-app-status-bar-style" content="black">
 <title>Заявки — STACKUP.</title>
-<link rel="stylesheet" href="brief.css?v=3">
-<link rel="stylesheet" href="admin.css?v=10">
+<link rel="stylesheet" href="brief.css?v=4">
+<link rel="stylesheet" href="admin.css?v=11">
 </head>
 <body class="adm">
 
@@ -31,13 +31,13 @@
     <form id="loginForm" class="login-form">
       <input type="text" name="username" autocomplete="username" value="Stackup CRM" hidden>
       <label class="field"><span class="f-label">Код кабінету</span><input type="password" id="codeInput" name="code" autocomplete="current-password" inputmode="text" maxlength="64" placeholder="••••••" required></label>
-      <button class="button primary" type="submit" id="codeBtn"><b>Далі</b> <span>↗</span></button>
+      <button class="button primary" type="submit" id="codeBtn"><b>Далі</b> <span>↗︎</span></button>
       <p class="step-error" id="loginError" role="alert"></p>
     </form>
     <form id="otpForm" class="login-form" autocomplete="off" hidden>
       <label class="check mono trust"><input type="checkbox" id="trustInput" checked> ДОВІРЯТИ ЦЬОМУ ПРИСТРОЮ 30 ДНІВ</label>
       <label class="field"><span class="f-label">Код із листа <em class="mono" id="otpTo"></em></span><input type="text" id="otpInput" name="otp" autocomplete="one-time-code" inputmode="numeric" pattern="[0-9]{6}" maxlength="6" placeholder="000000" required></label>
-      <button class="button primary" type="submit" id="otpBtn"><b>Увійти</b> <span>↗</span></button>
+      <button class="button primary" type="submit" id="otpBtn"><b>Увійти</b> <span>↗︎</span></button>
       <button class="link mono back-step" type="button" id="otpBack">← ВВЕСТИ КОД ЗНОВУ</button>
       <p class="step-error" id="otpError" role="alert"></p>
     </form>
@@ -116,6 +116,6 @@
 <div class="toast" id="toast" role="status" hidden></div>
 
 <script src="config.js?v=3"></script>
-<script src="admin.js?v=13" defer></script>
+<script src="admin.js?v=14" defer></script>
 </body>
 </html>
