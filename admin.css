@@ -174,7 +174,7 @@ button.kpi:hover,button.kpi[aria-pressed=true]{transform:translateY(-2px);box-sh
 .spec-box a em{font-style:normal;font-size:12px}
 .drawer .d-est{margin:0 0 6px}
 .notes{border-top:0;padding-top:0}
-.notes textarea{width:100%;border:1px solid #cdd2c0;border-radius:6px;padding:13px;background:#fff;font-size:15px;line-height:1.55;resize:vertical}
+.notes textarea{width:100%;border:1px solid #cdd2c0;border-radius:6px;padding:12px 54px 12px 13px;background:#fff;font-size:15px;line-height:1.5;resize:vertical;min-height:48px;display:block}
 .notes textarea:focus{outline:0;border-color:var(--ink)}
 .notes-bar{display:flex;justify-content:space-between;align-items:center;margin-top:10px;font-size:10px;color:var(--olive)}
 .acc summary{list-style:none;display:flex;justify-content:space-between;align-items:center;cursor:pointer}
@@ -265,3 +265,15 @@ html.guard body{visibility:hidden}
 .login-form .back-step{display:block;margin:18px auto 0}
 .login-form .f-label em{font-style:normal;opacity:.6;margin-left:6px}
 #otpInput{letter-spacing:.5em;font-size:24px}
+
+.nt-list{list-style:none;margin:0 0 12px;padding:0;display:flex;flex-direction:column;gap:8px;max-height:340px;overflow:auto}
+.nt{background:#ceff31;border-radius:12px 12px 12px 3px;padding:9px 13px 11px;max-width:92%;align-self:flex-start;box-shadow:0 1px 0 #00000012}
+.nt p{margin:0;font-size:14.5px;line-height:1.5;white-space:pre-wrap;word-break:break-word;color:#181917}
+.nt-meta{display:flex;justify-content:space-between;align-items:center;gap:14px;font-size:10px;letter-spacing:.06em;color:#181917a0;margin-bottom:3px}
+.nt-del{background:none;border:0;padding:0 2px;font-size:15px;line-height:1;color:inherit;cursor:pointer;opacity:0;transition:opacity .2s}
+.nt:hover .nt-del,.nt-del:focus-visible{opacity:1}
+@media(hover:none){.nt-del{opacity:.6}}
+.nt-empty{font-size:10px;color:var(--olive);padding:6px 0}
+.nt-compose{position:relative}
+.nt-send{position:absolute;right:8px;bottom:8px;width:34px;height:34px;border-radius:50%;border:0;background:#181917;color:#fff;font-size:17px;cursor:pointer;display:grid;place-items:center}
+.nt-send:hover{background:#000}
