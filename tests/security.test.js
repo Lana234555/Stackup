@@ -28,6 +28,30 @@ function seedBrief(g, client = { name: 'Олена', email: 'o@example.com' }, e
   return g.post({ action: 'submit', mode: 'none', client, summary: { type: 'Лендинг' }, sections: [], fileCount: 1, html: '<p>x</p>', website: '', ...extra });
 }
 
+/* ---------- коротка заявка з головної ---------- */
+t('lead: заявка з сайту зберігається в таблиці й видна в CRM', () => {
+  const g = fresh(); const r = g.post({ action: 'lead', name: 'Олена', email: 'o@example.com', phone: '+48 600 000 000', website: '' }); ok(r.ok && r.id, JSON.stringify(r));
+  const s = signIn(g); const l = g.post({ action: 'list', token: s.token }); eq(l.items[0].mode, 'lead'); eq(l.items[0].phone, '+48 600 000 000');
+  const d = g.post({ action: 'get', token: s.token, id: r.id }); ok(d.ok, JSON.stringify(d)); eq(d.files.length, 0); eq(d.record.client.email, 'o@example.com');
+});
+t('lead: Telegram отримує ім’я, email і телефон', () => {
+  const g = fresh(); g.props.TG_TOKEN = 'tkn'; g.props.TG_CHAT = '42';
+  g.post({ action: 'lead', name: '<b>Ann</b>', email: 'a@b.co', phone: '123' });
+  const f = g.fetches.find(x => /sendMessage/.test(x.url)); ok(f, 'no telegram'); const body = JSON.parse(f.o.payload);
+  ok(/Нова заявка з сайту/.test(body.text) && /a@b\.co/.test(body.text) && /123/.test(body.text)); ok(!body.text.includes('<b>Ann</b>'), 'name not escaped');
+});
+t('lead: без телефону або з поганим email відхиляється', () => {
+  const g = fresh(); ok(!g.post({ action: 'lead', name: 'x', email: 'a@b.co', phone: '' }).ok); eq(g.post({ action: 'lead', name: 'x', email: 'nope', phone: '1' }).error, 'bad email');
+});
+t('lead: honeypot і ліміт працюють', () => {
+  const g = fresh(); g.post({ action: 'lead', name: 'b', email: 'b@b.co', phone: '1', website: 'spam' }); eq(g.sheets['Заявки'].length, 1);
+  let last; for (let i = 0; i < 31; i++) last = g.post({ action: 'lead', name: 'n', email: i + '@x.co', phone: '1' }); eq(last.error, 'too many requests');
+});
+t('lead: токен брифу на заявку з сайту не працює', () => {
+  const g = fresh(); const r = g.post({ action: 'lead', name: 'x', email: 'a@b.co', phone: '1' });
+  eq(g.post({ action: 'file', id: r.id, token: '', name: 'x', data: 'eA==' }).error, 'bad id or token');
+});
+
 /* ---------- налаштування коду ---------- */
 t('setup: код зберігається лише як хеш, NEW_CODE видаляється', () => {
   const g = fresh();
