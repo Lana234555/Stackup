@@ -178,10 +178,8 @@ html{font-variant-emoji:text}
 /* Phones: the headline block starts below the studio line instead of being centred, so the two top lines never overlap; on short screens (browser bars) the two decorative cards step aside */
 @media(max-width:560px){.dive-pin .hero-center{top:clamp(130px,17svh,150px);transform:translateX(-50%)}.hero-actions .button,.hero-actions .text-link{padding:13px 18px}}
 @media(max-width:560px) and (max-height:780px){.dive-pin .spark,.dive-pin .blueprint{display:none}}
-/* Service icons sit in the top-right corner of each card */
-.service-card .service-symbol{top:22px;right:22px;bottom:auto;font-size:84px;transform:none;opacity:.22}
-.service-card:hover .service-symbol{transform:rotate(-8deg) scale(1.08);opacity:.32}
-@media(max-width:700px){.service-grid .service-card .service-symbol{top:18px;right:18px;font-size:58px}.service-grid .service-card>.mono{padding-right:72px}}
+/* Phones only: service icons sit in the top-right corner of each card */
+@media(max-width:700px){.service-grid .service-card .service-symbol{top:18px;right:18px;bottom:auto;font-size:58px;transform:none;opacity:.22}.service-grid .service-card>.mono{padding-right:72px}}
 
 /* 04 / WHO WE ARE */
 .about{position:relative;border-top:1px solid var(--line)}
