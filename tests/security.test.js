@@ -28,6 +28,10 @@ function seedBrief(g, client = { name: 'Олена', email: 'o@example.com' }, e
   return g.post({ action: 'submit', mode: 'none', client, summary: { type: 'Лендинг' }, sections: [], fileCount: 1, html: '<p>x</p>', website: '', ...extra });
 }
 
+t('connectTelegram: прибирає пробіли/лапки в токені і пояснює неправильний токен', () => {
+  const g = fresh(); g.props.TG_TOKEN = ' "1234567890:AAH_test-token-abcdefghijklmnopqrstuv" '; g.ctx.connectTelegram(); eq(g.props.TG_TOKEN, '1234567890:AAH_test-token-abcdefghijklmnopqrstuv');
+  const h = fresh(); h.props.TG_TOKEN = 'abc'; let e; try { h.ctx.connectTelegram(); } catch (x) { e = x; } ok(e && /1234567890:AA/.test(e.message), e && e.message);
+});
 /* ---------- коротка заявка з головної ---------- */
 t('lead: заявка з сайту зберігається в таблиці й видна в CRM', () => {
   const g = fresh(); const r = g.post({ action: 'lead', name: 'Олена', email: 'o@example.com', phone: '+48 600 000 000', website: '' }); ok(r.ok && r.id, JSON.stringify(r));
@@ -201,7 +205,7 @@ t('не більше 5 довірених пристроїв', () => { const g =
 
 /* ---------- публічний бриф ---------- */
 t('Telegram: connectTelegram запам’ятовує чат, нова заявка приходить push-повідомленням з кнопкою в CRM', () => {
-  const g = fresh(); g.props.TG_TOKEN = '123:abc'; g.props.ADMIN_URL = 'https://stackup.studio/admin.html';
+  const g = fresh(); g.props.TG_TOKEN = ' "1234567890:AAH_test-token-abcdefghijklmnopqrstuv" '; g.props.ADMIN_URL = 'https://stackup.studio/admin.html';
   g.ctx.connectTelegram(); eq(g.props.TG_CHAT, '777');
   const b = seedBrief(g); g.post({ action: 'finish', id: b.id, token: b.token, fileCount: 0 });
   const sent = g.fetches.filter(f => /sendMessage/.test(f.url)).map(f => JSON.parse(f.o.payload));

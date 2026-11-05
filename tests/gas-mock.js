@@ -7,7 +7,7 @@ function create(codePath) {
   const props = {};
   const cacheStore = {};
   const mails = [], fetches = [];
-  const fetchReply = url => /getUpdates/.test(url) ? { ok: true, result: [{ message: { chat: { id: 777, type: 'private', first_name: 'Lana' } } }] } : { ok: true };
+  const fetchReply = url => /getUpdates/.test(url) ? { ok: true, result: [{ message: { chat: { id: 777, type: 'private', first_name: 'Lana' } } }] } : /getMe/.test(url) ? { ok: true, result: { username: 'Stackup_studio_bot' } } : /getWebhookInfo/.test(url) ? { ok: true, result: { url: '' } } : { ok: true };
   const logs = [];
   let idn = 0;
   const signed = buf => Array.from(buf).map(b => (b > 127 ? b - 256 : b));
