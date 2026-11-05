@@ -440,15 +440,26 @@ function finish(d) {
    3) Напишіть своєму боту будь-що (наприклад /start).
    4) Запустіть connectTelegram() у редакторі — бот надішле «Підключено». */
 function connectTelegram() {
-  const token = props().getProperty('TG_TOKEN');
-  if (!token) throw new Error('Спершу додайте властивість TG_TOKEN (токен від @BotFather).');
-  const res = JSON.parse(UrlFetchApp.fetch('https://api.telegram.org/bot' + token + '/getUpdates', { muteHttpExceptions: true }).getContentText());
-  const msgs = (res.result || []).map(u => u.message).filter(m => m && m.chat && m.chat.type === 'private');
-  if (!msgs.length) throw new Error('Бот ще не отримав повідомлень. Напишіть йому /start і запустіть connectTelegram() знову.');
+  const p = props(), raw = p.getProperty('TG_TOKEN');
+  if (!raw) throw new Error('Спершу додайте властивість TG_TOKEN (токен від @BotFather).');
+  const token = String(raw).replace(/^\s*["']?|["']?\s*$/g, '').replace(/\s+/g, '');
+  if (token !== raw) p.setProperty('TG_TOKEN', token); // прибрали пробіли/лапки
+  if (!/^\d+:[\w-]{30,}$/.test(token)) throw new Error('TG_TOKEN має вигляд 1234567890:AA… Скопіюйте його з @BotFather повністю.');
+  const api = m => JSON.parse(UrlFetchApp.fetch('https://api.telegram.org/bot' + token + '/' + m, { muteHttpExceptions: true }).getContentText());
+  const me = api('getMe');
+  if (!me.ok) throw new Error('Telegram не прийняв токен (' + (me.description || 'невідома помилка') + '). Скопіюйте токен з @BotFather ще раз.');
+  const bot = '@' + me.result.username;
+  Logger.log('Токен належить боту ' + bot);
+  const wh = api('getWebhookInfo');
+  if (wh.ok && wh.result && wh.result.url) { api('deleteWebhook'); Logger.log('Вимкнено старий webhook бота.'); }
+  const res = api('getUpdates');
+  if (!res.ok) throw new Error('Telegram: ' + (res.description || 'getUpdates не спрацював') + '. Запустіть connectTelegram() ще раз.');
+  const msgs = (res.result || []).map(u => u.message || u.edited_message).filter(m => m && m.chat && m.chat.type === 'private');
+  if (!msgs.length) throw new Error('Токен від бота ' + bot + ', але він ще не отримав повідомлень. Відкрийте саме ' + bot + ' у Telegram, напишіть /start і запустіть connectTelegram() знову.');
   const chat = msgs[msgs.length - 1].chat;
-  props().setProperty('TG_CHAT', String(chat.id));
+  p.setProperty('TG_CHAT', String(chat.id));
   telegram('✅ Підключено. Сюди приходитимуть нові заявки зі stackup.studio.');
-  Logger.log('Telegram підключено: ' + (chat.username || chat.first_name || chat.id));
+  Logger.log('Telegram підключено: ' + bot + ' → ' + (chat.username || chat.first_name || chat.id));
 }
 function telegram(html, url) {
   const p = props(), token = p.getProperty('TG_TOKEN'), chat = p.getProperty('TG_CHAT');
