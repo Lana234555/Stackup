@@ -36,7 +36,15 @@ $$('[data-project]').forEach(btn=>btn.addEventListener('click',()=>{const key = 
 $('.dialog-close').addEventListener('click',()=>dialog.close());
 dialog.addEventListener('click',e=>{ if(e.target===dialog){const r=dialog.getBoundingClientRect();if(e.clientX<r.left||e.clientX>r.right||e.clientY<r.top||e.clientY>r.bottom)dialog.close();} });
 $$('[data-service]').forEach(link=>link.addEventListener('click',()=>{const n=$('.contact-form input[name="name"]');if(n)setTimeout(()=>n.focus({preventScroll:true}),900);}));
-$('.contact-form').addEventListener('submit',e=>{e.preventDefault();const data=new FormData(e.currentTarget);const subject=`A new spark — ${data.get('name')}`;const body=`Hi STACKUP,\n\nName: ${data.get('name')}\nEmail: ${data.get('email')}\nPhone: ${data.get('phone')}\n\nI’d love to talk about a new project.`;window.location.href=`mailto:hello@stackup.dev?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;$('.form-status').textContent='Your email draft is ready to open in your mail app. Review it and press send there. The address should be confirmed before launch.';});
+$('.contact-form').addEventListener('submit',async e=>{e.preventDefault();const f=e.currentTarget,data=new FormData(f),st=$('.form-status'),btn=$('button[type="submit"]',f);
+ const name=data.get('name'),email=data.get('email'),phone=data.get('phone');
+ const mail=()=>{const subject=`A new spark — ${name}`;const body=`Hi STACKUP,\n\nName: ${name}\nEmail: ${email}\nPhone: ${phone}\n\nI’d love to talk about a new project.`;const to=(window.STACKUP&&STACKUP.email)||'hello@stackup.dev';window.location.href=`mailto:${to}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;st.textContent='Your email draft is ready. Press send in your mail app and we’ll be in touch.';};
+ const ep=window.STACKUP&&STACKUP.endpoint;if(!ep)return mail();
+ btn.disabled=true;f.classList.add('sending');st.textContent='Sending…';
+ try{const r=await fetch(ep,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({action:'lead',name,email,phone,website:data.get('website')||''})});const j=await r.json();
+  if(!j.ok)throw new Error(j.error||'failed');f.reset();f.classList.add('sent');st.textContent='Thank you! Your request is in. We’ll get back to you very soon.';}
+ catch(err){mail();}
+ finally{btn.disabled=false;f.classList.remove('sending');}});
 
 const observer = new IntersectionObserver(entries=>entries.forEach(e=>{if(e.isIntersecting){e.target.classList.add('in-view');observer.unobserve(e.target);}}),{threshold:.12});
 $$('.section-heading,.why-intro,.benefits article,.process-layout,.contact-intro,.contact-form').forEach(el=>{el.classList.add('reveal');observer.observe(el);});observer.observe($('footer'));observer.observe($('.why'));

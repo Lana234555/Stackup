@@ -118,6 +118,8 @@ function doPost(e) {
       case 'submit': return out(submit(d));
       case 'file': return out(addFile(d));
       case 'finish': return out(finish(d));
+      // публічне: коротка заявка з форми на головній (ім'я, email, телефон)
+      case 'lead': return out(lead(d));
       // вхід
       case 'login': return out(login(d));
       case 'verify': return out(verify(d));
@@ -346,6 +348,38 @@ function submit(d) {
   } finally { lock.releaseLock(); }
 }
 
+/* =====================================================================
+   КОРОТКА ЗАЯВКА З ГОЛОВНОЇ (публічне): ім'я, email, телефон
+   ===================================================================== */
+function lead(d) {
+  const name = str(d.name, 200), email = str(d.email, 200), phone = str(d.phone, 80);
+  if (!name || !email || !phone) throw new Error('name, email and phone required');
+  if (!/^[^\s@<>]+@[^\s@<>]+\.[^\s@<>]+$/.test(email)) throw new Error('bad email');
+  rateLimit('lead', SEC.SUBMITS_PER_HOUR);
+  const lock = LockService.getScriptLock(); lock.waitLock(20000);
+  let id;
+  try {
+    id = Utilities.formatDate(new Date(), 'Etc/GMT', 'yyMMdd') + '-' + randomToken().slice(0, 6).toUpperCase().replace(/[^A-Z0-9]/g, 'X');
+    const now = new Date().toISOString();
+    const row = { id, created: now, status: 'new', name, company: '', email, phone, mode: 'lead', type: 'Заявка з сайту', deadline: '', budget: '', files: 0,
+      folderId: '', notes: '', token: '', updated: now };
+    sheet().appendRow(COLS.map(k => cell(row[k])));
+  } finally { lock.releaseLock(); }
+  const p = props(), adminUrl = p.getProperty('ADMIN_URL') || '', link = /^https:\/\//.test(adminUrl) ? adminUrl + '#' + id : '';
+  try {
+    telegram('🔥 <b>Нова заявка з сайту</b>\n\n👤 ' + esc(name) + '\n✉️ ' + esc(email) + '\n📞 ' + esc(phone) +
+      '\n\n<i>stackup.studio · форма «Let’s build it»</i>', link);
+  } catch (e) { /* сповіщення не критичне */ }
+  try {
+    const to = p.getProperty('NOTIFY_EMAIL');
+    if (to) MailApp.sendEmail({ to, replyTo: email, subject: 'Нова заявка з сайту: ' + plain(name).slice(0, 80),
+      htmlBody: '<div style="font-family:Arial,sans-serif;font-size:15px;line-height:1.6"><p style="font-size:22px;font-weight:bold;margin:0 0 12px">STACKUP. Нова заявка з сайту</p>' +
+        '<p><b>' + esc(name) + '</b><br>' + esc(email) + '<br>' + esc(phone) + '</p>' +
+        (link ? '<p><a href="' + esc(link) + '" style="background:#ceff31;color:#181917;padding:10px 16px;text-decoration:none;font-weight:bold">Відкрити в кабінеті ↗</a></p>' : '') + '</div>' });
+  } catch (e) { /* лист не критичний */ }
+  return { ok: true, id };
+}
+
 function addFile(d) {
   const r = ownRow(d);
   const k = 'UP:' + r.obj.id, raw = cache().get(k);
@@ -443,6 +477,10 @@ function list() {
 function get(id) {
   const r = findRow(str(id, 40));
   if (!r) throw new Error('not found');
+  if (!r.obj.folderId) { // коротка заявка з сайту: без папки і файлів
+    const row0 = {}; Object.keys(r.obj).forEach(k => { if (k !== 'token' && k !== 'folderId') row0[k] = uncell(r.obj[k]); });
+    return { ok: true, row: row0, record: { client: { name: row0.name, email: row0.email, phone: row0.phone } }, files: [], folderUrl: '' };
+  }
   const folder = DriveApp.getFolderById(r.obj.folderId);
   let record = {};
   const js = folder.getFilesByName('brief.json');

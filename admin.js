@@ -301,7 +301,7 @@ function card(x) {
     <div class="card-top"><span class="ava ${stTone(x.status)}">${esc(initials(x))}</span><span class="mono card-age">${esc(ago(x.created))}</span>${isUnread(x) ? '<em class="new-tag mono">НОВА</em>' : ''}</div>
     <strong>${esc(x.company || x.name)}</strong>
     <span class="card-sub">${esc(x.company ? x.name : x.email)}</span>
-    <div class="tags"><span class="tag mono">${x.mode === 'has' ? 'ТЗ ✓' : 'БРИФ'}</span>${x.type && x.mode !== 'has' ? `<span class="tag">${esc(x.type)}</span>` : ''}</div>
+    <div class="tags"><span class="tag mono">${x.mode === 'has' ? 'ТЗ ✓' : x.mode === 'lead' ? 'САЙТ' : 'БРИФ'}</span>${x.type && x.mode === 'none' ? `<span class="tag">${esc(x.type)}</span>` : ''}</div>
     <div class="card-foot mono">${x.budget ? `<span>${esc(x.budget)}</span>` : ''}${x.deadline ? `<span>⏱ ${esc(x.deadline)}</span>` : ''}${num(x.files) ? `<span>📎 ${num(x.files)}</span>` : ''}${x.notes ? '<span title="Є нотатки">✎</span>' : ''}</div>
   </article>`;
 }
@@ -359,7 +359,7 @@ function renderTable() {
       <td class="c-dot"><span class="ava ${stTone(x.status)}">${esc(initials(x))}</span></td>
       <td class="c-date"><b>${esc(fmtDay(x.created))}</b><span class="mono">${esc(ago(x.created))} тому</span></td>
       <td class="c-client"><b>${esc(x.company || x.name)}${isUnread(x) ? ' <em class="new-tag mono">НОВА</em>' : ''}</b><span>${esc(x.company ? x.name : x.email)}</span></td>
-      <td class="c-what"><span class="tag mono">${x.mode === 'has' ? 'ТЗ ✓' : 'БРИФ'}</span> ${esc(x.mode === 'has' ? 'Власне ТЗ' : x.type || '—')}</td>
+      <td class="c-what"><span class="tag mono">${x.mode === 'has' ? 'ТЗ ✓' : x.mode === 'lead' ? 'САЙТ' : 'БРИФ'}</span> ${esc(x.mode === 'has' ? 'Власне ТЗ' : x.type || '—')}</td>
       <td class="c-dl">${esc(x.deadline || '—')}</td>
       <td class="c-bg">${esc(x.budget || '—')}</td>
       <td class="c-files mono">${x.files ? '📎 ' + x.files : ''}</td>
@@ -421,7 +421,7 @@ function renderDetail(d) {
     <div class="d-nav"><button type="button" class="icon-btn" id="closeDrawer" aria-label="Закрити">×</button>${navBtns(row.id)}</div>
     <div class="d-bar mono"><span>№ ${esc(row.id)}</span><span>${esc(fmtDate(row.created))}</span></div>
     <div class="d-hero"><span class="ava big ${stTone(live.status)}">${esc(initials(c))}</span>
-      <div><h2>${esc(c.company || c.name)}</h2><p class="serif d-who">${esc(c.company ? c.name : (row.mode === 'has' ? 'надіслав(ла) ТЗ' : 'створив(ла) ТЗ'))}</p></div></div>
+      <div><h2>${esc(c.company || c.name)}</h2><p class="serif d-who">${esc(c.company ? c.name : (row.mode === 'has' ? 'надіслав(ла) ТЗ' : row.mode === 'lead' ? 'залишив(ла) заявку на сайті' : 'створив(ла) ТЗ'))}</p></div></div>
     <p class="contact-line">${esc(c.email || '')}${c.phone ? ' · ' + esc(c.phone) : ''}</p>
     <p class="mono d-label">ЕТАП</p>
     <div class="stage" role="group" aria-label="Етап">${STATUS.map(([v, l, t], i) => `<button type="button" class="${t}${PIPE.indexOf(v) <= PIPE.indexOf(live.status) && PIPE.includes(live.status) && PIPE.includes(v) ? ' passed' : ''}" data-st="${esc(v)}" aria-pressed="${live.status === v}"><span class="mono">${v === 'archive' ? '×' : String(i + 1).padStart(2, '0')}</span>${esc(l)}</button>`).join('')}</div>
