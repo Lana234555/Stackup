@@ -245,3 +245,6 @@ html{font-variant-emoji:text}
 /* "працюють." is wider than "impact.": keep the Ukrainian hero inside narrow screens */
 @media(max-width:560px){html[lang="uk"] .hero h1{font-size:clamp(56px,18.5vw,96px)}}
 @media(max-width:560px){html[lang="uk"] .header nav{gap:16px;flex-wrap:wrap}html[lang="uk"] .header nav a{white-space:nowrap}}
+/* No sideways scroll: decorative layers (clouds, sparkles, tilted cards) may poke past the edge.
+   clip, not hidden, so the sticky hero and process sections keep pinning. */
+html,body{overflow-x:clip}
