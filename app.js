@@ -1,9 +1,10 @@
+const I18N = window.STACKUP_I18N || { lang: 'en', t: s => s, apply() {} }, T = I18N.t;
 const $ = s => document.querySelector(s);
 const $$ = s => [...document.querySelectorAll(s)];
 const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
 const menu = $('.menu-toggle');
-menu.addEventListener('click', () => { const open = menu.getAttribute('aria-expanded') !== 'true'; menu.setAttribute('aria-expanded', String(open)); menu.setAttribute('aria-label', open ? 'Close menu' : 'Open menu'); $('.header nav').classList.toggle('open', open); menu.textContent = open ? '×' : '☰'; });
-$$('.header nav a').forEach(a => a.addEventListener('click', () => { menu.setAttribute('aria-expanded', 'false'); menu.setAttribute('aria-label', 'Open menu'); $('.header nav').classList.remove('open'); menu.textContent = '☰'; }));
+menu.addEventListener('click', () => { const open = menu.getAttribute('aria-expanded') !== 'true'; menu.setAttribute('aria-expanded', String(open)); menu.setAttribute('aria-label', T(open ? 'Close menu' : 'Open menu')); $('.header nav').classList.toggle('open', open); menu.textContent = open ? '×' : '☰'; });
+$$('.header nav a').forEach(a => a.addEventListener('click', () => { menu.setAttribute('aria-expanded', 'false'); menu.setAttribute('aria-label', T('Open menu')); $('.header nav').classList.remove('open'); menu.textContent = '☰'; }));
 
 const scenes = [
  { label: '01 / FIND THE FOCUS', caption: 'Every great thing starts here.', html: `<div class="brief-art"><div class="art-meta"><span>STACKUP / DISCOVERY</span><span>01</span></div><h4>A little<br>clarity.<br><em>A big idea.</em></h4><div class="art-line"></div><div class="art-line short"></div><div class="art-checks"><span>Your goals</span><span>Your people</span><span>Our direction</span></div><div class="art-sticker">✳︎</div></div>` },
@@ -17,7 +18,7 @@ function renderStep(index, animate = true) {
  $$('.step').forEach((el,i) => { el.classList.toggle('active', i === index); el.setAttribute('aria-expanded', String(i === index)); el.querySelector('.step-indicator').textContent = i === index ? '−' : '+'; });
  const scene = scenes[index], content = $('.scene-content');
  clearTimeout(sceneTimer);
- const update = () => { $('.process-scene').dataset.scene = String(index); $('.chip-one').textContent = ['THE BIG IDEA', 'MAKE IT MATTER', 'BUILDING…', 'WE ARE LIVE'][index]; $('.chip-two').textContent = ['CONNECT THE DOTS', 'DESIGN IN MOTION', 'PIXELS → PRODUCT', 'HELLO, WORLD'][index]; content.innerHTML = scene.html; $('.scene-label').textContent = scene.label; $('.scene-caption').textContent = scene.caption; content.classList.remove('changing'); };
+ const update = () => { $('.process-scene').dataset.scene = String(index); $('.chip-one').textContent = T(['THE BIG IDEA', 'MAKE IT MATTER', 'BUILDING…', 'WE ARE LIVE'][index]); $('.chip-two').textContent = T(['CONNECT THE DOTS', 'DESIGN IN MOTION', 'PIXELS → PRODUCT', 'HELLO, WORLD'][index]); content.innerHTML = scene.html; I18N.apply(content); $('.scene-label').textContent = T(scene.label); $('.scene-caption').textContent = T(scene.caption); content.classList.remove('changing'); };
  if(animate && !reduced) { content.classList.add('changing'); sceneTimer = setTimeout(update,180); } else update();
 }
 $$('.step').forEach((step,index) => { step.addEventListener('click',()=>selectStep(index)); step.addEventListener('keydown',e=>{ if(['ArrowDown','ArrowUp','Home','End'].includes(e.key)){e.preventDefault(); const next = e.key==='Home'?0:e.key==='End'?3:(index+(e.key==='ArrowDown'?1:3))%4; $$('.step')[next].focus();selectStep(next); }}); });
@@ -38,11 +39,11 @@ dialog.addEventListener('click',e=>{ if(e.target===dialog){const r=dialog.getBou
 $$('[data-service]').forEach(link=>link.addEventListener('click',()=>{const n=$('.contact-form input[name="name"]');if(n)setTimeout(()=>n.focus({preventScroll:true}),900);}));
 $('.contact-form').addEventListener('submit',async e=>{e.preventDefault();const f=e.currentTarget,data=new FormData(f),st=$('.form-status'),btn=$('button[type="submit"]',f);
  const name=data.get('name'),email=data.get('email'),phone=data.get('phone');
- const mail=()=>{const subject=`A new spark — ${name}`;const body=`Hi STACKUP,\n\nName: ${name}\nEmail: ${email}\nPhone: ${phone}\n\nI’d love to talk about a new project.`;const to=(window.STACKUP&&STACKUP.email)||'hello@stackup.dev';window.location.href=`mailto:${to}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;st.textContent='Your email draft is ready. Press send in your mail app and we’ll be in touch.';};
+ const mail=()=>{const subject=`A new spark — ${name}`;const body=`Hi STACKUP,\n\nName: ${name}\nEmail: ${email}\nPhone: ${phone}\n\nI’d love to talk about a new project.`;const to=(window.STACKUP&&STACKUP.email)||'hello@stackup.dev';window.location.href=`mailto:${to}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;st.textContent=T('Your email draft is ready. Press send in your mail app and we’ll be in touch.');};
  const ep=window.STACKUP&&STACKUP.endpoint;if(!ep)return mail();
- btn.disabled=true;f.classList.add('sending');st.textContent='Sending…';
+ btn.disabled=true;f.classList.add('sending');st.textContent=T('Sending…');
  try{const r=await fetch(ep,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({action:'lead',name,email,phone,website:data.get('website')||''})});const j=await r.json();
-  if(!j.ok)throw new Error(j.error||'failed');f.reset();f.classList.add('sent');st.textContent='Thank you! Your request is in. We’ll get back to you very soon.';}
+  if(!j.ok)throw new Error(j.error||'failed');f.reset();f.classList.add('sent');st.textContent=T('Thank you! Your request is in. We’ll get back to you very soon.');}
  catch(err){mail();}
  finally{btn.disabled=false;f.classList.remove('sending');}});
 
@@ -136,10 +137,10 @@ new IntersectionObserver(entries=>entries.forEach(entry=>entry.target.classList.
 let playbackVisible=false, playbackPaused=reduced, playbackElapsed=0, playbackDuration=6000, playbackFrame=0, lastPlaybackTime=0;
 const playButton=$('.process-autoplay');
 function updatePlaybackUI(){
- const label=playbackPaused?'Play automatic process slides':'Pause automatic process slides';
+ const label=T(playbackPaused?'Play automatic process slides':'Pause automatic process slides');
  if(playButton.getAttribute('aria-label')!==label||!playButton.dataset.ready){
   playButton.setAttribute('aria-pressed',String(playbackPaused));playButton.setAttribute('aria-label',label);
-  playButton.innerHTML=playbackPaused?'▶︎ <span>PLAY SEQUENCE</span>':'Ⅱ <span>AUTO PLAY</span>';playButton.dataset.ready='true';
+  playButton.innerHTML=playbackPaused?'▶︎ <span>'+T('PLAY SEQUENCE')+'</span>':'Ⅱ <span>'+T('AUTO PLAY')+'</span>';playButton.dataset.ready='true';
  }
  const count=`0${activeStep+1} / 04`;if($('.process-count').textContent!==count)$('.process-count').textContent=count;
  $('.process-progress i').style.width=`${playbackElapsed/playbackDuration*100}%`;
@@ -284,7 +285,7 @@ $$('.project-image').forEach(btn=>{
 /* 04 / WHO WE ARE: words light up as you read, the ID card leans toward the cursor */
 (()=>{const sec=$('#about');if(!sec)return;const st=$('.about-statement',sec),card=$('.about-card',sec);
  const reduce=matchMedia('(prefers-reduced-motion: reduce)').matches;
- const HL=['remember,','live.','one'];
+ const HL=['remember,','live.','one','запам’ятовуються,','запуску.','одна'];
  st.innerHTML=st.textContent.trim().split(/\s+/).map(w=>`<span class="w${HL.includes(w)?' k':''}">${w}</span>`).join(' ');
  const ws=[...st.querySelectorAll('.w')];
  if(!reduce){document.documentElement.classList.add('js-about');
