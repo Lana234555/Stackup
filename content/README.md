@@ -21,3 +21,11 @@
 
 ## library.json — матеріали компанії
 Групи `{ id, title, note, items: [{ name, file, thumb, type: png|jpg|pdf|link, link }] }`. Файли в `library/`.
+
+## insights.json і calendar.json
+
+`insights.json` — розділ «Стратегія»: `trends[]` (новіші першими: `date`, `title`, `summary`, `items[{tag,title,what,use,source}]`), `weekly[]` (`title`, `range`, `summary`, `blocks[{title,items}]`, `plan[{day,what,why}]`, `questions[]`), `market{summary,facts,ourPluses,ourMinuses,competitors,gaps,positioning,sources}`, `lessons[{id,module,minutes,title,body[],task}]`. У тексті можна `**жирний**`.
+
+`calendar.json` — `events[{date:'YYYY-MM-DD', title, kind: holiday|sale|opportunity|industry|content, idea, prep}]`.
+
+Обидва файли Claude може оновлювати напряму в main (лише папка content/).
