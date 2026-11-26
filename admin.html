@@ -5,8 +5,8 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="robots" content="noindex,nofollow,noarchive">
 <meta name="referrer" content="no-referrer">
-<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'self' https://fonts.googleapis.com; style-src-attr 'unsafe-inline'; font-src https://fonts.gstatic.com; img-src 'self' data:; connect-src https://script.google.com https://script.googleusercontent.com; manifest-src 'self'; worker-src 'self'; form-action 'none'; base-uri 'none'; object-src 'none'">
-<meta name="theme-color" content="#181917">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'self' https://fonts.googleapis.com; style-src-attr 'unsafe-inline'; font-src https://fonts.gstatic.com; img-src 'self' data:; media-src 'self'; connect-src 'self' https://script.google.com https://script.googleusercontent.com; manifest-src 'self'; worker-src 'self'; form-action 'none'; base-uri 'none'; object-src 'none'">
+<meta name="theme-color" content="#0f100e">
 <link rel="icon" href="assets/icons/crm.ico?v=2" sizes="any">
 <link rel="icon" type="image/png" sizes="32x32" href="assets/icons/crm-32.png?v=2">
 <link rel="icon" type="image/png" sizes="192x192" href="assets/icons/crm-192.png?v=2">
@@ -14,19 +14,20 @@
 <link rel="manifest" href="crm.webmanifest">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-title" content="Stackup CRM">
+<meta name="apple-mobile-web-app-title" content="Stackup">
 <meta name="apple-mobile-web-app-status-bar-style" content="black">
-<title>Заявки — STACKUP.</title>
+<title>Stackup — керування</title>
 <link rel="stylesheet" href="brief.css?v=4">
-<link rel="stylesheet" href="admin.css?v=11">
+<link rel="stylesheet" href="admin.css?v=12">
+<link rel="stylesheet" href="hub.css?v=1">
 </head>
 <body class="adm">
 
 <section class="login" id="login" hidden>
   <div>
     <a class="brand" href="admin.html">STACKUP<i class="dot"></i></a>
-    <p class="eyebrow"><i></i> CRM / ВХІД</p>
-    <h1 class="h2">Ваші заявки.<br><span class="serif">В одному місці.</span></h1>
+    <p class="eyebrow"><i></i> STACKUP / КЕРУВАННЯ</p>
+    <h1 class="h2">Заявки, контент, матеріали.<br><span class="serif">В одному місці.</span></h1>
     <p class="lead" id="loginLead">Введіть код кабінету. Після нього на вашу пошту прийде одноразовий код підтвердження.</p>
     <form id="loginForm" class="login-form">
       <input type="text" name="username" autocomplete="username" value="Stackup CRM" hidden>
@@ -47,12 +48,21 @@
 <div class="app" id="app" hidden>
   <aside class="side">
     <a class="brand" href="admin.html">STACKUP<i class="dot"></i></a>
-    <span class="side-tag mono">CRM</span>
+    <span class="side-tag mono">СИСТЕМА КЕРУВАННЯ</span>
     <nav class="side-nav" id="sideNav">
+      <button type="button" data-sec="home"><span class="ico">◇</span>Огляд</button>
+      <p class="side-group mono">ЗАЯВКИ</p>
       <button type="button" data-view="board"><span class="ico">▦</span>Воронка</button>
       <button type="button" data-view="list"><span class="ico">≡</span>Усі заявки <em id="cntAll"></em></button>
       <button type="button" data-quick="unread"><span class="ico">◆</span>Нові <em class="hot" id="cntNew"></em></button>
       <button type="button" data-quick="archive"><span class="ico">▢</span>Архів <em id="cntArch"></em></button>
+      <p class="side-group mono">INSTAGRAM</p>
+      <button type="button" data-sec="content" data-ctab="review"><span class="ico">✦</span>Контент <em class="hot" id="cntReview"></em></button>
+      <button type="button" data-sec="content" data-ctab="plan"><span class="ico">▤</span>Календар</button>
+      <button type="button" data-sec="content" data-ctab="grid"><span class="ico">⊞</span>Сітка профілю</button>
+      <p class="side-group mono">КОМПАНІЯ</p>
+      <button type="button" data-sec="library"><span class="ico">❒</span>Матеріали</button>
+      <button type="button" data-sec="settings"><span class="ico">⚙</span>Налаштування</button>
     </nav>
     <div class="side-links">
       <p class="mono">ПОСИЛАННЯ ДЛЯ КЛІЄНТІВ</p>
@@ -68,6 +78,7 @@
   </aside>
 
   <div class="main">
+    <section class="sec" id="secLeads" data-section="leads" hidden>
     <header class="top">
       <div class="top-title">
         <h1 id="viewTitle">Воронка</h1>
@@ -105,8 +116,25 @@
         </table>
       </div>
     </section>
+    </section>
+
+    <section class="sec" id="secHome" data-section="home" hidden></section>
+    <section class="sec" id="secContent" data-section="content" hidden></section>
+    <section class="sec" id="secLibrary" data-section="library" hidden></section>
+    <section class="sec" id="secSettings" data-section="settings" hidden></section>
   </div>
+  <nav class="tabbar" id="tabbar" aria-label="Розділи">
+  <button type="button" data-sec="home"><span>◇</span>Огляд</button>
+  <button type="button" data-sec="leads"><span>▦</span>Заявки<em class="hot" id="tabNew"></em></button>
+  <button type="button" data-sec="content"><span>✦</span>Контент<em class="hot" id="tabReview"></em></button>
+  <button type="button" data-sec="library"><span>❒</span>Матеріали</button>
+  <button type="button" data-sec="settings"><span>⚙</span>Ще</button>
+</nav>
 </div>
+
+
+
+<div class="viewer" id="viewer" hidden></div>
 
 <div class="scrim" id="scrim" hidden></div>
 <aside class="drawer" id="drawer" aria-label="Заявка" hidden>
@@ -116,6 +144,7 @@
 <div class="toast" id="toast" role="status" hidden></div>
 
 <script src="config.js?v=3"></script>
-<script src="admin.js?v=15" defer></script>
+<script src="admin.js?v=16" defer></script>
+<script src="hub.js?v=1" defer></script>
 </body>
 </html>

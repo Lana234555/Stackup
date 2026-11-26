@@ -57,6 +57,7 @@ const device = { get() { try { return localStorage.getItem(DEVICE_STORE) || ''; 
 try { localStorage.removeItem('stackup-admin-key'); } catch (e) {} // старий ключ більше не потрібен
 let token = sess.get();
 let challenge = '';
+let firstLoadEvent = true;
 let items = [], current = null, cache = {}, pollTimer = null, firstLoad = true, flashIds = [];
 let seen = new Set(store.get(SEEN_STORE, null) || []);
 let seenInit = store.get(SEEN_STORE, null) !== null;
@@ -98,6 +99,7 @@ function showLogin(err) {
 /* прибрати всі дані з пам’яті і з екрана */
 function wipe() {
   token = ''; sess.set(''); items = []; cache = {}; current = null;
+  document.dispatchEvent(new CustomEvent('stackup:wipe'));
   ['#board', '#rows', '#detail', '#kpis'].forEach(s => { const el = $(s); if (el) el.innerHTML = ''; });
 }
 function expire(msg) { if (DEMO) return; wipe(); showLogin(msg || 'Сесія завершилась. Увійдіть знову.'); }
@@ -166,6 +168,7 @@ async function enter() {
     clearInterval(pollTimer); pollTimer = setInterval(poll, POLL_MS);
     document.onvisibilitychange = () => { if (!document.hidden) poll(); };
     render();
+    document.dispatchEvent(new CustomEvent('stackup:enter'));
     const id = location.hash.slice(1); if (id && items.some(x => x.id === id)) openDrawer(id);
   } catch (e) {
     if (e.message === 'unauthorized') return expire();
@@ -182,6 +185,8 @@ async function load(background) {
   const fresh = firstLoad ? [] : items.filter(x => !before.has(x.id));
   firstLoad = false;
   $('#updated').textContent = 'ОНОВЛЕНО ' + fmtTime(new Date().toISOString());
+  if (!firstLoadEvent) document.dispatchEvent(new CustomEvent('stackup:leads'));
+  firstLoadEvent = false;
   return fresh;
 }
 async function poll() {
@@ -631,6 +636,17 @@ if (DEMO) setTimeout(() => {
     record: { estimate: [['Дизайн-основа', 'Нічого немає'], ['Терміни', '1–2 місяці'], ['Бюджет', '$1 000–3 000']], sections: [{ title: 'Технічне завдання клієнта', rows: [{ label: 'Наскільки ТЗ фінальне?', type: 'radio', value: 'Фінальне, можна оцінювати' }] }] },
     fileList: [['specFiles', 'Файл ТЗ', 'Bloom_TZ.docx', 220000]] });
 }, 20000);
+
+/* ---------- спільне з hub.js (контент, огляд, матеріали) ---------- */
+window.StackupCRM = {
+  demo: DEMO,
+  call: body => authed(body),
+  leads: () => items.slice(),
+  stages: () => stages.slice(),
+  isUnread: x => isUnread(x),
+  open: id => openDrawer(id),
+  toast: (html, ms) => { const t = $('#toast'); t.innerHTML = html + '<button type="button" class="x" aria-label="Закрити">×</button>'; t.hidden = false; clearTimeout(t._h); t._h = setTimeout(() => { t.hidden = true; }, ms || 3200); }
+};
 
 /* ---------- init ---------- */
 if (!DEMO) setStages(store.get('stackup-stages-cache', null));
