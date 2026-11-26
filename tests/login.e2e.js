@@ -31,7 +31,7 @@ http.createServer((req, res) => {
   const ext = path.extname(f);
   const types = { '.html': 'text/html', '.js': 'text/javascript', '.css': 'text/css', '.png': 'image/png', '.webp': 'image/webp', '.svg': 'image/svg+xml' };
   res.setHeader('Content-Type', types[ext] || 'application/octet-stream');
-  if (ext === '.html') body = String(body).replace('connect-src https://script.google.com', `connect-src http://localhost:${API} https://script.google.com`);
+  if (ext === '.html') body = String(body).replace("connect-src 'self' https://script.google.com", `connect-src 'self' http://localhost:${API} https://script.google.com`);
   res.end(body);
 }).listen(WEB);
 
@@ -93,7 +93,7 @@ const URL_ = `http://localhost:${WEB}/admin.html`;
   await t('правильний код із листа → відкривається воронка із заявками', async () => {
     ok(await page.isChecked('#trustInput'), 'trust should be on by default');
     await page.uncheck('#trustInput'); await page.fill('#otpInput', otp());
-    await page.waitForSelector('#app:not([hidden])'); await page.waitForSelector('.card');
+    await page.waitForSelector('#app:not([hidden])'); await page.waitForSelector('#secHome:not([hidden])'); await page.click('.side-nav [data-view=board]'); await page.waitForSelector('.card');
     ok((await page.$$('.card')).length === 2, 'cards: ' + (await page.$$('.card')).length);
     await page.screenshot({ path: SHOTS + '/sec-board.png' });
   });
@@ -175,6 +175,24 @@ const URL_ = `http://localhost:${WEB}/admin.html`;
   await t('мобільний екран входу', async () => {
     const m = await browser.newContext({ viewport: { width: 390, height: 844 }, isMobile: true }); const pm = await m.newPage();
     await pm.goto(URL_); await pm.waitForSelector('#codeInput', { state: 'visible' }); await pm.screenshot({ path: SHOTS + '/sec-login-mobile.png' }); await m.close();
+  });
+  await t('контент: публікацію з manifest затверджують у кабінеті, стан зберігається на сервері', async () => {
+    const c = await browser.newContext({ viewport: { width: 1440, height: 900 } }); const p = await c.newPage(); watch(p);
+    await p.goto(URL_); await p.fill('#codeInput', '48271593'); await p.click('#codeBtn');
+    const step = await Promise.race([p.waitForSelector('#otpForm:not([hidden])').then(() => 'otp'), p.waitForSelector('#app:not([hidden])').then(() => 'app')]);
+    if (step === 'otp') await p.fill('#otpInput', otp());
+    await p.waitForSelector('#app:not([hidden])');
+    await p.click('.side-nav [data-sec=content][data-ctab=review]'); await p.waitForSelector('.ccard');
+    const n = (await p.$$('.ccard')).length; ok(n >= 9, 'cards ' + n);
+    await p.click('.ccard'); await p.waitForSelector('#viewer.in #vCaption');
+    await p.fill('#vCaption', 'Підпис з кабінету ✦'); await p.fill('#vAt', '2030-05-01T10:30');
+    await p.click('[data-op=approve]'); await p.waitForFunction(() => /Заплановано/.test(document.querySelector('#toast').textContent));
+    const tok = await p.evaluate(() => localStorage.getItem('stackup-crm-session'));
+    const st = g.post({ action: 'content', token: tok }).state, k = Object.keys(st)[0];
+    ok(st[k].status === 'scheduled' && st[k].caption === 'Підпис з кабінету ✦', JSON.stringify(st[k]));
+    ok(new Date(st[k].at).getFullYear() === 2030, st[k].at);
+    await p.screenshot({ path: SHOTS + '/sec-content.png' });
+    await c.close();
   });
   await t('бриф і CRM без порушень CSP (стилі, шрифти, скрипти)', async () => {
     const p4 = await ctxA.newPage(); watch(p4);

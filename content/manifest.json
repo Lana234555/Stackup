@@ -1,0 +1,407 @@
+{
+ "version": 1,
+ "updated": "2026-11-26",
+ "timezone": "Europe/Kyiv",
+ "items": [
+  {
+   "id": "c01-hto-my",
+   "kind": "carousel",
+   "title": "Хто ми такі?",
+   "media": [
+    "ig/01-hto-my/01.jpg",
+    "ig/01-hto-my/02.jpg",
+    "ig/01-hto-my/03.jpg",
+    "ig/01-hto-my/04.jpg"
+   ],
+   "thumbs": [
+    "ig/01-hto-my/t01.jpg",
+    "ig/01-hto-my/t02.jpg",
+    "ig/01-hto-my/t03.jpg",
+    "ig/01-hto-my/t04.jpg"
+   ],
+   "caption": "Привіт! Ми Stackup, незалежна веб-студія ✦\nДизайн і розробка в одних руках: лендинги, корпоративні сайти, онлайн-магазини й редизайн. Від ідеї до запуску ви говорите напряму з людиною, яка робить ваш сайт.\n\nРозкажіть про свою ідею: Надішліть «+» у коментарях або в директ 👇\n\n#вебстудія #розробкасайтів #вебдизайн #сайтдлябізнесу #stackupstudio",
+   "note": "Знайомство: незалежна веб-студія, що робимо і з ким ви працюєте. Закріпити в профілі (вручну в Instagram).",
+   "proposedAt": "2026-12-01T10:00:00+02:00",
+   "pin": true,
+   "series": "Запуск · 9 постів",
+   "created": "2026-11-24"
+  },
+  {
+   "id": "c02-biznes-u-kysheni",
+   "kind": "carousel",
+   "title": "Ваш бізнес у кишені клієнта",
+   "media": [
+    "ig/02-biznes-u-kysheni/01.jpg",
+    "ig/02-biznes-u-kysheni/02.jpg",
+    "ig/02-biznes-u-kysheni/03.jpg",
+    "ig/02-biznes-u-kysheni/04.jpg",
+    "ig/02-biznes-u-kysheni/05.jpg"
+   ],
+   "thumbs": [
+    "ig/02-biznes-u-kysheni/t01.jpg",
+    "ig/02-biznes-u-kysheni/t02.jpg",
+    "ig/02-biznes-u-kysheni/t03.jpg",
+    "ig/02-biznes-u-kysheni/t04.jpg",
+    "ig/02-biznes-u-kysheni/t05.jpg"
+   ],
+   "caption": "Клієнт шукає вас з телефону 📱\nInstagram, Google, порада друга: знайомство з бізнесом майже завжди починається на маленькому екрані. На першому екрані людина має одразу побачити, хто ви, що пропонуєте і як з вами звʼязатися. А кнопка «написати» завжди під рукою, і заявка одразу приходить у Telegram.\n\nПокладемо ваш бізнес у кишеню: Надішліть «+» у коментарях або в директ 👇\n\n#сайтдлябізнесу #адаптивнийдизайн #розробкасайтів #вебдизайн",
+   "note": "Чому сайт має бути зручним саме на телефоні: перший екран, кнопка «написати», заявка в Telegram. Закріпити в профілі (вручну в Instagram).",
+   "proposedAt": "2026-12-01T14:00:00+02:00",
+   "pin": true,
+   "series": "Запуск · 9 постів",
+   "created": "2026-11-24"
+  },
+  {
+   "id": "c03-z-bud-yakoi-tochky-svitu",
+   "kind": "carousel",
+   "title": "Працюємо з будь-якої точки світу",
+   "media": [
+    "ig/03-z-bud-yakoi-tochky-svitu/01.jpg",
+    "ig/03-z-bud-yakoi-tochky-svitu/02.jpg",
+    "ig/03-z-bud-yakoi-tochky-svitu/03.jpg",
+    "ig/03-z-bud-yakoi-tochky-svitu/04.jpg",
+    "ig/03-z-bud-yakoi-tochky-svitu/05.jpg"
+   ],
+   "thumbs": [
+    "ig/03-z-bud-yakoi-tochky-svitu/t01.jpg",
+    "ig/03-z-bud-yakoi-tochky-svitu/t02.jpg",
+    "ig/03-z-bud-yakoi-tochky-svitu/t03.jpg",
+    "ig/03-z-bud-yakoi-tochky-svitu/t04.jpg",
+    "ig/03-z-bud-yakoi-tochky-svitu/t05.jpg"
+   ],
+   "caption": "Працюємо з будь-якої точки світу 🌍\nЗустріч онлайн, коли вам зручно. Усе спілкування, правки й файли в одному чаті Telegram. Сайт ви бачите ще до запуску: дизайн у Figma і робоча версія за посиланням.\n\nДе б ви не були, ми на звʼязку. Надішліть «+» у коментарях або в директ 👇\n\n#вебстудія #розробкасайтів #вебдизайн #онлайн",
+   "note": "Як ми працюємо онлайн: зустріч, один чат, сайт видно ще до запуску.",
+   "proposedAt": "2026-12-01T19:00:00+02:00",
+   "pin": false,
+   "series": "Запуск · 9 постів",
+   "created": "2026-11-24"
+  },
+  {
+   "id": "c04-sait-vtrachaie-klientiv",
+   "kind": "carousel",
+   "title": "Ваш сайт втрачає клієнтів?",
+   "media": [
+    "ig/04-sait-vtrachaie-klientiv/01.jpg",
+    "ig/04-sait-vtrachaie-klientiv/02.jpg",
+    "ig/04-sait-vtrachaie-klientiv/03.jpg",
+    "ig/04-sait-vtrachaie-klientiv/04.jpg",
+    "ig/04-sait-vtrachaie-klientiv/05.jpg",
+    "ig/04-sait-vtrachaie-klientiv/06.jpg",
+    "ig/04-sait-vtrachaie-klientiv/07.jpg"
+   ],
+   "thumbs": [
+    "ig/04-sait-vtrachaie-klientiv/t01.jpg",
+    "ig/04-sait-vtrachaie-klientiv/t02.jpg",
+    "ig/04-sait-vtrachaie-klientiv/t03.jpg",
+    "ig/04-sait-vtrachaie-klientiv/t04.jpg",
+    "ig/04-sait-vtrachaie-klientiv/t05.jpg",
+    "ig/04-sait-vtrachaie-klientiv/t06.jpg",
+    "ig/04-sait-vtrachaie-klientiv/t07.jpg"
+   ],
+   "caption": "5 ознак, що сайт втрачає клієнтів, і як виправити кожну:\n01 Довго вантажиться\n02 Незручно на телефоні\n03 Незрозуміло, що ви продаєте\n04 Немає кнопки «написати»\n05 Немає реальних фото\n\nЗбережіть і перевірте свій сайт. Впізнали його? Надішліть «+», подивимось і підкажемо, що виправити першим 👇\n\n#сайтдлябізнесу #вебдизайн #маркетинг #розробкасайтів #юзабіліті",
+   "note": "5 ознак і як виправити кожну. Такий пост зберігають і пересилають власникам бізнесу.",
+   "proposedAt": "2026-12-03T12:00:00+02:00",
+   "pin": false,
+   "series": "Запуск · 9 постів",
+   "created": "2026-11-24"
+  },
+  {
+   "id": "c05-shcho-pidhotuvaty",
+   "kind": "carousel",
+   "title": "Що підготувати до сайту?",
+   "media": [
+    "ig/05-shcho-pidhotuvaty/01.jpg",
+    "ig/05-shcho-pidhotuvaty/02.jpg",
+    "ig/05-shcho-pidhotuvaty/03.jpg",
+    "ig/05-shcho-pidhotuvaty/04.jpg",
+    "ig/05-shcho-pidhotuvaty/05.jpg",
+    "ig/05-shcho-pidhotuvaty/06.jpg",
+    "ig/05-shcho-pidhotuvaty/07.jpg"
+   ],
+   "thumbs": [
+    "ig/05-shcho-pidhotuvaty/t01.jpg",
+    "ig/05-shcho-pidhotuvaty/t02.jpg",
+    "ig/05-shcho-pidhotuvaty/t03.jpg",
+    "ig/05-shcho-pidhotuvaty/t04.jpg",
+    "ig/05-shcho-pidhotuvaty/t05.jpg",
+    "ig/05-shcho-pidhotuvaty/t06.jpg",
+    "ig/05-shcho-pidhotuvaty/t07.jpg"
+   ],
+   "caption": "Що підготувати до розробки сайту: мета, тексти, фото й логотип, приклади сайтів, які подобаються, і домен. Збережіть, щоб не загубити 📌\n\nНе все готово? Це нормально. Надішліть «+», і ми пройдемо цей список разом 👇\n\n#розробкасайтів #сайтдлябізнесу #вебдизайн #чекліст",
+   "note": "Чекліст перед розробкою: мета, тексти, фото й логотип, приклади, домен.",
+   "proposedAt": "2026-12-05T12:00:00+02:00",
+   "pin": false,
+   "series": "Запуск · 9 постів",
+   "created": "2026-11-24"
+  },
+  {
+   "id": "c06-instagram-chy-sait",
+   "kind": "carousel",
+   "title": "Instagram чи сайт?",
+   "media": [
+    "ig/06-instagram-chy-sait/01.jpg",
+    "ig/06-instagram-chy-sait/02.jpg",
+    "ig/06-instagram-chy-sait/03.jpg",
+    "ig/06-instagram-chy-sait/04.jpg",
+    "ig/06-instagram-chy-sait/05.jpg",
+    "ig/06-instagram-chy-sait/06.jpg"
+   ],
+   "thumbs": [
+    "ig/06-instagram-chy-sait/t01.jpg",
+    "ig/06-instagram-chy-sait/t02.jpg",
+    "ig/06-instagram-chy-sait/t03.jpg",
+    "ig/06-instagram-chy-sait/t04.jpg",
+    "ig/06-instagram-chy-sait/t05.jpg",
+    "ig/06-instagram-chy-sait/t06.jpg"
+   ],
+   "caption": "Instagram чи сайт? Насправді обидва 🤝\nInstagram для знайомства і довіри. Сайт, щоб вас знаходили в Google, і заявки без переписки. Разом вони працюють найкраще: Instagram приводить людей, а сайт перетворює їх на клієнтів.\n\nДодамо до вашого Instagram сайт: Надішліть «+» у коментарях або в директ 👇\n\n#instagramдлябізнесу #сайтдлябізнесу #маркетинг #розробкасайтів",
+   "note": "Чому потрібні обидва: Instagram для довіри, сайт для пошуку й заявок.",
+   "proposedAt": "2026-12-08T12:00:00+02:00",
+   "pin": false,
+   "series": "Запуск · 9 постів",
+   "created": "2026-11-24"
+  },
+  {
+   "id": "c07-vid-idei-do-zapusku",
+   "kind": "carousel",
+   "title": "Створюю сайт разом: від ідеї до запуску",
+   "media": [
+    "ig/07-vid-idei-do-zapusku/01.jpg",
+    "ig/07-vid-idei-do-zapusku/02.jpg",
+    "ig/07-vid-idei-do-zapusku/03.jpg",
+    "ig/07-vid-idei-do-zapusku/04.jpg",
+    "ig/07-vid-idei-do-zapusku/05.jpg",
+    "ig/07-vid-idei-do-zapusku/06.jpg"
+   ],
+   "thumbs": [
+    "ig/07-vid-idei-do-zapusku/t01.jpg",
+    "ig/07-vid-idei-do-zapusku/t02.jpg",
+    "ig/07-vid-idei-do-zapusku/t03.jpg",
+    "ig/07-vid-idei-do-zapusku/t04.jpg",
+    "ig/07-vid-idei-do-zapusku/t05.jpg",
+    "ig/07-vid-idei-do-zapusku/t06.jpg"
+   ],
+   "caption": "Створюємо сайт разом: лендинг для музичної студії 🎙\n01 Ідея і задача\n02 Дизайн у Figma\n03 Розробка\n04 Запуск\nНа кожному кроці ви бачите результат і знаєте, що буде далі.\n\nГотові почати? Надішліть «+» у коментарях або в директ 👇\n\n#процес #figma #вебдизайн #розробкасайтів #лендинг",
+   "note": "Процес на живому прикладі лендингу для музичної студії: ідея, дизайн, розробка, запуск.",
+   "proposedAt": "2026-12-10T12:00:00+02:00",
+   "pin": false,
+   "series": "Запуск · 9 постів",
+   "created": "2026-11-24"
+  },
+  {
+   "id": "c08-poky-vy-spyte-posluhy",
+   "kind": "carousel",
+   "title": "Поки ви спите",
+   "media": [
+    "ig/08-poky-vy-spyte-posluhy/01.jpg",
+    "ig/08-poky-vy-spyte-posluhy/02.jpg",
+    "ig/08-poky-vy-spyte-posluhy/03.jpg",
+    "ig/08-poky-vy-spyte-posluhy/04.jpg",
+    "ig/08-poky-vy-spyte-posluhy/05.jpg",
+    "ig/08-poky-vy-spyte-posluhy/06.jpg",
+    "ig/08-poky-vy-spyte-posluhy/07.jpg"
+   ],
+   "thumbs": [
+    "ig/08-poky-vy-spyte-posluhy/t01.jpg",
+    "ig/08-poky-vy-spyte-posluhy/t02.jpg",
+    "ig/08-poky-vy-spyte-posluhy/t03.jpg",
+    "ig/08-poky-vy-spyte-posluhy/t04.jpg",
+    "ig/08-poky-vy-spyte-posluhy/t05.jpg",
+    "ig/08-poky-vy-spyte-posluhy/t06.jpg",
+    "ig/08-poky-vy-spyte-posluhy/t07.jpg"
+   ],
+   "caption": "Поки ви спите, сайт приймає заявки, а вони одразу приходять у Telegram 🌙\nЩо ми робимо: лендинг, корпоративний сайт, онлайн-магазин, редизайн і підтримку після запуску.\n\nНе знаєте, що обрати? Надішліть «+», підкажемо формат під ваш бізнес 👇\n\n#лендинг #інтернетмагазин #сайтпідключ #вебдизайн",
+   "note": "Послуги: лендинг, корпоративний сайт, магазин, редизайн, підтримка. Заявки в Telegram навіть уночі.",
+   "proposedAt": "2026-12-12T12:00:00+02:00",
+   "pin": false,
+   "series": "Запуск · 9 постів",
+   "created": "2026-11-24"
+  },
+  {
+   "id": "c09-ye-ideia",
+   "kind": "carousel",
+   "title": "Є ідея?",
+   "media": [
+    "ig/09-ye-ideia/01.jpg",
+    "ig/09-ye-ideia/02.jpg",
+    "ig/09-ye-ideia/03.jpg",
+    "ig/09-ye-ideia/04.jpg"
+   ],
+   "thumbs": [
+    "ig/09-ye-ideia/t01.jpg",
+    "ig/09-ye-ideia/t02.jpg",
+    "ig/09-ye-ideia/t03.jpg",
+    "ig/09-ye-ideia/t04.jpg"
+   ],
+   "caption": "Є ідея? Перетворимо її на сайт ✦\nТри простих кроки: ви надсилаєте «+», ми пишемо вам і ставимо кілька питань, обговорюємо ідею, план і наступні кроки.\n\nНадішліть «+» у коментарях або в директ 👇\n\n#замовитисайт #сайтпідключ #розробкасайтів #вебдизайн",
+   "note": "Короткий заклик: які сайти робимо і три простих кроки. Закріпити в профілі (вручну в Instagram).",
+   "proposedAt": "2026-12-15T12:00:00+02:00",
+   "pin": true,
+   "series": "Запуск · 9 постів",
+   "created": "2026-11-24"
+  },
+  {
+   "id": "s-plus",
+   "kind": "stories",
+   "title": "Сторіс: Цікавить сайт?",
+   "media": [
+    "ig/s-plus/01.jpg",
+    "ig/s-plus/02.jpg"
+   ],
+   "thumbs": [
+    "ig/s-plus/t01.jpg",
+    "ig/s-plus/t02.jpg"
+   ],
+   "caption": "",
+   "note": "Заклик «+» у день запуску.",
+   "highlight": "",
+   "proposedAt": "2026-12-01T20:00:00+02:00",
+   "series": "Сторіс і хайлайти",
+   "created": "2026-11-24"
+  },
+  {
+   "id": "s-about",
+   "kind": "stories",
+   "title": "Сторіс: Про нас",
+   "media": [
+    "ig/s-about/01.jpg",
+    "ig/s-about/02.jpg",
+    "ig/s-about/03.jpg",
+    "ig/s-about/04.jpg",
+    "ig/s-about/05.jpg"
+   ],
+   "thumbs": [
+    "ig/s-about/t01.jpg",
+    "ig/s-about/t02.jpg",
+    "ig/s-about/t03.jpg",
+    "ig/s-about/t04.jpg",
+    "ig/s-about/t05.jpg"
+   ],
+   "caption": "",
+   "note": "Хто ми, 3+ роки, підхід. Після публікації додай у хайлайт «Про нас».",
+   "highlight": "Про нас",
+   "proposedAt": "2026-12-02T11:00:00+02:00",
+   "series": "Сторіс і хайлайти",
+   "created": "2026-11-24"
+  },
+  {
+   "id": "s-services",
+   "kind": "stories",
+   "title": "Сторіс: Послуги",
+   "media": [
+    "ig/s-services/01.jpg",
+    "ig/s-services/02.jpg",
+    "ig/s-services/03.jpg",
+    "ig/s-services/04.jpg",
+    "ig/s-services/05.jpg",
+    "ig/s-services/06.jpg",
+    "ig/s-services/07.jpg"
+   ],
+   "thumbs": [
+    "ig/s-services/t01.jpg",
+    "ig/s-services/t02.jpg",
+    "ig/s-services/t03.jpg",
+    "ig/s-services/t04.jpg",
+    "ig/s-services/t05.jpg",
+    "ig/s-services/t06.jpg",
+    "ig/s-services/t07.jpg"
+   ],
+   "caption": "",
+   "note": "Які сайти робимо і вартість. Додай у хайлайт «Послуги».",
+   "highlight": "Послуги",
+   "proposedAt": "2026-12-04T11:00:00+02:00",
+   "series": "Сторіс і хайлайти",
+   "created": "2026-11-24"
+  },
+  {
+   "id": "s-work",
+   "kind": "stories",
+   "title": "Сторіс: Роботи",
+   "media": [
+    "ig/s-work/01.jpg",
+    "ig/s-work/02.jpg",
+    "ig/s-work/03.jpg",
+    "ig/s-work/04.jpg",
+    "ig/s-work/05.jpg",
+    "ig/s-work/06.jpg",
+    "ig/s-work/07.jpg"
+   ],
+   "thumbs": [
+    "ig/s-work/t01.jpg",
+    "ig/s-work/t02.jpg",
+    "ig/s-work/t03.jpg",
+    "ig/s-work/t04.jpg",
+    "ig/s-work/t05.jpg",
+    "ig/s-work/t06.jpg",
+    "ig/s-work/t07.jpg"
+   ],
+   "caption": "",
+   "note": "Наші сайти по одному на кадр. Додай у хайлайт «Роботи».",
+   "highlight": "Роботи",
+   "proposedAt": "2026-12-06T11:00:00+02:00",
+   "series": "Сторіс і хайлайти",
+   "created": "2026-11-24"
+  },
+  {
+   "id": "s-process",
+   "kind": "stories",
+   "title": "Сторіс: Процес",
+   "media": [
+    "ig/s-process/01.jpg",
+    "ig/s-process/02.jpg",
+    "ig/s-process/03.jpg",
+    "ig/s-process/04.jpg",
+    "ig/s-process/05.jpg",
+    "ig/s-process/06.jpg"
+   ],
+   "thumbs": [
+    "ig/s-process/t01.jpg",
+    "ig/s-process/t02.jpg",
+    "ig/s-process/t03.jpg",
+    "ig/s-process/t04.jpg",
+    "ig/s-process/t05.jpg",
+    "ig/s-process/t06.jpg"
+   ],
+   "caption": "",
+   "note": "Чотири кроки від ідеї до запуску. Додай у хайлайт «Процес».",
+   "highlight": "Процес",
+   "proposedAt": "2026-12-09T11:00:00+02:00",
+   "series": "Сторіс і хайлайти",
+   "created": "2026-11-24"
+  },
+  {
+   "id": "reel-my-zapustylys",
+   "kind": "reel",
+   "title": "Рілс: Ми запустились",
+   "video": "ig/reel-my-zapustylys/video.mp4",
+   "media": [
+    "ig/reel-my-zapustylys/cover.jpg"
+   ],
+   "thumbs": [
+    "ig/reel-my-zapustylys/t01.jpg"
+   ],
+   "caption": "Ми запустились 🚀 stackup.studio\n\nЦікавить сайт? Надішліть «+» у коментарях або в директ 👇\n\n#вебдизайн #сайт #uxui #stackupstudio",
+   "note": "Анімація зі звуком: DEPLOY, від брифу до запуску, фінал «+». 15 с. Дата не стоїть: сітку займають 9 каруселей, тож вирішуй, чи і коли додавати рілс.",
+   "proposedAt": "",
+   "series": "Рілс",
+   "created": "2026-11-13"
+  },
+  {
+   "id": "reel-6-saitiv",
+   "kind": "reel",
+   "title": "Рілс: 6 сайтів за 15 секунд",
+   "video": "ig/reel-6-saitiv/video.mp4",
+   "media": [
+    "ig/reel-6-saitiv/cover.jpg"
+   ],
+   "thumbs": [
+    "ig/reel-6-saitiv/t01.jpg"
+   ],
+   "caption": "6 сайтів за 15 секунд. Який вам подобається найбільше? 👇\n\nХочете такий самий? Надішліть «+».\n\n#вебдизайн #портфоліо #розробкасайтів #webdesign",
+   "note": "Шість сайтів по черзі, мозаїка і фінал «+». 16 с. Дата не стоїть: сітку займають 9 каруселей, тож вирішуй, чи і коли додавати рілс.",
+   "proposedAt": "",
+   "series": "Рілс",
+   "created": "2026-11-13"
+  }
+ ]
+}

@@ -1,0 +1,1469 @@
+{
+ "version": 1,
+ "updated": "2026-11-26",
+ "groups": [
+  {
+   "id": "brandbook",
+   "title": "Брендбук",
+   "note": "Актуальна версія фірмового стилю компанії, PDF.",
+   "items": [
+    {
+     "name": "Stackup-BrandBook.pdf",
+     "file": "library/brandbook/Stackup-BrandBook.pdf",
+     "thumb": "library/brandbook/cover.jpg",
+     "type": "pdf"
+    }
+   ]
+  },
+  {
+   "id": "logos",
+   "title": "Логотипи",
+   "note": "STACKUP з квадратною крапкою, символ S, іконки застосунку. PNG з прозорим тлом.",
+   "items": [
+    {
+     "name": "S+STACKUP-lockup-ink.png",
+     "file": "library/logos/S-STACKUP-lockup-ink.png",
+     "thumb": "library/logos/S-STACKUP-lockup-ink.png",
+     "type": "png"
+    },
+    {
+     "name": "S+STACKUP-lockup-paper.png",
+     "file": "library/logos/S-STACKUP-lockup-paper.png",
+     "thumb": "library/logos/S-STACKUP-lockup-paper.png",
+     "type": "png"
+    },
+    {
+     "name": "S-symbol-ink.png",
+     "file": "library/logos/S-symbol-ink.png",
+     "thumb": "library/logos/S-symbol-ink.png",
+     "type": "png"
+    },
+    {
+     "name": "S-symbol-lime.png",
+     "file": "library/logos/S-symbol-lime.png",
+     "thumb": "library/logos/S-symbol-lime.png",
+     "type": "png"
+    },
+    {
+     "name": "S-symbol-paper.png",
+     "file": "library/logos/S-symbol-paper.png",
+     "thumb": "library/logos/S-symbol-paper.png",
+     "type": "png"
+    },
+    {
+     "name": "STACKUP-logo-ink.png",
+     "file": "library/logos/STACKUP-logo-ink.png",
+     "thumb": "library/logos/STACKUP-logo-ink.png",
+     "type": "png"
+    },
+    {
+     "name": "STACKUP-logo-lime.png",
+     "file": "library/logos/STACKUP-logo-lime.png",
+     "thumb": "library/logos/STACKUP-logo-lime.png",
+     "type": "png"
+    },
+    {
+     "name": "STACKUP-logo-olive.png",
+     "file": "library/logos/STACKUP-logo-olive.png",
+     "thumb": "library/logos/STACKUP-logo-olive.png",
+     "type": "png"
+    },
+    {
+     "name": "STACKUP-logo-paper.png",
+     "file": "library/logos/STACKUP-logo-paper.png",
+     "thumb": "library/logos/STACKUP-logo-paper.png",
+     "type": "png"
+    },
+    {
+     "name": "app-icon-ink.png",
+     "file": "library/logos/app-icon-ink.png",
+     "thumb": "library/logos/app-icon-ink.png",
+     "type": "png"
+    },
+    {
+     "name": "app-icon-lime.png",
+     "file": "library/logos/app-icon-lime.png",
+     "thumb": "library/logos/app-icon-lime.png",
+     "type": "png"
+    },
+    {
+     "name": "app-icon-mint.png",
+     "file": "library/logos/app-icon-mint.png",
+     "thumb": "library/logos/app-icon-mint.png",
+     "type": "png"
+    }
+   ]
+  },
+  {
+   "id": "highlights",
+   "title": "Обкладинки хайлайтів і аватар",
+   "note": "Основний варіант t4 (лінійна іконка на пастелі), також t6 і чорний t9. Завантажуються вручну в Instagram.",
+   "items": [
+    {
+     "name": "Аватар профілю",
+     "file": "library/highlights/avatar.png",
+     "thumb": "library/highlights/t-avatar.jpg",
+     "type": "png"
+    },
+    {
+     "name": "t4 · about",
+     "file": "library/highlights/t4-about.jpg",
+     "thumb": "library/highlights/t-t4-about.jpg",
+     "type": "jpg"
+    },
+    {
+     "name": "t4 · plus",
+     "file": "library/highlights/t4-plus.jpg",
+     "thumb": "library/highlights/t-t4-plus.jpg",
+     "type": "jpg"
+    },
+    {
+     "name": "t4 · process",
+     "file": "library/highlights/t4-process.jpg",
+     "thumb": "library/highlights/t-t4-process.jpg",
+     "type": "jpg"
+    },
+    {
+     "name": "t4 · services",
+     "file": "library/highlights/t4-services.jpg",
+     "thumb": "library/highlights/t-t4-services.jpg",
+     "type": "jpg"
+    },
+    {
+     "name": "t4 · work",
+     "file": "library/highlights/t4-work.jpg",
+     "thumb": "library/highlights/t-t4-work.jpg",
+     "type": "jpg"
+    },
+    {
+     "name": "t6 · about",
+     "file": "library/highlights/t6-about.jpg",
+     "thumb": "library/highlights/t-t6-about.jpg",
+     "type": "jpg"
+    },
+    {
+     "name": "t6 · plus",
+     "file": "library/highlights/t6-plus.jpg",
+     "thumb": "library/highlights/t-t6-plus.jpg",
+     "type": "jpg"
+    },
+    {
+     "name": "t6 · process",
+     "file": "library/highlights/t6-process.jpg",
+     "thumb": "library/highlights/t-t6-process.jpg",
+     "type": "jpg"
+    },
+    {
+     "name": "t6 · services",
+     "file": "library/highlights/t6-services.jpg",
+     "thumb": "library/highlights/t-t6-services.jpg",
+     "type": "jpg"
+    },
+    {
+     "name": "t6 · work",
+     "file": "library/highlights/t6-work.jpg",
+     "thumb": "library/highlights/t-t6-work.jpg",
+     "type": "jpg"
+    },
+    {
+     "name": "t9-black · about",
+     "file": "library/highlights/t9-black-about.jpg",
+     "thumb": "library/highlights/t-t9-black-about.jpg",
+     "type": "jpg"
+    },
+    {
+     "name": "t9-black · plus",
+     "file": "library/highlights/t9-black-plus.jpg",
+     "thumb": "library/highlights/t-t9-black-plus.jpg",
+     "type": "jpg"
+    },
+    {
+     "name": "t9-black · process",
+     "file": "library/highlights/t9-black-process.jpg",
+     "thumb": "library/highlights/t-t9-black-process.jpg",
+     "type": "jpg"
+    },
+    {
+     "name": "t9-black · services",
+     "file": "library/highlights/t9-black-services.jpg",
+     "thumb": "library/highlights/t-t9-black-services.jpg",
+     "type": "jpg"
+    },
+    {
+     "name": "t9-black · work",
+     "file": "library/highlights/t9-black-work.jpg",
+     "thumb": "library/highlights/t-t9-black-work.jpg",
+     "type": "jpg"
+    }
+   ]
+  },
+  {
+   "id": "stickers",
+   "title": "Стікери",
+   "note": "Твої стікери з білою обводкою, вирізані з аркушів. PNG з прозорим тлом.",
+   "items": [
+    {
+     "name": "01-type-en-sticker-01.png",
+     "file": "library/stickers/01-type-en-sticker-01.png",
+     "thumb": "library/stickers/01-type-en-sticker-01.png",
+     "type": "png"
+    },
+    {
+     "name": "01-type-en-sticker-02.png",
+     "file": "library/stickers/01-type-en-sticker-02.png",
+     "thumb": "library/stickers/01-type-en-sticker-02.png",
+     "type": "png"
+    },
+    {
+     "name": "01-type-en-sticker-03.png",
+     "file": "library/stickers/01-type-en-sticker-03.png",
+     "thumb": "library/stickers/01-type-en-sticker-03.png",
+     "type": "png"
+    },
+    {
+     "name": "01-type-en-sticker-04.png",
+     "file": "library/stickers/01-type-en-sticker-04.png",
+     "thumb": "library/stickers/01-type-en-sticker-04.png",
+     "type": "png"
+    },
+    {
+     "name": "01-type-en-sticker-05.png",
+     "file": "library/stickers/01-type-en-sticker-05.png",
+     "thumb": "library/stickers/01-type-en-sticker-05.png",
+     "type": "png"
+    },
+    {
+     "name": "01-type-en-sticker-06.png",
+     "file": "library/stickers/01-type-en-sticker-06.png",
+     "thumb": "library/stickers/01-type-en-sticker-06.png",
+     "type": "png"
+    },
+    {
+     "name": "01-type-en-sticker-07.png",
+     "file": "library/stickers/01-type-en-sticker-07.png",
+     "thumb": "library/stickers/01-type-en-sticker-07.png",
+     "type": "png"
+    },
+    {
+     "name": "01-type-en-sticker-08.png",
+     "file": "library/stickers/01-type-en-sticker-08.png",
+     "thumb": "library/stickers/01-type-en-sticker-08.png",
+     "type": "png"
+    },
+    {
+     "name": "01-type-en-sticker-09.png",
+     "file": "library/stickers/01-type-en-sticker-09.png",
+     "thumb": "library/stickers/01-type-en-sticker-09.png",
+     "type": "png"
+    },
+    {
+     "name": "01-type-en-sticker-10.png",
+     "file": "library/stickers/01-type-en-sticker-10.png",
+     "thumb": "library/stickers/01-type-en-sticker-10.png",
+     "type": "png"
+    },
+    {
+     "name": "01-type-en-sticker-11.png",
+     "file": "library/stickers/01-type-en-sticker-11.png",
+     "thumb": "library/stickers/01-type-en-sticker-11.png",
+     "type": "png"
+    },
+    {
+     "name": "01-type-en-sticker-12.png",
+     "file": "library/stickers/01-type-en-sticker-12.png",
+     "thumb": "library/stickers/01-type-en-sticker-12.png",
+     "type": "png"
+    },
+    {
+     "name": "02-type-uk-sticker-01.png",
+     "file": "library/stickers/02-type-uk-sticker-01.png",
+     "thumb": "library/stickers/02-type-uk-sticker-01.png",
+     "type": "png"
+    },
+    {
+     "name": "02-type-uk-sticker-02.png",
+     "file": "library/stickers/02-type-uk-sticker-02.png",
+     "thumb": "library/stickers/02-type-uk-sticker-02.png",
+     "type": "png"
+    },
+    {
+     "name": "02-type-uk-sticker-03.png",
+     "file": "library/stickers/02-type-uk-sticker-03.png",
+     "thumb": "library/stickers/02-type-uk-sticker-03.png",
+     "type": "png"
+    },
+    {
+     "name": "02-type-uk-sticker-04.png",
+     "file": "library/stickers/02-type-uk-sticker-04.png",
+     "thumb": "library/stickers/02-type-uk-sticker-04.png",
+     "type": "png"
+    },
+    {
+     "name": "02-type-uk-sticker-05.png",
+     "file": "library/stickers/02-type-uk-sticker-05.png",
+     "thumb": "library/stickers/02-type-uk-sticker-05.png",
+     "type": "png"
+    },
+    {
+     "name": "02-type-uk-sticker-06.png",
+     "file": "library/stickers/02-type-uk-sticker-06.png",
+     "thumb": "library/stickers/02-type-uk-sticker-06.png",
+     "type": "png"
+    },
+    {
+     "name": "02-type-uk-sticker-07.png",
+     "file": "library/stickers/02-type-uk-sticker-07.png",
+     "thumb": "library/stickers/02-type-uk-sticker-07.png",
+     "type": "png"
+    },
+    {
+     "name": "02-type-uk-sticker-08.png",
+     "file": "library/stickers/02-type-uk-sticker-08.png",
+     "thumb": "library/stickers/02-type-uk-sticker-08.png",
+     "type": "png"
+    },
+    {
+     "name": "02-type-uk-sticker-09.png",
+     "file": "library/stickers/02-type-uk-sticker-09.png",
+     "thumb": "library/stickers/02-type-uk-sticker-09.png",
+     "type": "png"
+    },
+    {
+     "name": "02-type-uk-sticker-10.png",
+     "file": "library/stickers/02-type-uk-sticker-10.png",
+     "thumb": "library/stickers/02-type-uk-sticker-10.png",
+     "type": "png"
+    },
+    {
+     "name": "02-type-uk-sticker-11.png",
+     "file": "library/stickers/02-type-uk-sticker-11.png",
+     "thumb": "library/stickers/02-type-uk-sticker-11.png",
+     "type": "png"
+    },
+    {
+     "name": "02-type-uk-sticker-12.png",
+     "file": "library/stickers/02-type-uk-sticker-12.png",
+     "thumb": "library/stickers/02-type-uk-sticker-12.png",
+     "type": "png"
+    },
+    {
+     "name": "03-code-sticker-01.png",
+     "file": "library/stickers/03-code-sticker-01.png",
+     "thumb": "library/stickers/03-code-sticker-01.png",
+     "type": "png"
+    },
+    {
+     "name": "03-code-sticker-02.png",
+     "file": "library/stickers/03-code-sticker-02.png",
+     "thumb": "library/stickers/03-code-sticker-02.png",
+     "type": "png"
+    },
+    {
+     "name": "03-code-sticker-03.png",
+     "file": "library/stickers/03-code-sticker-03.png",
+     "thumb": "library/stickers/03-code-sticker-03.png",
+     "type": "png"
+    },
+    {
+     "name": "03-code-sticker-04.png",
+     "file": "library/stickers/03-code-sticker-04.png",
+     "thumb": "library/stickers/03-code-sticker-04.png",
+     "type": "png"
+    },
+    {
+     "name": "03-code-sticker-05.png",
+     "file": "library/stickers/03-code-sticker-05.png",
+     "thumb": "library/stickers/03-code-sticker-05.png",
+     "type": "png"
+    },
+    {
+     "name": "03-code-sticker-06.png",
+     "file": "library/stickers/03-code-sticker-06.png",
+     "thumb": "library/stickers/03-code-sticker-06.png",
+     "type": "png"
+    },
+    {
+     "name": "03-code-sticker-07.png",
+     "file": "library/stickers/03-code-sticker-07.png",
+     "thumb": "library/stickers/03-code-sticker-07.png",
+     "type": "png"
+    },
+    {
+     "name": "03-code-sticker-08.png",
+     "file": "library/stickers/03-code-sticker-08.png",
+     "thumb": "library/stickers/03-code-sticker-08.png",
+     "type": "png"
+    },
+    {
+     "name": "03-code-sticker-09.png",
+     "file": "library/stickers/03-code-sticker-09.png",
+     "thumb": "library/stickers/03-code-sticker-09.png",
+     "type": "png"
+    },
+    {
+     "name": "03-code-sticker-10.png",
+     "file": "library/stickers/03-code-sticker-10.png",
+     "thumb": "library/stickers/03-code-sticker-10.png",
+     "type": "png"
+    },
+    {
+     "name": "03-code-sticker-11.png",
+     "file": "library/stickers/03-code-sticker-11.png",
+     "thumb": "library/stickers/03-code-sticker-11.png",
+     "type": "png"
+    },
+    {
+     "name": "03-code-sticker-12.png",
+     "file": "library/stickers/03-code-sticker-12.png",
+     "thumb": "library/stickers/03-code-sticker-12.png",
+     "type": "png"
+    },
+    {
+     "name": "04-3d-sticker-01.png",
+     "file": "library/stickers/04-3d-sticker-01.png",
+     "thumb": "library/stickers/04-3d-sticker-01.png",
+     "type": "png"
+    },
+    {
+     "name": "04-3d-sticker-02.png",
+     "file": "library/stickers/04-3d-sticker-02.png",
+     "thumb": "library/stickers/04-3d-sticker-02.png",
+     "type": "png"
+    },
+    {
+     "name": "04-3d-sticker-03.png",
+     "file": "library/stickers/04-3d-sticker-03.png",
+     "thumb": "library/stickers/04-3d-sticker-03.png",
+     "type": "png"
+    },
+    {
+     "name": "04-3d-sticker-04.png",
+     "file": "library/stickers/04-3d-sticker-04.png",
+     "thumb": "library/stickers/04-3d-sticker-04.png",
+     "type": "png"
+    },
+    {
+     "name": "04-3d-sticker-05.png",
+     "file": "library/stickers/04-3d-sticker-05.png",
+     "thumb": "library/stickers/04-3d-sticker-05.png",
+     "type": "png"
+    },
+    {
+     "name": "04-3d-sticker-06.png",
+     "file": "library/stickers/04-3d-sticker-06.png",
+     "thumb": "library/stickers/04-3d-sticker-06.png",
+     "type": "png"
+    },
+    {
+     "name": "04-3d-sticker-07.png",
+     "file": "library/stickers/04-3d-sticker-07.png",
+     "thumb": "library/stickers/04-3d-sticker-07.png",
+     "type": "png"
+    },
+    {
+     "name": "04-3d-sticker-08.png",
+     "file": "library/stickers/04-3d-sticker-08.png",
+     "thumb": "library/stickers/04-3d-sticker-08.png",
+     "type": "png"
+    },
+    {
+     "name": "04-3d-sticker-09.png",
+     "file": "library/stickers/04-3d-sticker-09.png",
+     "thumb": "library/stickers/04-3d-sticker-09.png",
+     "type": "png"
+    },
+    {
+     "name": "04-3d-sticker-10.png",
+     "file": "library/stickers/04-3d-sticker-10.png",
+     "thumb": "library/stickers/04-3d-sticker-10.png",
+     "type": "png"
+    },
+    {
+     "name": "04-3d-sticker-11.png",
+     "file": "library/stickers/04-3d-sticker-11.png",
+     "thumb": "library/stickers/04-3d-sticker-11.png",
+     "type": "png"
+    },
+    {
+     "name": "04-3d-sticker-12.png",
+     "file": "library/stickers/04-3d-sticker-12.png",
+     "thumb": "library/stickers/04-3d-sticker-12.png",
+     "type": "png"
+    },
+    {
+     "name": "05-design-sticker-01.png",
+     "file": "library/stickers/05-design-sticker-01.png",
+     "thumb": "library/stickers/05-design-sticker-01.png",
+     "type": "png"
+    },
+    {
+     "name": "05-design-sticker-02.png",
+     "file": "library/stickers/05-design-sticker-02.png",
+     "thumb": "library/stickers/05-design-sticker-02.png",
+     "type": "png"
+    },
+    {
+     "name": "05-design-sticker-03.png",
+     "file": "library/stickers/05-design-sticker-03.png",
+     "thumb": "library/stickers/05-design-sticker-03.png",
+     "type": "png"
+    },
+    {
+     "name": "05-design-sticker-04.png",
+     "file": "library/stickers/05-design-sticker-04.png",
+     "thumb": "library/stickers/05-design-sticker-04.png",
+     "type": "png"
+    },
+    {
+     "name": "05-design-sticker-05.png",
+     "file": "library/stickers/05-design-sticker-05.png",
+     "thumb": "library/stickers/05-design-sticker-05.png",
+     "type": "png"
+    },
+    {
+     "name": "05-design-sticker-06.png",
+     "file": "library/stickers/05-design-sticker-06.png",
+     "thumb": "library/stickers/05-design-sticker-06.png",
+     "type": "png"
+    },
+    {
+     "name": "05-design-sticker-07.png",
+     "file": "library/stickers/05-design-sticker-07.png",
+     "thumb": "library/stickers/05-design-sticker-07.png",
+     "type": "png"
+    },
+    {
+     "name": "05-design-sticker-08.png",
+     "file": "library/stickers/05-design-sticker-08.png",
+     "thumb": "library/stickers/05-design-sticker-08.png",
+     "type": "png"
+    },
+    {
+     "name": "05-design-sticker-09.png",
+     "file": "library/stickers/05-design-sticker-09.png",
+     "thumb": "library/stickers/05-design-sticker-09.png",
+     "type": "png"
+    },
+    {
+     "name": "05-design-sticker-10.png",
+     "file": "library/stickers/05-design-sticker-10.png",
+     "thumb": "library/stickers/05-design-sticker-10.png",
+     "type": "png"
+    },
+    {
+     "name": "05-design-sticker-11.png",
+     "file": "library/stickers/05-design-sticker-11.png",
+     "thumb": "library/stickers/05-design-sticker-11.png",
+     "type": "png"
+    },
+    {
+     "name": "05-design-sticker-12.png",
+     "file": "library/stickers/05-design-sticker-12.png",
+     "thumb": "library/stickers/05-design-sticker-12.png",
+     "type": "png"
+    },
+    {
+     "name": "06-humor-sticker-01.png",
+     "file": "library/stickers/06-humor-sticker-01.png",
+     "thumb": "library/stickers/06-humor-sticker-01.png",
+     "type": "png"
+    },
+    {
+     "name": "06-humor-sticker-02.png",
+     "file": "library/stickers/06-humor-sticker-02.png",
+     "thumb": "library/stickers/06-humor-sticker-02.png",
+     "type": "png"
+    },
+    {
+     "name": "06-humor-sticker-03.png",
+     "file": "library/stickers/06-humor-sticker-03.png",
+     "thumb": "library/stickers/06-humor-sticker-03.png",
+     "type": "png"
+    },
+    {
+     "name": "06-humor-sticker-04.png",
+     "file": "library/stickers/06-humor-sticker-04.png",
+     "thumb": "library/stickers/06-humor-sticker-04.png",
+     "type": "png"
+    },
+    {
+     "name": "06-humor-sticker-05.png",
+     "file": "library/stickers/06-humor-sticker-05.png",
+     "thumb": "library/stickers/06-humor-sticker-05.png",
+     "type": "png"
+    },
+    {
+     "name": "06-humor-sticker-06.png",
+     "file": "library/stickers/06-humor-sticker-06.png",
+     "thumb": "library/stickers/06-humor-sticker-06.png",
+     "type": "png"
+    },
+    {
+     "name": "06-humor-sticker-07.png",
+     "file": "library/stickers/06-humor-sticker-07.png",
+     "thumb": "library/stickers/06-humor-sticker-07.png",
+     "type": "png"
+    },
+    {
+     "name": "06-humor-sticker-08.png",
+     "file": "library/stickers/06-humor-sticker-08.png",
+     "thumb": "library/stickers/06-humor-sticker-08.png",
+     "type": "png"
+    },
+    {
+     "name": "06-humor-sticker-09.png",
+     "file": "library/stickers/06-humor-sticker-09.png",
+     "thumb": "library/stickers/06-humor-sticker-09.png",
+     "type": "png"
+    },
+    {
+     "name": "06-humor-sticker-10.png",
+     "file": "library/stickers/06-humor-sticker-10.png",
+     "thumb": "library/stickers/06-humor-sticker-10.png",
+     "type": "png"
+    },
+    {
+     "name": "06-humor-sticker-11.png",
+     "file": "library/stickers/06-humor-sticker-11.png",
+     "thumb": "library/stickers/06-humor-sticker-11.png",
+     "type": "png"
+    },
+    {
+     "name": "06-humor-sticker-12.png",
+     "file": "library/stickers/06-humor-sticker-12.png",
+     "thumb": "library/stickers/06-humor-sticker-12.png",
+     "type": "png"
+    }
+   ]
+  },
+  {
+   "id": "photos",
+   "title": "Фото",
+   "note": "Твої фото для постів, сторіс і сайту.",
+   "items": [
+    {
+     "name": "IMG_0950.jpg",
+     "file": "library/photos/IMG_0950.jpg",
+     "thumb": "library/photos/t-IMG_0950.jpg",
+     "type": "jpg"
+    },
+    {
+     "name": "IMG_0951.jpg",
+     "file": "library/photos/IMG_0951.jpg",
+     "thumb": "library/photos/t-IMG_0951.jpg",
+     "type": "jpg"
+    },
+    {
+     "name": "IMG_0952.jpg",
+     "file": "library/photos/IMG_0952.jpg",
+     "thumb": "library/photos/t-IMG_0952.jpg",
+     "type": "jpg"
+    },
+    {
+     "name": "IMG_0953.jpg",
+     "file": "library/photos/IMG_0953.jpg",
+     "thumb": "library/photos/t-IMG_0953.jpg",
+     "type": "jpg"
+    },
+    {
+     "name": "IMG_0954.jpg",
+     "file": "library/photos/IMG_0954.jpg",
+     "thumb": "library/photos/t-IMG_0954.jpg",
+     "type": "jpg"
+    },
+    {
+     "name": "IMG_0955.jpg",
+     "file": "library/photos/IMG_0955.jpg",
+     "thumb": "library/photos/t-IMG_0955.jpg",
+     "type": "jpg"
+    },
+    {
+     "name": "IMG_0961.jpg",
+     "file": "library/photos/IMG_0961.jpg",
+     "thumb": "library/photos/t-IMG_0961.jpg",
+     "type": "jpg"
+    },
+    {
+     "name": "IMG_0962.jpg",
+     "file": "library/photos/IMG_0962.jpg",
+     "thumb": "library/photos/t-IMG_0962.jpg",
+     "type": "jpg"
+    },
+    {
+     "name": "IMG_0963.jpg",
+     "file": "library/photos/IMG_0963.jpg",
+     "thumb": "library/photos/t-IMG_0963.jpg",
+     "type": "jpg"
+    },
+    {
+     "name": "IMG_0965.jpg",
+     "file": "library/photos/IMG_0965.jpg",
+     "thumb": "library/photos/t-IMG_0965.jpg",
+     "type": "jpg"
+    },
+    {
+     "name": "IMG_0966.jpg",
+     "file": "library/photos/IMG_0966.jpg",
+     "thumb": "library/photos/t-IMG_0966.jpg",
+     "type": "jpg"
+    },
+    {
+     "name": "IMG_0967.jpg",
+     "file": "library/photos/IMG_0967.jpg",
+     "thumb": "library/photos/t-IMG_0967.jpg",
+     "type": "jpg"
+    },
+    {
+     "name": "IMG_0968.jpg",
+     "file": "library/photos/IMG_0968.jpg",
+     "thumb": "library/photos/t-IMG_0968.jpg",
+     "type": "jpg"
+    },
+    {
+     "name": "IMG_0969.jpg",
+     "file": "library/photos/IMG_0969.jpg",
+     "thumb": "library/photos/t-IMG_0969.jpg",
+     "type": "jpg"
+    },
+    {
+     "name": "IMG_0970.jpg",
+     "file": "library/photos/IMG_0970.jpg",
+     "thumb": "library/photos/t-IMG_0970.jpg",
+     "type": "jpg"
+    },
+    {
+     "name": "IMG_0971.jpg",
+     "file": "library/photos/IMG_0971.jpg",
+     "thumb": "library/photos/t-IMG_0971.jpg",
+     "type": "jpg"
+    },
+    {
+     "name": "black-notebook.jpg",
+     "file": "library/photos/black-notebook.jpg",
+     "thumb": "library/photos/t-black-notebook.jpg",
+     "type": "jpg"
+    },
+    {
+     "name": "bw-lake.jpg",
+     "file": "library/photos/bw-lake.jpg",
+     "thumb": "library/photos/t-bw-lake.jpg",
+     "type": "jpg"
+    },
+    {
+     "name": "cafe-notebook.jpg",
+     "file": "library/photos/cafe-notebook.jpg",
+     "thumb": "library/photos/t-cafe-notebook.jpg",
+     "type": "jpg"
+    },
+    {
+     "name": "cut-yellow.png",
+     "file": "library/photos/cut-yellow.png",
+     "thumb": "library/photos/t-cut-yellow.jpg",
+     "type": "png"
+    },
+    {
+     "name": "desk.jpg",
+     "file": "library/photos/desk.jpg",
+     "thumb": "library/photos/t-desk.jpg",
+     "type": "jpg"
+    },
+    {
+     "name": "gallery.jpg",
+     "file": "library/photos/gallery.jpg",
+     "thumb": "library/photos/t-gallery.jpg",
+     "type": "jpg"
+    },
+    {
+     "name": "glasses-laptop.jpg",
+     "file": "library/photos/glasses-laptop.jpg",
+     "thumb": "library/photos/t-glasses-laptop.jpg",
+     "type": "jpg"
+    },
+    {
+     "name": "lake-glasses.jpg",
+     "file": "library/photos/lake-glasses.jpg",
+     "thumb": "library/photos/t-lake-glasses.jpg",
+     "type": "jpg"
+    },
+    {
+     "name": "lamp-table.jpg",
+     "file": "library/photos/lamp-table.jpg",
+     "thumb": "library/photos/t-lamp-table.jpg",
+     "type": "jpg"
+    },
+    {
+     "name": "macbook-hands.jpg",
+     "file": "library/photos/macbook-hands.jpg",
+     "thumb": "library/photos/t-macbook-hands.jpg",
+     "type": "jpg"
+    },
+    {
+     "name": "palace-coat.jpg",
+     "file": "library/photos/palace-coat.jpg",
+     "thumb": "library/photos/t-palace-coat.jpg",
+     "type": "jpg"
+    },
+    {
+     "name": "palace-hat.jpg",
+     "file": "library/photos/palace-hat.jpg",
+     "thumb": "library/photos/t-palace-hat.jpg",
+     "type": "jpg"
+    },
+    {
+     "name": "palace-sun.jpg",
+     "file": "library/photos/palace-sun.jpg",
+     "thumb": "library/photos/t-palace-sun.jpg",
+     "type": "jpg"
+    },
+    {
+     "name": "park-daffodils.jpg",
+     "file": "library/photos/park-daffodils.jpg",
+     "thumb": "library/photos/t-park-daffodils.jpg",
+     "type": "jpg"
+    },
+    {
+     "name": "park-hair.jpg",
+     "file": "library/photos/park-hair.jpg",
+     "thumb": "library/photos/t-park-hair.jpg",
+     "type": "jpg"
+    },
+    {
+     "name": "park-portrait.jpg",
+     "file": "library/photos/park-portrait.jpg",
+     "thumb": "library/photos/t-park-portrait.jpg",
+     "type": "jpg"
+    },
+    {
+     "name": "selfie-bus.jpg",
+     "file": "library/photos/selfie-bus.jpg",
+     "thumb": "library/photos/t-selfie-bus.jpg",
+     "type": "jpg"
+    },
+    {
+     "name": "sunset.jpg",
+     "file": "library/photos/sunset.jpg",
+     "thumb": "library/photos/t-sunset.jpg",
+     "type": "jpg"
+    },
+    {
+     "name": "yellow-glasses.jpg",
+     "file": "library/photos/yellow-glasses.jpg",
+     "thumb": "library/photos/t-yellow-glasses.jpg",
+     "type": "jpg"
+    }
+   ]
+  },
+  {
+   "id": "stories-light",
+   "title": "Сторіс для хайлайтів, світлий варіант",
+   "note": "Попередня версія хайлайтів у стилі сайту.",
+   "items": [
+    {
+     "name": "about-01",
+     "file": "library/stories-light/about-01.jpg",
+     "thumb": "library/stories-light/t-about-01.jpg",
+     "type": "jpg"
+    },
+    {
+     "name": "about-02",
+     "file": "library/stories-light/about-02.jpg",
+     "thumb": "library/stories-light/t-about-02.jpg",
+     "type": "jpg"
+    },
+    {
+     "name": "about-03",
+     "file": "library/stories-light/about-03.jpg",
+     "thumb": "library/stories-light/t-about-03.jpg",
+     "type": "jpg"
+    },
+    {
+     "name": "about-04",
+     "file": "library/stories-light/about-04.jpg",
+     "thumb": "library/stories-light/t-about-04.jpg",
+     "type": "jpg"
+    },
+    {
+     "name": "process-01",
+     "file": "library/stories-light/process-01.jpg",
+     "thumb": "library/stories-light/t-process-01.jpg",
+     "type": "jpg"
+    },
+    {
+     "name": "process-02",
+     "file": "library/stories-light/process-02.jpg",
+     "thumb": "library/stories-light/t-process-02.jpg",
+     "type": "jpg"
+    },
+    {
+     "name": "process-03",
+     "file": "library/stories-light/process-03.jpg",
+     "thumb": "library/stories-light/t-process-03.jpg",
+     "type": "jpg"
+    },
+    {
+     "name": "process-04",
+     "file": "library/stories-light/process-04.jpg",
+     "thumb": "library/stories-light/t-process-04.jpg",
+     "type": "jpg"
+    },
+    {
+     "name": "process-05",
+     "file": "library/stories-light/process-05.jpg",
+     "thumb": "library/stories-light/t-process-05.jpg",
+     "type": "jpg"
+    },
+    {
+     "name": "services-01",
+     "file": "library/stories-light/services-01.jpg",
+     "thumb": "library/stories-light/t-services-01.jpg",
+     "type": "jpg"
+    },
+    {
+     "name": "services-02",
+     "file": "library/stories-light/services-02.jpg",
+     "thumb": "library/stories-light/t-services-02.jpg",
+     "type": "jpg"
+    },
+    {
+     "name": "services-03",
+     "file": "library/stories-light/services-03.jpg",
+     "thumb": "library/stories-light/t-services-03.jpg",
+     "type": "jpg"
+    },
+    {
+     "name": "services-04",
+     "file": "library/stories-light/services-04.jpg",
+     "thumb": "library/stories-light/t-services-04.jpg",
+     "type": "jpg"
+    },
+    {
+     "name": "services-05",
+     "file": "library/stories-light/services-05.jpg",
+     "thumb": "library/stories-light/t-services-05.jpg",
+     "type": "jpg"
+    },
+    {
+     "name": "services-06",
+     "file": "library/stories-light/services-06.jpg",
+     "thumb": "library/stories-light/t-services-06.jpg",
+     "type": "jpg"
+    },
+    {
+     "name": "services-07",
+     "file": "library/stories-light/services-07.jpg",
+     "thumb": "library/stories-light/t-services-07.jpg",
+     "type": "jpg"
+    },
+    {
+     "name": "services-08",
+     "file": "library/stories-light/services-08.jpg",
+     "thumb": "library/stories-light/t-services-08.jpg",
+     "type": "jpg"
+    },
+    {
+     "name": "work-01",
+     "file": "library/stories-light/work-01.jpg",
+     "thumb": "library/stories-light/t-work-01.jpg",
+     "type": "jpg"
+    },
+    {
+     "name": "work-02",
+     "file": "library/stories-light/work-02.jpg",
+     "thumb": "library/stories-light/t-work-02.jpg",
+     "type": "jpg"
+    },
+    {
+     "name": "work-03",
+     "file": "library/stories-light/work-03.jpg",
+     "thumb": "library/stories-light/t-work-03.jpg",
+     "type": "jpg"
+    },
+    {
+     "name": "work-04",
+     "file": "library/stories-light/work-04.jpg",
+     "thumb": "library/stories-light/t-work-04.jpg",
+     "type": "jpg"
+    },
+    {
+     "name": "work-05",
+     "file": "library/stories-light/work-05.jpg",
+     "thumb": "library/stories-light/t-work-05.jpg",
+     "type": "jpg"
+    },
+    {
+     "name": "work-06",
+     "file": "library/stories-light/work-06.jpg",
+     "thumb": "library/stories-light/t-work-06.jpg",
+     "type": "jpg"
+    },
+    {
+     "name": "work-07",
+     "file": "library/stories-light/work-07.jpg",
+     "thumb": "library/stories-light/t-work-07.jpg",
+     "type": "jpg"
+    }
+   ]
+  },
+  {
+   "id": "post-variants",
+   "title": "Банк варіантів постів",
+   "note": "Усі варіанти постів, які ми робили (серії a, p, q, r, s, v, w, x, z). Можна взяти будь-який у нову публікацію.",
+   "items": [
+    {
+     "name": "post-a1",
+     "file": "library/post-variants/post-a1.jpg",
+     "thumb": "library/post-variants/t-post-a1.jpg",
+     "type": "jpg"
+    },
+    {
+     "name": "post-a2",
+     "file": "library/post-variants/post-a2.jpg",
+     "thumb": "library/post-variants/t-post-a2.jpg",
+     "type": "jpg"
+    },
+    {
+     "name": "post-a3",
+     "file": "library/post-variants/post-a3.jpg",
+     "thumb": "library/post-variants/t-post-a3.jpg",
+     "type": "jpg"
+    },
+    {
+     "name": "post-a4",
+     "file": "library/post-variants/post-a4.jpg",
+     "thumb": "library/post-variants/t-post-a4.jpg",
+     "type": "jpg"
+    },
+    {
+     "name": "post-a5",
+     "file": "library/post-variants/post-a5.jpg",
+     "thumb": "library/post-variants/t-post-a5.jpg",
+     "type": "jpg"
+    },
+    {
+     "name": "post-a6",
+     "file": "library/post-variants/post-a6.jpg",
+     "thumb": "library/post-variants/t-post-a6.jpg",
+     "type": "jpg"
+    },
+    {
+     "name": "post-a7",
+     "file": "library/post-variants/post-a7.jpg",
+     "thumb": "library/post-variants/t-post-a7.jpg",
+     "type": "jpg"
+    },
+    {
+     "name": "post-a8",
+     "file": "library/post-variants/post-a8.jpg",
+     "thumb": "library/post-variants/t-post-a8.jpg",
+     "type": "jpg"
+    },
+    {
+     "name": "post-a9",
+     "file": "library/post-variants/post-a9.jpg",
+     "thumb": "library/post-variants/t-post-a9.jpg",
+     "type": "jpg"
+    },
+    {
+     "name": "post-p1",
+     "file": "library/post-variants/post-p1.jpg",
+     "thumb": "library/post-variants/t-post-p1.jpg",
+     "type": "jpg"
+    },
+    {
+     "name": "post-p2",
+     "file": "library/post-variants/post-p2.jpg",
+     "thumb": "library/post-variants/t-post-p2.jpg",
+     "type": "jpg"
+    },
+    {
+     "name": "post-p3",
+     "file": "library/post-variants/post-p3.jpg",
+     "thumb": "library/post-variants/t-post-p3.jpg",
+     "type": "jpg"
+    },
+    {
+     "name": "post-p4",
+     "file": "library/post-variants/post-p4.jpg",
+     "thumb": "library/post-variants/t-post-p4.jpg",
+     "type": "jpg"
+    },
+    {
+     "name": "post-p5",
+     "file": "library/post-variants/post-p5.jpg",
+     "thumb": "library/post-variants/t-post-p5.jpg",
+     "type": "jpg"
+    },
+    {
+     "name": "post-p6",
+     "file": "library/post-variants/post-p6.jpg",
+     "thumb": "library/post-variants/t-post-p6.jpg",
+     "type": "jpg"
+    },
+    {
+     "name": "post-p7",
+     "file": "library/post-variants/post-p7.jpg",
+     "thumb": "library/post-variants/t-post-p7.jpg",
+     "type": "jpg"
+    },
+    {
+     "name": "post-p8",
+     "file": "library/post-variants/post-p8.jpg",
+     "thumb": "library/post-variants/t-post-p8.jpg",
+     "type": "jpg"
+    },
+    {
+     "name": "post-p9",
+     "file": "library/post-variants/post-p9.jpg",
+     "thumb": "library/post-variants/t-post-p9.jpg",
+     "type": "jpg"
+    },
+    {
+     "name": "post-q1",
+     "file": "library/post-variants/post-q1.jpg",
+     "thumb": "library/post-variants/t-post-q1.jpg",
+     "type": "jpg"
+    },
+    {
+     "name": "post-q2",
+     "file": "library/post-variants/post-q2.jpg",
+     "thumb": "library/post-variants/t-post-q2.jpg",
+     "type": "jpg"
+    },
+    {
+     "name": "post-q3",
+     "file": "library/post-variants/post-q3.jpg",
+     "thumb": "library/post-variants/t-post-q3.jpg",
+     "type": "jpg"
+    },
+    {
+     "name": "post-q4",
+     "file": "library/post-variants/post-q4.jpg",
+     "thumb": "library/post-variants/t-post-q4.jpg",
+     "type": "jpg"
+    },
+    {
+     "name": "post-q5",
+     "file": "library/post-variants/post-q5.jpg",
+     "thumb": "library/post-variants/t-post-q5.jpg",
+     "type": "jpg"
+    },
+    {
+     "name": "post-q6",
+     "file": "library/post-variants/post-q6.jpg",
+     "thumb": "library/post-variants/t-post-q6.jpg",
+     "type": "jpg"
+    },
+    {
+     "name": "post-q7",
+     "file": "library/post-variants/post-q7.jpg",
+     "thumb": "library/post-variants/t-post-q7.jpg",
+     "type": "jpg"
+    },
+    {
+     "name": "post-q8",
+     "file": "library/post-variants/post-q8.jpg",
+     "thumb": "library/post-variants/t-post-q8.jpg",
+     "type": "jpg"
+    },
+    {
+     "name": "post-q9",
+     "file": "library/post-variants/post-q9.jpg",
+     "thumb": "library/post-variants/t-post-q9.jpg",
+     "type": "jpg"
+    },
+    {
+     "name": "post-r1",
+     "file": "library/post-variants/post-r1.jpg",
+     "thumb": "library/post-variants/t-post-r1.jpg",
+     "type": "jpg"
+    },
+    {
+     "name": "post-r2",
+     "file": "library/post-variants/post-r2.jpg",
+     "thumb": "library/post-variants/t-post-r2.jpg",
+     "type": "jpg"
+    },
+    {
+     "name": "post-r3",
+     "file": "library/post-variants/post-r3.jpg",
+     "thumb": "library/post-variants/t-post-r3.jpg",
+     "type": "jpg"
+    },
+    {
+     "name": "post-r4",
+     "file": "library/post-variants/post-r4.jpg",
+     "thumb": "library/post-variants/t-post-r4.jpg",
+     "type": "jpg"
+    },
+    {
+     "name": "post-r5",
+     "file": "library/post-variants/post-r5.jpg",
+     "thumb": "library/post-variants/t-post-r5.jpg",
+     "type": "jpg"
+    },
+    {
+     "name": "post-r6",
+     "file": "library/post-variants/post-r6.jpg",
+     "thumb": "library/post-variants/t-post-r6.jpg",
+     "type": "jpg"
+    },
+    {
+     "name": "post-r7",
+     "file": "library/post-variants/post-r7.jpg",
+     "thumb": "library/post-variants/t-post-r7.jpg",
+     "type": "jpg"
+    },
+    {
+     "name": "post-r8",
+     "file": "library/post-variants/post-r8.jpg",
+     "thumb": "library/post-variants/t-post-r8.jpg",
+     "type": "jpg"
+    },
+    {
+     "name": "post-r9",
+     "file": "library/post-variants/post-r9.jpg",
+     "thumb": "library/post-variants/t-post-r9.jpg",
+     "type": "jpg"
+    },
+    {
+     "name": "post-z1",
+     "file": "library/post-variants/post-z1.jpg",
+     "thumb": "library/post-variants/t-post-z1.jpg",
+     "type": "jpg"
+    },
+    {
+     "name": "post-z2",
+     "file": "library/post-variants/post-z2.jpg",
+     "thumb": "library/post-variants/t-post-z2.jpg",
+     "type": "jpg"
+    },
+    {
+     "name": "post-z3",
+     "file": "library/post-variants/post-z3.jpg",
+     "thumb": "library/post-variants/t-post-z3.jpg",
+     "type": "jpg"
+    },
+    {
+     "name": "post-z4",
+     "file": "library/post-variants/post-z4.jpg",
+     "thumb": "library/post-variants/t-post-z4.jpg",
+     "type": "jpg"
+    },
+    {
+     "name": "post-z5",
+     "file": "library/post-variants/post-z5.jpg",
+     "thumb": "library/post-variants/t-post-z5.jpg",
+     "type": "jpg"
+    },
+    {
+     "name": "post-z6",
+     "file": "library/post-variants/post-z6.jpg",
+     "thumb": "library/post-variants/t-post-z6.jpg",
+     "type": "jpg"
+    },
+    {
+     "name": "post-z7",
+     "file": "library/post-variants/post-z7.jpg",
+     "thumb": "library/post-variants/t-post-z7.jpg",
+     "type": "jpg"
+    },
+    {
+     "name": "post-z8",
+     "file": "library/post-variants/post-z8.jpg",
+     "thumb": "library/post-variants/t-post-z8.jpg",
+     "type": "jpg"
+    },
+    {
+     "name": "post-z9",
+     "file": "library/post-variants/post-z9.jpg",
+     "thumb": "library/post-variants/t-post-z9.jpg",
+     "type": "jpg"
+    },
+    {
+     "name": "post-s1",
+     "file": "library/post-variants/post-s1.jpg",
+     "thumb": "library/post-variants/t-post-s1.jpg",
+     "type": "jpg"
+    },
+    {
+     "name": "post-s2",
+     "file": "library/post-variants/post-s2.jpg",
+     "thumb": "library/post-variants/t-post-s2.jpg",
+     "type": "jpg"
+    },
+    {
+     "name": "post-s3",
+     "file": "library/post-variants/post-s3.jpg",
+     "thumb": "library/post-variants/t-post-s3.jpg",
+     "type": "jpg"
+    },
+    {
+     "name": "post-s4",
+     "file": "library/post-variants/post-s4.jpg",
+     "thumb": "library/post-variants/t-post-s4.jpg",
+     "type": "jpg"
+    },
+    {
+     "name": "post-s5",
+     "file": "library/post-variants/post-s5.jpg",
+     "thumb": "library/post-variants/t-post-s5.jpg",
+     "type": "jpg"
+    },
+    {
+     "name": "post-s6",
+     "file": "library/post-variants/post-s6.jpg",
+     "thumb": "library/post-variants/t-post-s6.jpg",
+     "type": "jpg"
+    },
+    {
+     "name": "post-v1",
+     "file": "library/post-variants/post-v1.jpg",
+     "thumb": "library/post-variants/t-post-v1.jpg",
+     "type": "jpg"
+    },
+    {
+     "name": "post-v2",
+     "file": "library/post-variants/post-v2.jpg",
+     "thumb": "library/post-variants/t-post-v2.jpg",
+     "type": "jpg"
+    },
+    {
+     "name": "post-v3",
+     "file": "library/post-variants/post-v3.jpg",
+     "thumb": "library/post-variants/t-post-v3.jpg",
+     "type": "jpg"
+    },
+    {
+     "name": "post-v4",
+     "file": "library/post-variants/post-v4.jpg",
+     "thumb": "library/post-variants/t-post-v4.jpg",
+     "type": "jpg"
+    },
+    {
+     "name": "post-v5",
+     "file": "library/post-variants/post-v5.jpg",
+     "thumb": "library/post-variants/t-post-v5.jpg",
+     "type": "jpg"
+    },
+    {
+     "name": "post-v6",
+     "file": "library/post-variants/post-v6.jpg",
+     "thumb": "library/post-variants/t-post-v6.jpg",
+     "type": "jpg"
+    },
+    {
+     "name": "post-w1",
+     "file": "library/post-variants/post-w1.jpg",
+     "thumb": "library/post-variants/t-post-w1.jpg",
+     "type": "jpg"
+    },
+    {
+     "name": "post-w2",
+     "file": "library/post-variants/post-w2.jpg",
+     "thumb": "library/post-variants/t-post-w2.jpg",
+     "type": "jpg"
+    },
+    {
+     "name": "post-w3",
+     "file": "library/post-variants/post-w3.jpg",
+     "thumb": "library/post-variants/t-post-w3.jpg",
+     "type": "jpg"
+    },
+    {
+     "name": "post-w4",
+     "file": "library/post-variants/post-w4.jpg",
+     "thumb": "library/post-variants/t-post-w4.jpg",
+     "type": "jpg"
+    },
+    {
+     "name": "post-w5",
+     "file": "library/post-variants/post-w5.jpg",
+     "thumb": "library/post-variants/t-post-w5.jpg",
+     "type": "jpg"
+    },
+    {
+     "name": "post-w6",
+     "file": "library/post-variants/post-w6.jpg",
+     "thumb": "library/post-variants/t-post-w6.jpg",
+     "type": "jpg"
+    },
+    {
+     "name": "post-x1",
+     "file": "library/post-variants/post-x1.jpg",
+     "thumb": "library/post-variants/t-post-x1.jpg",
+     "type": "jpg"
+    },
+    {
+     "name": "post-x2",
+     "file": "library/post-variants/post-x2.jpg",
+     "thumb": "library/post-variants/t-post-x2.jpg",
+     "type": "jpg"
+    },
+    {
+     "name": "post-x3",
+     "file": "library/post-variants/post-x3.jpg",
+     "thumb": "library/post-variants/t-post-x3.jpg",
+     "type": "jpg"
+    },
+    {
+     "name": "post-x4",
+     "file": "library/post-variants/post-x4.jpg",
+     "thumb": "library/post-variants/t-post-x4.jpg",
+     "type": "jpg"
+    },
+    {
+     "name": "post-x5",
+     "file": "library/post-variants/post-x5.jpg",
+     "thumb": "library/post-variants/t-post-x5.jpg",
+     "type": "jpg"
+    },
+    {
+     "name": "post-x6",
+     "file": "library/post-variants/post-x6.jpg",
+     "thumb": "library/post-variants/t-post-x6.jpg",
+     "type": "jpg"
+    },
+    {
+     "name": "post-x7",
+     "file": "library/post-variants/post-x7.jpg",
+     "thumb": "library/post-variants/t-post-x7.jpg",
+     "type": "jpg"
+    },
+    {
+     "name": "post-x8",
+     "file": "library/post-variants/post-x8.jpg",
+     "thumb": "library/post-variants/t-post-x8.jpg",
+     "type": "jpg"
+    },
+    {
+     "name": "post-x9",
+     "file": "library/post-variants/post-x9.jpg",
+     "thumb": "library/post-variants/t-post-x9.jpg",
+     "type": "jpg"
+    }
+   ]
+  },
+  {
+   "id": "brief",
+   "title": "Бриф для клієнтів",
+   "note": "Посилання, які ти надсилаєш клієнтам.",
+   "items": [
+    {
+     "name": "Клієнт має ТЗ",
+     "link": "/brief.html?mode=has",
+     "type": "link"
+    },
+    {
+     "name": "Клієнт створює ТЗ з нами",
+     "link": "/brief.html?mode=none",
+     "type": "link"
+    },
+    {
+     "name": "Сайт Stackup",
+     "link": "/",
+     "type": "link"
+    }
+   ]
+  }
+ ]
+}

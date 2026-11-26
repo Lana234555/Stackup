@@ -9,6 +9,8 @@ function create(codePath) {
   const mails = [], fetches = [];
   const fetchReply = url => /getUpdates/.test(url) ? { ok: true, result: [{ message: { chat: { id: 777, type: 'private', first_name: 'Lana' } } }] } : /getMe/.test(url) ? { ok: true, result: { username: 'Stackup_studio_bot' } } : /getWebhookInfo/.test(url) ? { ok: true, result: { url: '' } } : { ok: true };
   const logs = [];
+  const hooks = { reply: null };
+  const triggers = [];
   let idn = 0;
   const signed = buf => Array.from(buf).map(b => (b > 127 ? b - 256 : b));
   const toBuf = v => Array.isArray(v) ? Buffer.from(v.map(b => b & 255)) : Buffer.from(String(v), 'utf8');
@@ -63,7 +65,7 @@ function create(codePath) {
       get: k => { const e = cacheStore[k]; if (!e) return null; if (e.exp < now()) { delete cacheStore[k]; return null; } return e.v; },
       put: (k, v, ttl) => { cacheStore[k] = { v: String(v), exp: now() + Math.min(ttl || 600, 21600) * 1000 }; },
       remove: k => { delete cacheStore[k]; } }) },
-    LockService: { getScriptLock: () => ({ waitLock() {}, releaseLock() {} }) },
+    LockService: { getScriptLock: () => ({ waitLock() {}, tryLock() { return true; }, releaseLock() {} }) },
     Utilities: {
       DigestAlgorithm: { SHA_256: 'sha256' },
       computeDigest: (alg, v) => signed(crypto.createHash('sha256').update(toBuf(v)).digest()),
@@ -77,7 +79,10 @@ function create(codePath) {
       newBlob: (bytes, type, name) => ({ bytes: typeof bytes === 'string' ? signed(Buffer.from(bytes)) : bytes, type, name, getBytes() { return this.bytes; } })
     },
     MailApp: { sendEmail: o => mails.push(o) },
-    UrlFetchApp: { fetch: (url, o) => { fetches.push({ url, o }); return { getContentText: () => JSON.stringify(fetchReply(url)) }; } },
+    UrlFetchApp: { fetch: (url, o) => { fetches.push({ url, o }); const r = hooks.reply && hooks.reply(url, o || {}); return { getContentText: () => JSON.stringify(r !== undefined && r !== null ? r : fetchReply(url)) }; } },
+    ScriptApp: { getProjectTriggers: () => triggers.map(t => ({ getHandlerFunction: () => t.fn, _t: t })), deleteTrigger: x => { const i = triggers.indexOf(x._t); if (i >= 0) triggers.splice(i, 1); },
+      newTrigger: fn => { const t = { fn }; const b = { timeBased: () => b, everyMinutes: n => { t.every = n + 'm'; return b; }, everyDays: n => { t.every = n + 'd'; return b; }, atHour: () => b, create: () => { triggers.push(t); return t; } }; return b; } },
+    encodeURIComponent,
     Session: { getEffectiveUser: () => ({ getEmail: () => 'lana@example.com' }), getScriptTimeZone: () => 'Etc/GMT' },
     DriveApp: { createFolder: n => mkFolder(n), getFolderById: id => folderApi(drive[id]), getFileById: () => ({ moveTo() {} }) },
     SpreadsheetApp: { create: () => { sheets['Заявки'] = []; return ss; }, openById: () => ss },
@@ -89,6 +94,6 @@ function create(codePath) {
   [].concat(codePath).forEach(f => vm.runInContext(fs.readFileSync(f, 'utf8'), ctx, { filename: require('path').basename(f) }));
   const post = body => JSON.parse(ctx.doPost({ postData: { contents: typeof body === 'string' ? body : JSON.stringify(body) } }).t);
   const get = params => JSON.parse(ctx.doGet({ parameter: params }).t);
-  return { ctx, props, cacheStore, mails, logs, sheets, drive, clock, post, get, fetches };
+  return { ctx, props, cacheStore, mails, logs, sheets, drive, clock, post, get, fetches, hooks, triggers };
 }
 module.exports = { create };

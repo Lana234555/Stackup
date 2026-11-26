@@ -131,6 +131,10 @@ function doPost(e) {
       case 'get': requireSession(d); return out(get(d.id));
       case 'update': requireSession(d); return out(update(d));
       case 'stages': requireSession(d); return out(saveStages(d.stages));
+      // контент і Instagram
+      case 'content': requireSession(d); return out(contentState());
+      case 'contentUpdate': requireSession(d); return out(contentUpdate(d));
+      case 'publishNow': requireSession(d); return out(publishNowAction(d));
       default: return out({ ok: false, error: 'unknown action' });
     }
   } catch (err) { return out({ ok: false, error: publicError(err) }); }
@@ -586,8 +590,10 @@ function publicError(err) {
   const m = String(err && err.message || err);
   // назовні — лише короткі коди, без деталей реалізації
   const known = ['unauthorized', 'bad code', 'bad otp', 'expired', 'not configured', 'payload too large', 'bad request', 'name and email required', 'bad email',
-    'too many requests', 'bad id or token', 'upload window closed', 'file too large', 'too many files', 'not found', 'bad status', 'bad stages', 'stage "new" is required', 'unknown action', 'mail failed'];
+    'too many requests', 'bad id or token', 'upload window closed', 'file too large', 'too many files', 'not found', 'bad status', 'bad stages', 'stage "new" is required', 'unknown action', 'mail failed',
+    'bad item', 'bad op', 'bad date', 'locked item', 'instagram not connected'];
   if (/^locked:\d+$/.test(m)) return m;
+  if (/^IG: /.test(m)) return m.slice(0, 220);
   return known.indexOf(m) >= 0 ? m : 'server error';
 }
 function randomToken() {
@@ -618,3 +624,300 @@ function plain(s) { return String(s || '').replace(/[\r\n]+/g, ' '); }
 function clean(s) { return String(s).replace(/[\\/:*?"<>|\u0000-\u001f]+/g, '-').slice(0, 120); }
 function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c])); }
 function out(o) { return ContentService.createTextOutput(JSON.stringify(o)).setMimeType(ContentService.MimeType.JSON); }
+
+/* =====================================================================
+   КОНТЕНТ І INSTAGRAM
+   Claude готує пости, каруселі, сторіс і рілс і кладе їх на сайт у /content/
+   (manifest.json + картинки). У кабінеті ви затверджуєте або повертаєте на
+   правки, а цей скрипт публікує затверджене в Instagram у вказаний час.
+   Стан кожної публікації — аркуш «Контент» у таблиці.
+
+   Один раз:
+     1) Запустіть setupContent() — створить аркуш і планувальник (кожні 10 хв).
+     2) Коли буде токен Instagram: властивість IG_TOKEN = токен,
+        запустіть connectInstagram(). Токен оновлюється сам (раз на тиждень).
+   ===================================================================== */
+const CONTENT_SHEET = 'Контент';
+const CCOLS = ['id', 'status', 'at', 'caption', 'comment', 'container', 'children', 'igId', 'permalink', 'publishedAt', 'error', 'tries', 'updated'];
+const C_OPS = ['approve', 'changes', 'review', 'skip'];
+const IG_API = 'https://graph.instagram.com/v23.0';
+const SITE_URL = 'https://stackup.studio';
+const PUBLISH_TRIES = 3;
+
+function setupContent() {
+  contentSheet();
+  ensureContentTriggers();
+  Logger.log('Контент підключено: аркуш «' + CONTENT_SHEET + '» і планувальник кожні 10 хв. Instagram: ' + (igConnected() ? '@' + props().getProperty('IG_USERNAME') : 'ще не підключено (див. connectInstagram)'));
+}
+
+function ensureContentTriggers() {
+  const want = { publishDue: 'min', refreshInstagramToken: 'day' };
+  ScriptApp.getProjectTriggers().forEach(t => { if (want[t.getHandlerFunction()]) { ScriptApp.deleteTrigger(t); } });
+  ScriptApp.newTrigger('publishDue').timeBased().everyMinutes(10).create();
+  ScriptApp.newTrigger('refreshInstagramToken').timeBased().everyDays(1).atHour(4).create();
+}
+
+/** Підключити Instagram: властивість IG_TOKEN = токен із Meta (Instagram API з входом через Instagram). */
+function connectInstagram() {
+  const p = props(), raw = p.getProperty('IG_TOKEN');
+  if (!raw) throw new Error('Спершу додайте властивість IG_TOKEN (токен із кабінету розробника Meta).');
+  const tokenValue = String(raw).replace(/^\s*["']?|["']?\s*$/g, '').replace(/\s+/g, '');
+  if (tokenValue !== raw) p.setProperty('IG_TOKEN', tokenValue);
+  const me = ig('get', '/me', { fields: 'user_id,username,account_type' });
+  if (!me.user_id && !me.id) throw new Error('Instagram не повернув акаунт. Перевірте токен.');
+  p.setProperties({ IG_USER_ID: String(me.user_id || me.id), IG_USERNAME: String(me.username || ''), IG_TOKEN_AT: String(Date.now()) });
+  if (!p.getProperty('IG_TOKEN_EXP')) p.setProperty('IG_TOKEN_EXP', String(Date.now() + 60 * 864e5));
+  contentSheet();
+  ensureContentTriggers();
+  try { refreshInstagramToken(true); } catch (e) { /* свіжий токен ще не можна оновити, спробуємо завтра */ }
+  telegram('✅ Instagram підключено: @' + esc(me.username || '') + '. Затверджені пости публікуватимуться самі.');
+  Logger.log('Instagram підключено: @' + me.username + ' (' + (me.account_type || 'professional') + ').');
+}
+
+/** Довгий токен Instagram діє 60 днів. Оновлюємо раз на тиждень (тригер щодня о 4:00). */
+function refreshInstagramToken(force) {
+  const p = props();
+  if (!p.getProperty('IG_TOKEN')) return;
+  const at = +p.getProperty('IG_TOKEN_AT') || 0;
+  if (force !== true && Date.now() - at < 7 * 864e5) return;
+  try {
+    const r = JSON.parse(UrlFetchApp.fetch('https://graph.instagram.com/refresh_access_token?grant_type=ig_refresh_token&access_token=' + encodeURIComponent(p.getProperty('IG_TOKEN')), { muteHttpExceptions: true }).getContentText());
+    if (!r.access_token) throw new Error(r.error && r.error.message || 'no token');
+    p.setProperties({ IG_TOKEN: r.access_token, IG_TOKEN_AT: String(Date.now()), IG_TOKEN_EXP: String(Date.now() + (+r.expires_in || 60 * 86400) * 1000) });
+  } catch (e) {
+    if (force === true) throw e;
+    const exp = +p.getProperty('IG_TOKEN_EXP') || 0;
+    if (exp && exp - Date.now() < 10 * 864e5) telegram('⚠️ Не вдалося оновити токен Instagram (' + esc(String(e.message).slice(0, 120)) + '). Він діє до ' + esc(new Date(exp).toISOString().slice(0, 10)) + '. Згенеруйте новий у Meta і запустіть connectInstagram().');
+  }
+}
+
+function igConnected() { const p = props(); return !!(p.getProperty('IG_TOKEN') && p.getProperty('IG_USER_ID')); }
+function igInfo() {
+  const p = props();
+  return { connected: igConnected(), username: p.getProperty('IG_USERNAME') || '', tokenExp: +p.getProperty('IG_TOKEN_EXP') || 0,
+    scheduler: !!p.getProperty('CONTENT_TICK'), lastTick: +p.getProperty('CONTENT_TICK') || 0 };
+}
+
+/** Запит до Instagram API. Токен ніколи не виходить за межі скрипта. */
+function ig(method, path, params) {
+  const p = props(), tokenValue = p.getProperty('IG_TOKEN');
+  if (!tokenValue) throw new Error('instagram not connected');
+  const q = Object.assign({}, params || {}, { access_token: tokenValue });
+  const enc = o => Object.keys(o).map(k => encodeURIComponent(k) + '=' + encodeURIComponent(o[k])).join('&');
+  const res = method === 'get'
+    ? UrlFetchApp.fetch(IG_API + path + '?' + enc(q), { muteHttpExceptions: true })
+    : UrlFetchApp.fetch(IG_API + path, { method: 'post', payload: q, muteHttpExceptions: true });
+  let j; try { j = JSON.parse(res.getContentText()); } catch (e) { throw new Error('IG: bad response'); }
+  if (j.error) throw new Error('IG: ' + String(j.error.error_user_msg || j.error.message || 'error').slice(0, 200));
+  return j;
+}
+
+/* ---------- маніфест (що підготував Claude) ---------- */
+function contentBase() { return (props().getProperty('CONTENT_URL') || SITE_URL + '/content/').replace(/\/?$/, '/'); }
+function manifest(fresh) {
+  const c = cache();
+  if (!fresh) { const hit = c.get('MANIFEST'); if (hit) return JSON.parse(hit); }
+  const res = UrlFetchApp.fetch(contentBase() + 'manifest.json?t=' + Date.now(), { muteHttpExceptions: true });
+  const j = JSON.parse(res.getContentText());
+  const items = (j.items || []).filter(x => x && /^[a-z0-9-]{1,80}$/.test(x.id));
+  const s = JSON.stringify({ items });
+  if (s.length < 90000) c.put('MANIFEST', s, 300);
+  return { items };
+}
+function mediaUrl(path) {
+  path = String(path || '');
+  if (!/^[a-z0-9][a-z0-9\/._-]{0,200}$/i.test(path) || path.indexOf('..') >= 0) throw new Error('bad media path');
+  return contentBase() + path;
+}
+
+/* ---------- аркуш стану ---------- */
+function contentSheet() {
+  const ss = SpreadsheetApp.openById(props().getProperty('SHEET_ID'));
+  let sh = ss.getSheetByName(CONTENT_SHEET);
+  if (!sh) { sh = ss.insertSheet(CONTENT_SHEET); sh.appendRow(CCOLS); sh.setFrozenRows(1); }
+  return sh;
+}
+function contentRows() {
+  const vals = contentSheet().getDataRange().getValues(), head = vals[0] || CCOLS, map = {};
+  for (let i = 1; i < vals.length; i++) {
+    if (!vals[i][0]) continue;
+    const o = {}; head.forEach((k, j) => o[k] = vals[i][j] instanceof Date ? vals[i][j].toISOString() : vals[i][j]);
+    map[String(o.id)] = { row: i + 1, obj: o };
+  }
+  return map;
+}
+function saveContent(r, patch) {
+  const sh = contentSheet();
+  const o = Object.assign({}, r ? r.obj : {}, patch, { updated: new Date().toISOString() });
+  const values = CCOLS.map(k => cell(o[k] == null ? '' : o[k]));
+  if (r) sh.getRange(r.row, 1, 1, CCOLS.length).setValues([values]);
+  else sh.appendRow(values);
+  return o;
+}
+function publicState(o) {
+  const x = {}; ['status', 'at', 'caption', 'comment', 'igId', 'permalink', 'publishedAt', 'error', 'updated'].forEach(k => { x[k] = o[k] == null ? '' : String(o[k]); });
+  return x;
+}
+
+/* ---------- кабінет ---------- */
+function contentState() {
+  const rows = contentRows(), state = {};
+  Object.keys(rows).forEach(id => { state[id] = publicState(rows[id].obj); });
+  return { ok: true, state, ig: igInfo() };
+}
+
+function contentUpdate(d) {
+  const id = str(d.id, 80);
+  if (!/^[a-z0-9-]{1,80}$/.test(id)) throw new Error('bad item');
+  if (C_OPS.indexOf(d.op) < 0) throw new Error('bad op');
+  return withLock(() => {
+    const r = contentRows()[id];
+    if (r && ['published', 'publishing'].indexOf(String(r.obj.status)) >= 0) throw new Error('locked item');
+    const patch = { id };
+    if (d.caption != null) patch.caption = str(d.caption, 2200);
+    if (d.op === 'approve') {
+      const t = new Date(String(d.at || ''));
+      if (isNaN(t) || t.getFullYear() < 2024 || t.getFullYear() > 2100) throw new Error('bad date');
+      Object.assign(patch, { status: 'scheduled', at: t.toISOString(), comment: '', error: '', tries: 0 });
+    } else if (d.op === 'changes') {
+      const c = str(d.comment, 2000);
+      if (!c) throw new Error('bad request');
+      Object.assign(patch, { status: 'changes', comment: c });
+    } else if (d.op === 'review') {
+      Object.assign(patch, { status: 'review', error: '' });
+    } else {
+      Object.assign(patch, { status: 'skipped' });
+    }
+    return { ok: true, id, state: publicState(saveContent(r, patch)) };
+  });
+}
+
+function publishNowAction(d) {
+  const id = str(d.id, 80);
+  if (!/^[a-z0-9-]{1,80}$/.test(id)) throw new Error('bad item');
+  if (!igConnected()) throw new Error('instagram not connected');
+  contentUpdate({ id, op: 'approve', at: new Date().toISOString(), caption: d.caption });
+  const m = manifest(true), item = m.items.filter(x => x.id === id)[0];
+  const lock = LockService.getScriptLock(); lock.waitLock(30000); // не разом із планувальником
+  try { advanceContent(contentRows()[id], item, true); } finally { lock.releaseLock(); }
+  return { ok: true, id, state: publicState(contentRows()[id].obj) };
+}
+
+/* ---------- планувальник (тригер кожні 10 хв) ---------- */
+function publishDue() {
+  const lock = LockService.getScriptLock();
+  if (!lock.tryLock(5000)) return;
+  try {
+    props().setProperty('CONTENT_TICK', String(Date.now()));
+    let m;
+    try { m = manifest(true); } catch (e) { return; }
+    announceNewContent(m);
+    if (!igConnected()) return;
+    const rows = contentRows(), nowMs = Date.now();
+    const due = Object.keys(rows).map(k => rows[k]).filter(r => {
+      const st = String(r.obj.status);
+      return st === 'publishing' || (st === 'scheduled' && new Date(r.obj.at).getTime() <= nowMs);
+    }).sort((a, b) => new Date(a.obj.at) - new Date(b.obj.at)).slice(0, 3);
+    due.forEach(r => advanceContent(r, m.items.filter(x => x.id === r.obj.id)[0], false));
+  } finally { lock.releaseLock(); }
+}
+
+/** Повідомити в Telegram, коли Claude додав нові публікації на затвердження. */
+function announceNewContent(m) {
+  const p = props();
+  let known; try { known = JSON.parse(p.getProperty('CONTENT_KNOWN') || 'null'); } catch (e) { known = null; }
+  const ids = m.items.map(x => x.id);
+  if (known) {
+    const fresh = m.items.filter(x => known.indexOf(x.id) < 0);
+    if (fresh.length) {
+      const adminUrl = p.getProperty('ADMIN_URL') || '';
+      telegram('🆕 <b>Нове на затвердження: ' + fresh.length + '</b>\n' + fresh.slice(0, 8).map(x => '• ' + esc(String(x.title || x.id).slice(0, 80))).join('\n'),
+        /^https:\/\//.test(adminUrl) ? adminUrl + '?s=content' : '');
+    }
+  }
+  p.setProperty('CONTENT_KNOWN', JSON.stringify(ids.slice(-400)));
+}
+
+/** Крок публікації. Картинки зазвичай виходять за один запуск, відео (рілс) — за кілька. */
+function advanceContent(r, item, interactive) {
+  r = contentRows()[r.obj.id] || r; // свіжий стан: публікацію могли вже завершити
+  const o = r.obj;
+  if (['scheduled', 'publishing'].indexOf(String(o.status)) < 0) return;
+  try {
+    if (!item) throw new Error('публікації немає в manifest.json');
+    if (String(o.status) === 'scheduled') startPublish(r, item);
+    const cur = contentRows()[o.id];
+    if (String(cur.obj.status) === 'publishing') finishPublish(cur, item, interactive);
+  } catch (e) {
+    const tries = (+o.tries || 0) + 1, msg = String(e && e.message || e).slice(0, 300);
+    const cur = contentRows()[o.id];
+    const final = tries >= PUBLISH_TRIES || /немає в manifest|bad media/.test(msg);
+    saveContent(cur, { status: final ? 'failed' : 'scheduled', error: msg, tries, container: final ? '' : cur.obj.container });
+    if (final) {
+      const adminUrl = props().getProperty('ADMIN_URL') || '';
+      telegram('❌ <b>Не вдалося опублікувати</b>: ' + esc(item ? item.title : o.id) + '\n' + esc(msg), /^https:\/\//.test(adminUrl) ? adminUrl + '?s=content' : '');
+    }
+    if (interactive) throw e;
+  }
+}
+
+function captionOf(o, item) { return String(o.caption || item.caption || '').slice(0, 2200); }
+
+function startPublish(r, item) {
+  const o = r.obj, uid = props().getProperty('IG_USER_ID'), media = (item.media || []).map(mediaUrl);
+  let container = '', children = '';
+  if (item.kind === 'stories') {
+    // кожен кадр — окрема сторіс; children = скільки вже опубліковано
+    return saveContent(r, { status: 'publishing', container: '', children: String(+o.children || 0) });
+  }
+  if (item.kind === 'reel') {
+    container = ig('post', '/' + uid + '/media', { media_type: 'REELS', video_url: mediaUrl(item.video), caption: captionOf(o, item), share_to_feed: 'true' }).id;
+  } else if (item.kind === 'carousel' && media.length > 1) {
+    const ids = media.slice(0, 10).map(u => ig('post', '/' + uid + '/media', { image_url: u, is_carousel_item: 'true' }).id);
+    waitContainers(ids, 6);
+    children = ids.join(',');
+    container = ig('post', '/' + uid + '/media', { media_type: 'CAROUSEL', children, caption: captionOf(o, item) }).id;
+  } else {
+    container = ig('post', '/' + uid + '/media', { image_url: media[0], caption: captionOf(o, item) }).id;
+  }
+  saveContent(r, { status: 'publishing', container, children, error: '' });
+}
+
+function waitContainers(ids, rounds) {
+  for (let i = 0; i < rounds; i++) {
+    const st = ids.map(id => String(ig('get', '/' + id, { fields: 'status_code' }).status_code || ''));
+    if (st.some(s => s === 'ERROR' || s === 'EXPIRED')) throw new Error('IG: Instagram не прийняв файл');
+    if (st.every(s => s === 'FINISHED' || s === 'PUBLISHED')) return true;
+    Utilities.sleep(4000);
+  }
+  return false;
+}
+
+function finishPublish(r, item, interactive) {
+  const o = r.obj, uid = props().getProperty('IG_USER_ID');
+  if (item.kind === 'stories') {
+    const media = (item.media || []).map(mediaUrl);
+    let done = +o.children || 0, last = o.igId;
+    for (; done < media.length; done++) {
+      const c = ig('post', '/' + uid + '/media', { media_type: 'STORIES', image_url: media[done] }).id;
+      waitContainers([c], 6);
+      last = ig('post', '/' + uid + '/media_publish', { creation_id: c }).id;
+      saveContent(contentRows()[o.id], { children: String(done + 1), igId: last });
+    }
+    return published(contentRows()[o.id], item, last);
+  }
+  const ready = waitContainers([o.container], item.kind === 'reel' ? (interactive ? 10 : 3) : 6);
+  if (!ready) {
+    if (Date.now() - new Date(o.updated).getTime() > 20 * 3600 * 1000) throw new Error('IG: відео обробляється занадто довго');
+    return; // наступний запуск продовжить
+  }
+  const id = ig('post', '/' + uid + '/media_publish', { creation_id: o.container }).id;
+  published(contentRows()[o.id], item, id);
+}
+
+function published(r, item, mediaId) {
+  let link = '';
+  try { link = String(ig('get', '/' + mediaId, { fields: 'permalink' }).permalink || ''); } catch (e) { /* посилання не критичне */ }
+  saveContent(r, { status: 'published', igId: String(mediaId || ''), permalink: link, publishedAt: new Date().toISOString(), error: '', container: '' });
+  telegram('📣 <b>Опубліковано в Instagram</b>: ' + esc(item.title || item.id) + (item.kind === 'stories' && item.highlight ? '\nДодайте в хайлайт «' + esc(item.highlight) + '».' : ''), /^https:\/\//.test(link) ? link : '');
+}

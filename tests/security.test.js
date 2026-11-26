@@ -276,6 +276,125 @@ t('тестові заявки: seedTestBriefs додає 10 різних, бе�
   const left = g.post({ action: 'list', token: s.token }).items; eq(left.length, 1); eq(left[0].id, real.id);
 });
 
+/* ---------- контент і Instagram ---------- */
+const MANIFEST = { items: [
+  { id: 'c01-test', kind: 'carousel', title: 'Карусель', media: ['ig/c01/01.jpg', 'ig/c01/02.jpg'], caption: 'Підпис ✦', proposedAt: '2026-12-01T10:00:00+02:00' },
+  { id: 's-about', kind: 'stories', title: 'Сторіс', media: ['ig/s/01.jpg', 'ig/s/02.jpg'], highlight: 'Про нас' },
+  { id: 'reel-x', kind: 'reel', title: 'Рілс', video: 'ig/r/video.mp4', media: ['ig/r/cover.jpg'], caption: 'R' },
+  { id: 'bad-path', kind: 'post', title: 'Bad', media: ['../secret.jpg'] }
+] };
+function igWorld(g, opt = {}) {
+  let n = 0; const calls = [];
+  g.hooks.reply = (url, o) => {
+    if (/manifest\.json/.test(url)) return opt.manifest || MANIFEST;
+    if (/graph\.instagram\.com/.test(url)) {
+      const u = new URL(url), path = u.pathname.replace(/^\/v[\d.]+/, ''), body = o.payload || Object.fromEntries(u.searchParams);
+      calls.push({ path, body, method: o.method || 'get' });
+      if (/refresh_access_token/.test(url)) return { access_token: 'NEWTOKEN', expires_in: 5184000 };
+      if (path === '/me') return { user_id: '1789', username: 'stackup.studio', account_type: 'BUSINESS' };
+      if (/\/media$/.test(path)) return opt.fail ? { error: { message: 'Invalid image' } } : { id: 'C' + (++n) };
+      if (/\/media_publish$/.test(path)) return { id: 'M' + (++n) };
+      if (body.fields === 'status_code') return { status_code: opt.status || 'FINISHED' };
+      if (body.fields === 'permalink') return { permalink: 'https://www.instagram.com/p/XYZ/' };
+    }
+    return null;
+  };
+  return calls;
+}
+function connected(g) { g.props.IG_TOKEN = ' "IGAAtoken" '; const calls = igWorld(g); g.ctx.connectInstagram(); return calls; }
+
+t('content: без сесії стан контенту і дії недоступні', () => {
+  const g = fresh(); igWorld(g);
+  eq(g.post({ action: 'content' }).error, 'unauthorized'); eq(g.post({ action: 'contentUpdate', id: 'c01-test', op: 'skip' }).error, 'unauthorized');
+  eq(g.post({ action: 'publishNow', id: 'c01-test' }).error, 'unauthorized');
+});
+t('content: затвердити → заплановано з часом і підписом; правки з коментарем; перевірка даних', () => {
+  const g = fresh(); const s = signIn(g); igWorld(g);
+  const a = g.post({ action: 'contentUpdate', token: s.token, id: 'c01-test', op: 'approve', at: '2026-12-01T08:00:00Z', caption: '=HYPERLINK("x")' });
+  ok(a.ok, JSON.stringify(a)); eq(a.state.status, 'scheduled'); eq(a.state.at, '2026-12-01T08:00:00.000Z');
+  const st = g.post({ action: 'content', token: s.token }); eq(st.state['c01-test'].caption, '=HYPERLINK("x")'); eq(st.ig.connected, false);
+  ok(!String(g.sheets['Контент'][1][3]).startsWith('#FORMULA'), 'formula in sheet');
+  eq(g.post({ action: 'contentUpdate', token: s.token, id: 'c01-test', op: 'changes' }).error, 'bad request');
+  eq(g.post({ action: 'contentUpdate', token: s.token, id: 'c01-test', op: 'changes', comment: 'Темніше фон' }).state.status, 'changes');
+  eq(g.post({ action: 'contentUpdate', token: s.token, id: 'c01-test', op: 'approve', at: 'nope' }).error, 'bad date');
+  eq(g.post({ action: 'contentUpdate', token: s.token, id: '../x', op: 'skip' }).error, 'bad item');
+  eq(g.post({ action: 'contentUpdate', token: s.token, id: 'c01-test', op: 'delete' }).error, 'bad op');
+  eq(g.sheets['Контент'].length, 2, 'one row per item');
+});
+t('content: publishNow без Instagram пояснює, що не підключено', () => {
+  const g = fresh(); const s = signIn(g); igWorld(g);
+  eq(g.post({ action: 'publishNow', token: s.token, id: 'c01-test' }).error, 'instagram not connected');
+});
+t('connectInstagram: чистить токен, зберігає акаунт, ставить тригери, токен не видно в кабінеті', () => {
+  const g = fresh(); const s = signIn(g); connected(g);
+  eq(g.props.IG_USER_ID, '1789'); eq(g.props.IG_USERNAME, 'stackup.studio'); eq(g.props.IG_TOKEN, 'NEWTOKEN');
+  eq(g.triggers.map(x => x.fn).sort().join(','), 'publishDue,refreshInstagramToken');
+  g.ctx.connectInstagram(); eq(g.triggers.length, 2, 'no duplicate triggers');
+  const st = g.post({ action: 'content', token: s.token }); eq(st.ig.connected, true); eq(st.ig.username, 'stackup.studio');
+  ok(!JSON.stringify(st).includes('NEWTOKEN') && !JSON.stringify(st).includes('IGAA'), 'token leaked');
+});
+t('publishDue: публікує карусель у свій час, не раніше; посилання і Telegram', () => {
+  const g = fresh(); const s = signIn(g); const calls = connected(g); g.props.TG_TOKEN = 't'; g.props.TG_CHAT = '1';
+  const at = new Date(Date.now() + 30 * MIN).toISOString();
+  g.post({ action: 'contentUpdate', token: s.token, id: 'c01-test', op: 'approve', at });
+  calls.length = 0; g.ctx.publishDue(); ok(!calls.some(c => /media/.test(c.path)), 'published too early');
+  g.clock.offset += 31 * MIN; g.ctx.publishDue();
+  const kids = calls.filter(c => /\/1789\/media$/.test(c.path) && c.body.is_carousel_item === 'true');
+  eq(kids.length, 2); eq(kids[0].body.image_url, 'https://stackup.studio/content/ig/c01/01.jpg');
+  const parent = calls.find(c => c.body.media_type === 'CAROUSEL'); ok(parent && parent.body.caption === 'Підпис ✦' && parent.body.children.split(',').length === 2, JSON.stringify(parent));
+  ok(calls.some(c => /media_publish$/.test(c.path)), 'not published');
+  const st = g.post({ action: 'content', token: s.token }).state['c01-test'];
+  eq(st.status, 'published'); eq(st.permalink, 'https://www.instagram.com/p/XYZ/');
+  ok(g.fetches.some(f => /sendMessage/.test(f.url) && /Опубліковано/.test(JSON.parse(f.o.payload).text)), 'no telegram');
+  calls.length = 0; g.ctx.publishDue(); ok(!calls.some(c => /media/.test(c.path)), 'published twice');
+  eq(g.post({ action: 'contentUpdate', token: s.token, id: 'c01-test', op: 'review' }).error, 'locked item');
+});
+t('publishDue: сторіс — кожен кадр окремо, підказка про хайлайт', () => {
+  const g = fresh(); const s = signIn(g); const calls = connected(g); g.props.TG_TOKEN = 't'; g.props.TG_CHAT = '1';
+  g.post({ action: 'contentUpdate', token: s.token, id: 's-about', op: 'approve', at: new Date(Date.now() - MIN).toISOString() });
+  calls.length = 0; g.ctx.publishDue();
+  eq(calls.filter(c => c.body.media_type === 'STORIES').length, 2); eq(calls.filter(c => /media_publish$/.test(c.path)).length, 2);
+  eq(g.post({ action: 'content', token: s.token }).state['s-about'].status, 'published');
+  ok(g.fetches.some(f => /sendMessage/.test(f.url) && /хайлайт «Про нас»/.test(JSON.parse(f.o.payload).text)));
+});
+t('publishDue: рілс чекає обробку відео і публікується в наступний запуск', () => {
+  const g = fresh(); const s = signIn(g); connected(g);
+  g.post({ action: 'contentUpdate', token: s.token, id: 'reel-x', op: 'approve', at: new Date(Date.now() - MIN).toISOString() });
+  let calls = igWorld(g, { status: 'IN_PROGRESS' }); g.ctx.publishDue();
+  ok(calls.some(c => c.body.media_type === 'REELS' && c.body.video_url === 'https://stackup.studio/content/ig/r/video.mp4'));
+  eq(g.post({ action: 'content', token: s.token }).state['reel-x'].status, 'publishing');
+  calls = igWorld(g); g.clock.offset += 10 * MIN; g.ctx.publishDue();
+  ok(!calls.some(c => c.body.media_type === 'REELS'), 'container recreated');
+  eq(g.post({ action: 'content', token: s.token }).state['reel-x'].status, 'published');
+});
+t('publishDue: помилка Instagram — 3 спроби, потім «помилка» і Telegram; поганий шлях одразу', () => {
+  const g = fresh(); const s = signIn(g); connected(g); g.props.TG_TOKEN = 't'; g.props.TG_CHAT = '1';
+  g.post({ action: 'contentUpdate', token: s.token, id: 'c01-test', op: 'approve', at: new Date(Date.now() - MIN).toISOString() });
+  g.post({ action: 'contentUpdate', token: s.token, id: 'bad-path', op: 'approve', at: new Date(Date.now() - MIN).toISOString() });
+  igWorld(g, { fail: true });
+  g.ctx.publishDue(); let st = g.post({ action: 'content', token: s.token }).state;
+  eq(st['c01-test'].status, 'scheduled'); ok(/Invalid image/.test(st['c01-test'].error)); eq(st['bad-path'].status, 'failed');
+  g.ctx.publishDue(); g.ctx.publishDue(); st = g.post({ action: 'content', token: s.token }).state;
+  eq(st['c01-test'].status, 'failed');
+  ok(g.fetches.some(f => /sendMessage/.test(f.url) && /Не вдалося опублікувати/.test(JSON.parse(f.o.payload).text)));
+  eq(g.post({ action: 'contentUpdate', token: s.token, id: 'c01-test', op: 'approve', at: new Date().toISOString() }).state.status, 'scheduled', 'retry after failure');
+});
+t('publishNow: публікує одразу і повертає стан', () => {
+  const g = fresh(); const s = signIn(g); connected(g);
+  const r = g.post({ action: 'publishNow', token: s.token, id: 'c01-test', caption: 'Новий підпис' }); ok(r.ok, JSON.stringify(r)); eq(r.state.status, 'published');
+});
+t('announceNewContent: Telegram, коли в manifest з’явились нові публікації', () => {
+  const g = fresh(); g.props.TG_TOKEN = 't'; g.props.TG_CHAT = '1'; igWorld(g, { manifest: { items: MANIFEST.items.slice(0, 1) } });
+  g.ctx.publishDue(); ok(!g.fetches.some(f => /sendMessage/.test(f.url)), 'first run must be silent');
+  igWorld(g); g.cacheStore = {}; g.ctx.publishDue();
+  const m = g.fetches.filter(f => /sendMessage/.test(f.url)).map(f => JSON.parse(f.o.payload).text).join('\n'); ok(/Нове на затвердження: 3/.test(m), m);
+});
+t('refreshInstagramToken: раз на тиждень, попереджає перед закінченням', () => {
+  const g = fresh(); connected(g); g.props.TG_TOKEN = 't'; g.props.TG_CHAT = '1';
+  const calls = igWorld(g); g.ctx.refreshInstagramToken(); eq(g.fetches.filter(f => /refresh_access_token/.test(f.url)).length, 1, 'only the connect refresh');
+  g.clock.offset += 8 * 864e5; g.ctx.refreshInstagramToken(); eq(g.fetches.filter(f => /refresh_access_token/.test(f.url)).length, 2);
+});
+
 for (const [m, n] of results) console.log(m, n);
 console.log(`\n${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);
