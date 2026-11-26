@@ -18,8 +18,8 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black">
 <title>Stackup — керування</title>
 <link rel="stylesheet" href="brief.css?v=4">
-<link rel="stylesheet" href="admin.css?v=13">
-<link rel="stylesheet" href="hub.css?v=2">
+<link rel="stylesheet" href="admin.css?v=14">
+<link rel="stylesheet" href="hub.css?v=3">
 </head>
 <body class="adm">
 
@@ -51,27 +51,41 @@
     <span class="side-tag mono">СИСТЕМА КЕРУВАННЯ</span>
     <nav class="side-nav" id="sideNav">
       <button type="button" data-sec="home"><span class="ico">◇</span>Огляд</button>
-      <p class="side-group mono">ЗАЯВКИ</p>
-      <button type="button" data-view="board"><span class="ico">▦</span>Воронка</button>
-      <button type="button" data-view="list"><span class="ico">≡</span>Усі заявки <em id="cntAll"></em></button>
-      <button type="button" data-quick="unread"><span class="ico">◆</span>Нові <em class="hot" id="cntNew"></em></button>
-      <button type="button" data-quick="archive"><span class="ico">▢</span>Архів <em id="cntArch"></em></button>
-      <p class="side-group mono">INSTAGRAM</p>
-      <button type="button" data-sec="content" data-ctab="review"><span class="ico">✦</span>Контент <em class="hot" id="cntReview"></em></button>
-      <button type="button" data-sec="content" data-ctab="plan"><span class="ico">▤</span>Календар</button>
-      <button type="button" data-sec="content" data-ctab="grid"><span class="ico">⊞</span>Сітка профілю</button>
-      <p class="side-group mono">КОМПАНІЯ</p>
-      <button type="button" data-sec="tasks"><span class="ico">☐</span>Задачі <em class="hot" id="cntTasks"></em></button>
-      <button type="button" data-sec="mail"><span class="ico">✉</span>Розсилки</button>
-      <button type="button" data-sec="strategy"><span class="ico">◎</span>Стратегія</button>
-      <button type="button" data-sec="library"><span class="ico">❒</span>Матеріали</button>
-      <button type="button" data-sec="settings"><span class="ico">⚙</span>Налаштування</button>
+      <div class="side-sec" data-group="leads">
+        <button type="button" class="side-group mono" aria-expanded="true">ЗАЯВКИ <em class="hot" id="grpLeads"></em><i aria-hidden="true">⌄</i></button>
+        <div class="side-items">
+          <button type="button" data-view="board"><span class="ico">▦</span>Воронка</button>
+          <button type="button" data-view="list"><span class="ico">≡</span>Усі заявки <em id="cntAll"></em></button>
+          <button type="button" data-quick="unread"><span class="ico">◆</span>Нові <em class="hot" id="cntNew"></em></button>
+          <button type="button" data-quick="archive"><span class="ico">▢</span>Архів <em id="cntArch"></em></button>
+          <button type="button" data-sec="mail"><span class="ico">✉</span>Розсилки</button>
+        </div>
+      </div>
+      <div class="side-sec" data-group="content">
+        <button type="button" class="side-group mono" aria-expanded="true">INSTAGRAM <em class="hot" id="grpContent"></em><i aria-hidden="true">⌄</i></button>
+        <div class="side-items">
+          <button type="button" data-sec="content" data-ctab="review"><span class="ico">✦</span>Контент <em class="hot" id="cntReview"></em></button>
+          <button type="button" data-sec="content" data-ctab="plan"><span class="ico">▤</span>Календар</button>
+          <button type="button" data-sec="content" data-ctab="grid"><span class="ico">⊞</span>Сітка профілю</button>
+        </div>
+      </div>
+      <div class="side-sec" data-group="work">
+        <button type="button" class="side-group mono" aria-expanded="true">РОБОТА І РОЗВИТОК <em class="hot" id="grpWork"></em><i aria-hidden="true">⌄</i></button>
+        <div class="side-items">
+          <button type="button" data-sec="tasks"><span class="ico">☐</span>Задачі <em class="hot" id="cntTasks"></em></button>
+          <button type="button" data-sec="strategy"><span class="ico">◎</span>Стратегія</button>
+        </div>
+      </div>
+      <div class="side-sec" data-group="company">
+        <button type="button" class="side-group mono" aria-expanded="true">КОМПАНІЯ<i aria-hidden="true">⌄</i></button>
+        <div class="side-items">
+          <button type="button" data-sec="library"><span class="ico">❒</span>Матеріали</button>
+          <button type="button" data-sec="settings"><span class="ico">⚙</span>Налаштування</button>
+          <button type="button" class="copy-nav" data-copylink="/brief.html?mode=has"><span class="ico">⧉</span>Бриф: є ТЗ</button>
+          <button type="button" class="copy-nav" data-copylink="/brief.html?mode=none"><span class="ico">⧉</span>Бриф: створити ТЗ</button>
+        </div>
+      </div>
     </nav>
-    <div class="side-links">
-      <p class="mono">ПОСИЛАННЯ ДЛЯ КЛІЄНТІВ</p>
-      <button type="button" class="copy" data-copy="brief.html?mode=has">Є ТЗ <span class="mono">КОПІЮВАТИ</span></button>
-      <button type="button" class="copy" data-copy="brief.html?mode=none">Створити ТЗ <span class="mono">КОПІЮВАТИ</span></button>
-    </div>
     <div class="side-foot">
       <span class="demo-tag mono" id="demoTag" hidden>ДЕМО-ДАНІ</span>
       <button type="button" class="link mono" id="bellBtn">🔔 СПОВІЩЕННЯ</button>
@@ -151,6 +165,6 @@
 
 <script src="config.js?v=3"></script>
 <script src="admin.js?v=17" defer></script>
-<script src="hub.js?v=2" defer></script>
+<script src="hub.js?v=3" defer></script>
 </body>
 </html>

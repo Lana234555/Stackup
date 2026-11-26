@@ -119,6 +119,8 @@ function applySec() {
   const nNew = C.leads().filter(C.isUnread).length; $('#tabNew').textContent = nNew || '';
   const hot = hotTasks().length; $('#cntTasks').textContent = hot || ''; $('#tabTasks').textContent = hot || '';
   document.title = TITLES[sec] + ' — Stackup';
+  $('#grpLeads').textContent = nNew || ''; $('#grpContent').textContent = r || ''; $('#grpWork').textContent = hot || '';
+  sideGroups();
   void ch;
 }
 function renderAll() {
@@ -667,6 +669,20 @@ document.addEventListener('stackup:detail', e => {
   cur = { id: d.id, row: d.row || {} };
   if (changed) sendStep = false;
   if (!talk[d.id] && validEmail(cur.row.email)) loadTalk(d.id); else renderTalk();
+});
+
+/* ---------- бокове меню: секції згортаються, відкрита та, де ти зараз ---------- */
+const GROUP_OF = { leads: 'leads', mail: 'leads', content: 'content', tasks: 'work', strategy: 'work', library: 'company', settings: 'company' };
+function sideGroups() {
+  const closed = store.get('stackup-side-closed', {}), active = GROUP_OF[sec];
+  $$('.side-sec').forEach(g => { const open = g.dataset.group === active || !closed[g.dataset.group]; g.querySelector('.side-group').setAttribute('aria-expanded', String(open)); });
+}
+document.addEventListener('click', e => {
+  const b = e.target.closest('.side-group'); if (!b) return;
+  const g = b.closest('.side-sec').dataset.group, open = b.getAttribute('aria-expanded') === 'true';
+  const closed = store.get('stackup-side-closed', {});
+  closed[g] = open ? 1 : 0;
+  store.set('stackup-side-closed', closed); b.setAttribute('aria-expanded', String(!open));
 });
 
 /* ---------- події ---------- */
