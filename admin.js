@@ -432,6 +432,9 @@ function renderDetail(d) {
     <div class="stage" role="group" aria-label="Етап">${STATUS.map(([v, l, t], i) => `<button type="button" class="${t}${PIPE.indexOf(v) <= PIPE.indexOf(live.status) && PIPE.includes(live.status) && PIPE.includes(v) ? ' passed' : ''}" data-st="${esc(v)}" aria-pressed="${live.status === v}"><span class="mono">${v === 'archive' ? '×' : String(i + 1).padStart(2, '0')}</span>${esc(l)}</button>`).join('')}</div>
     <div class="act-row">${contactLinks(c)}${safeUrl(d.folderUrl) ? `<a class="button ghost" href="${esc(safeUrl(d.folderUrl))}" target="_blank" rel="noopener noreferrer"><b>Папка на Drive</b> <span>↗︎</span></a>` : ''}</div>
 
+    <section class="d-sec talk" id="dTalk"></section>
+    <section class="d-sec ai" id="dAi"></section>
+
     ${spec.length ? `<div class="spec-box"><span class="mono">ТЗ КЛІЄНТА</span>${spec.map(f => `<a href="${esc(safeUrl(f.url))}" target="_blank" rel="noopener noreferrer"><span class="mono">${esc(ext(f.name))}</span><b>${esc(f.name)}</b><em>${size(f.size)}</em><i>↗︎</i></a>`).join('')}</div>` : ''}
 
     <section class="d-sec notes"><h3><span class="mono">✎</span>Мої нотатки</h3>
@@ -449,6 +452,7 @@ function renderDetail(d) {
     <section class="d-sec"><h3><span class="mono">📎</span>Файли · ${(d.files || []).length}</h3>
       ${Object.keys(groups).length ? Object.entries(groups).map(([label, list]) => `<p class="f-group mono">${esc(label).toUpperCase()}</p><ul class="file-list">${list.map(f => `<li><span class="mono">${esc(ext(f.name))}</span><b><a href="${esc(safeUrl(f.url))}" target="_blank" rel="noopener noreferrer">${esc(f.name)}</a></b><em>${size(f.size)}</em></li>`).join('')}</ul>`).join('') : '<p class="lead">Файлів немає.</p>'}
     </section>`;
+  document.dispatchEvent(new CustomEvent('stackup:detail', { detail: { id: row.id, row: { ...row, email: c.email || row.email, name: c.name || row.name, company: c.company || row.company } } }));
 }
 
 async function setStatus(id, st) {

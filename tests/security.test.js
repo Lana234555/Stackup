@@ -328,8 +328,8 @@ t('content: publishNow без Instagram пояснює, що не підключ
 t('connectInstagram: чистить токен, зберігає акаунт, ставить тригери, токен не видно в кабінеті', () => {
   const g = fresh(); const s = signIn(g); connected(g);
   eq(g.props.IG_USER_ID, '1789'); eq(g.props.IG_USERNAME, 'stackup.studio'); eq(g.props.IG_TOKEN, 'NEWTOKEN');
-  eq(g.triggers.map(x => x.fn).sort().join(','), 'publishDue,refreshInstagramToken');
-  g.ctx.connectInstagram(); eq(g.triggers.length, 2, 'no duplicate triggers');
+  eq(g.triggers.map(x => x.fn).sort().join(','), 'dailyDigest,publishDue,refreshInstagramToken');
+  g.ctx.connectInstagram(); eq(g.triggers.length, 3, 'no duplicate triggers');
   const st = g.post({ action: 'content', token: s.token }); eq(st.ig.connected, true); eq(st.ig.username, 'stackup.studio');
   ok(!JSON.stringify(st).includes('NEWTOKEN') && !JSON.stringify(st).includes('IGAA'), 'token leaked');
 });
@@ -393,6 +393,100 @@ t('refreshInstagramToken: раз на тиждень, попереджає пе�
   const g = fresh(); connected(g); g.props.TG_TOKEN = 't'; g.props.TG_CHAT = '1';
   const calls = igWorld(g); g.ctx.refreshInstagramToken(); eq(g.fetches.filter(f => /refresh_access_token/.test(f.url)).length, 1, 'only the connect refresh');
   g.clock.offset += 8 * 864e5; g.ctx.refreshInstagramToken(); eq(g.fetches.filter(f => /refresh_access_token/.test(f.url)).length, 2);
+});
+
+/* ---------- фаза 2: редагування, задачі, листи, Claude, дайджест ---------- */
+t('contentUpdate edit: назва і порядок кадрів зберігаються, статус не змінюється; публікація в новому порядку', () => {
+  const g = fresh(); const s = signIn(g); const calls = connected(g);
+  let r = g.post({ action: 'contentUpdate', token: s.token, id: 'c01-test', op: 'edit', title: 'Нова назва', slides: '1,0' });
+  ok(r.ok, JSON.stringify(r)); eq(r.state.status, ''); eq(r.state.title, 'Нова назва'); eq(r.state.slides, '1,0');
+  eq(g.post({ action: 'contentUpdate', token: s.token, id: 'c01-test', op: 'edit', slides: '1,x' }).error, 'bad request');
+  g.post({ action: 'contentUpdate', token: s.token, id: 'c01-test', op: 'approve', at: new Date(Date.now() - MIN).toISOString() });
+  calls.length = 0; g.ctx.publishDue();
+  const kids = calls.filter(c => c.body.is_carousel_item === 'true');
+  eq(kids[0].body.image_url, 'https://stackup.studio/content/ig/c01/02.jpg', 'order');
+  const st = g.post({ action: 'content', token: s.token }).state['c01-test']; eq(st.status, 'published'); eq(st.title, 'Нова назва');
+});
+t('contentUpdate edit: приховати кадр — карусель з одного кадру стає звичайним постом', () => {
+  const g = fresh(); const s = signIn(g); const calls = connected(g);
+  g.post({ action: 'contentUpdate', token: s.token, id: 'c01-test', op: 'approve', slides: '1', at: new Date(Date.now() - MIN).toISOString() });
+  calls.length = 0; g.ctx.publishDue();
+  ok(!calls.some(c => c.body.media_type === 'CAROUSEL')); ok(calls.some(c => c.body.image_url === 'https://stackup.studio/content/ig/c01/02.jpg' && !c.body.is_carousel_item));
+});
+t('старий аркуш «Контент» без нових колонок дописує заголовок і не губить назву', () => {
+  const g = fresh(); const s = signIn(g); connected(g);
+  g.sheets['Контент'] = [['id', 'status', 'at', 'caption', 'comment', 'container', 'children', 'igId', 'permalink', 'publishedAt', 'error', 'tries', 'updated']];
+  g.post({ action: 'contentUpdate', token: s.token, id: 'c01-test', op: 'edit', title: 'X' });
+  eq(g.sheets['Контент'][0].length, 15); eq(g.post({ action: 'content', token: s.token }).state['c01-test'].title, 'X');
+});
+t('задачі: лише з сесією; створити, змінити, виконати, видалити; погані дані відхиляються', () => {
+  const g = fresh(); const s = signIn(g);
+  eq(g.post({ action: 'tasks' }).error, 'unauthorized'); eq(g.post({ action: 'taskSave', title: 'x' }).error, 'unauthorized');
+  let r = g.post({ action: 'taskSave', token: s.token, title: '=HYPERLINK("x")', priority: 'urgent', due: '2026-12-01', lead: '261101-A7F2' });
+  ok(r.ok, JSON.stringify(r)); const id = r.item.id; ok(/^t/.test(id)); eq(r.item.status, 'open');
+  ok(g.sheets['Задачі'].some(row => row.some(v => v && v.text === '=HYPERLINK("x")')), 'formula must be stored as text');
+  eq(g.post({ action: 'taskSave', token: s.token, title: 'a', due: '1 грудня' }).error, 'bad date');
+  eq(g.post({ action: 'taskSave', token: s.token, title: '' }).error, 'bad request');
+  eq(g.post({ action: 'taskSave', token: s.token, title: 'z', priority: 'mega' }).item.priority, 'normal');
+  r = g.post({ action: 'taskSave', token: s.token, id, title: 'Готово', priority: 'high', status: 'done' }); eq(r.item.status, 'done'); ok(r.item.doneAt);
+  eq(g.post({ action: 'taskSave', token: s.token, id: 'tnope1', title: 'x' }).error, 'not found');
+  eq(g.post({ action: 'tasks', token: s.token }).items.length, 2);
+  ok(g.post({ action: 'taskDelete', token: s.token, id }).ok); eq(g.post({ action: 'tasks', token: s.token }).items.length, 1);
+});
+t('sendMessage: без confirm не надсилає; лише на email із заявки; журнал', () => {
+  const g = fresh(); const s = signIn(g); const b = seedBrief(g);
+  eq(g.post({ action: 'sendMessage', token: s.token, id: b.id, subject: 'Hi', body: 'Text' }).error, 'confirm required');
+  eq(g.post({ action: 'sendMessage', id: b.id, subject: 'Hi', body: 'Text', confirm: true }).error, 'unauthorized');
+  eq(g.gmail.sent.length, 0);
+  const r = g.post({ action: 'sendMessage', token: s.token, id: b.id, subject: 'Hi', body: 'Text', confirm: true, to: 'evil@x.co' });
+  ok(r.ok, JSON.stringify(r)); eq(g.gmail.sent.length, 1); eq(g.gmail.sent[0].to, 'o@example.com');
+  ok(g.sheets['Листування'].length === 2);
+  eq(g.post({ action: 'sendMessage', token: s.token, id: 'nope', subject: 'Hi', body: 'T', confirm: true }).error, 'not found');
+});
+t('thread: шукає листи клієнта, обрізає цитати, визначає хто писав', () => {
+  const g = fresh(); const s = signIn(g); const b = seedBrief(g);
+  g.gmail.threads = [{ id: 'T1', messages: [{ id: 'm1', from: 'Олена <o@example.com>', date: '2026-11-20T10:00:00Z', subject: 'Сайт', body: 'Привіт!\n\nOn Mon, Lana wrote:\n> старе' }, { id: 'm2', from: 'Lana <lana@example.com>', date: '2026-11-21T10:00:00Z', subject: 'Re: Сайт', body: 'Відповідь' }] }];
+  const r = g.post({ action: 'thread', token: s.token, id: b.id }); ok(r.ok, JSON.stringify(r));
+  eq(r.messages.length, 2); eq(r.messages[0].text, 'Привіт!'); eq(r.messages[0].mine, false); eq(r.messages[1].mine, true);
+  ok(/from:"o@example.com"/.test(g.gmail.queries[0]));
+});
+t('mailing: confirm обовʼязковий, персоналізація, відписані пропускаються, ліміт', () => {
+  const g = fresh(); const s = signIn(g);
+  const a = seedBrief(g, { name: 'Олена Коваль', company: 'Coffee Lab', email: 'o@example.com' }), b = seedBrief(g, { name: 'Ігор', email: 'i@example.com' });
+  eq(g.post({ action: 'mailing', token: s.token, ids: [a.id, b.id], subject: 'Привіт, {{name}}', body: 'Для {{company}}' }).error, 'confirm required');
+  ok(g.post({ action: 'optout', token: s.token, email: 'I@example.com', on: true }).ok);
+  const r = g.post({ action: 'mailing', token: s.token, ids: [a.id, b.id], subject: 'Привіт, {{name}}', body: 'Для {{company}}', confirm: true });
+  ok(r.ok, JSON.stringify(r)); eq(r.sent, 1); eq(g.gmail.sent[0].subject, 'Привіт, Олена'); ok(/^Для Coffee Lab/.test(g.gmail.sent[0].body)); ok(/відписатися/.test(g.gmail.sent[0].body));
+  g.hooks.quota = 0; eq(g.post({ action: 'mailing', token: s.token, ids: [a.id], subject: 's', body: 'b', confirm: true }).error, 'mail quota');
+  eq(g.post({ action: 'mailing', token: s.token, ids: [b.id], subject: 's', body: 'b', confirm: true }).error, 'no recipients');
+  const meta = g.post({ action: 'mailMeta', token: s.token }); ok(meta.ok); eq(meta.optout[0], 'i@example.com'); ok(meta.log.length >= 1);
+});
+t('aiLead: без ключа — зрозуміла помилка; з ключем — запит до Claude без ключа у відповіді', () => {
+  const g = fresh(); const s = signIn(g); const b = seedBrief(g);
+  eq(g.post({ action: 'aiLead', token: s.token, id: b.id }).error, 'ai not configured');
+  g.props.ANTHROPIC_KEY = 'sk-ant-secret-123';
+  let sent = null;
+  g.hooks.reply = (url, o) => { if (/anthropic/.test(url)) { sent = { url, o }; return { stop_reason: 'end_turn', content: [{ type: 'thinking', thinking: '...' }, { type: 'text', text: 'Аналіз готовий' }] }; } };
+  const r = g.post({ action: 'aiLead', token: s.token, id: b.id, task: 'reply' });
+  ok(r.ok, JSON.stringify(r)); eq(r.text, 'Аналіз готовий'); ok(!JSON.stringify(r).includes('sk-ant'));
+  eq(sent.o.headers['x-api-key'], 'sk-ant-secret-123'); const body = JSON.parse(sent.o.payload);
+  eq(body.model, 'claude-opus-5-5'); eq(body.thinking.type, 'adaptive'); ok(!('temperature' in body)); ok(!JSON.stringify(body).includes('o@example.com'), 'email must not go to the model');
+  g.hooks.reply = url => /anthropic/.test(url) ? { __code: 529, type: 'error', error: { message: 'overloaded' } } : undefined;
+  eq(g.post({ action: 'aiLead', token: s.token, id: b.id }).error, 'ai busy');
+  g.hooks.reply = url => /anthropic/.test(url) ? { stop_reason: 'refusal', content: [] } : undefined;
+  eq(g.post({ action: 'aiLead', token: s.token, id: b.id }).error, 'ai error');
+  eq(g.post({ action: 'aiLead', id: b.id }).error, 'unauthorized');
+});
+t('dailyDigest: Telegram із задачами, затвердженням, заявками і святами; планувальник створено', () => {
+  const g = fresh(); const s = signIn(g); g.props.TG_TOKEN = 't'; g.props.TG_CHAT = '1'; seedBrief(g);
+  const day = new Date(Date.now() + 2 * 864e5).toISOString().slice(0, 10);
+  igWorld(g); const base = g.hooks.reply;
+  g.hooks.reply = (url, o) => /calendar\.json/.test(url) ? { events: [{ date: day, title: 'Тестове свято', kind: 'holiday', idea: 'Пост' }] } : base(url, o);
+  g.post({ action: 'taskSave', token: s.token, title: 'Термінова справа', priority: 'urgent' });
+  g.ctx.setupContent(); ok(g.triggers.some(x => x.fn === 'dailyDigest'));
+  g.ctx.dailyDigest();
+  const m = g.fetches.filter(f => /sendMessage/.test(f.url)).map(f => JSON.parse(f.o.payload).text).pop() || '';
+  ok(/Термінова справа/.test(m), m); ok(/Чекає твого затвердження/.test(m), m); ok(/Нові заявки/.test(m), m); ok(/Тестове свято/.test(m), m); ok(/рілс/.test(m), m);
 });
 
 for (const [m, n] of results) console.log(m, n);

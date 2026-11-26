@@ -10,6 +10,7 @@ function create(codePath) {
   const fetchReply = url => /getUpdates/.test(url) ? { ok: true, result: [{ message: { chat: { id: 777, type: 'private', first_name: 'Lana' } } }] } : /getMe/.test(url) ? { ok: true, result: { username: 'Stackup_studio_bot' } } : /getWebhookInfo/.test(url) ? { ok: true, result: { url: '' } } : { ok: true };
   const logs = [];
   const hooks = { reply: null };
+  const gmail = { sent: [], queries: [], threads: [] };
   const triggers = [];
   let idn = 0;
   const signed = buf => Array.from(buf).map(b => (b > 127 ? b - 256 : b));
@@ -46,7 +47,7 @@ function create(codePath) {
   function sheetApi(name) {
     const rows = sheets[name];
     return {
-      setName() {}, setFrozenRows() {}, deleteRow: i => rows.splice(i - 1, 1),
+      setName() {}, setFrozenRows() {}, deleteRow: i => rows.splice(i - 1, 1), getLastColumn: () => rows.length ? rows[0].length : 0,
       appendRow: r => rows.push(r.map(v => (typeof v === 'string' && v[0] === "'") ? { text: v.slice(1) } : v)),
       getDataRange: () => ({ getValues: () => rows.map(r => r.map(v => v && v.text != null ? v.text : (typeof v === 'string' && /^=/.test(v) ? '#FORMULA:' + v : v))) }),
       getRange: (r, c) => ({ setValue: v => { rows[r - 1][c - 1] = (typeof v === 'string' && v[0] === "'") ? { text: v.slice(1) } : v; }, setValues(v) { rows[r - 1] = v[0].slice(); return this; }, setFontWeight() { return this; } }),
@@ -78,8 +79,12 @@ function create(codePath) {
       formatDate: (d, tz, f) => { const x = new Date(d); const p = n => String(n).padStart(2, '0'); return f.replace('yyyy', x.getUTCFullYear()).replace('yy', String(x.getUTCFullYear()).slice(2)).replace('MM', p(x.getUTCMonth() + 1)).replace('dd', p(x.getUTCDate())).replace('HH', p(x.getUTCHours())).replace('mm', p(x.getUTCMinutes())).replace('ss', p(x.getUTCSeconds())); },
       newBlob: (bytes, type, name) => ({ bytes: typeof bytes === 'string' ? signed(Buffer.from(bytes)) : bytes, type, name, getBytes() { return this.bytes; } })
     },
-    MailApp: { sendEmail: o => mails.push(o) },
-    UrlFetchApp: { fetch: (url, o) => { fetches.push({ url, o }); const r = hooks.reply && hooks.reply(url, o || {}); return { getContentText: () => JSON.stringify(r !== undefined && r !== null ? r : fetchReply(url)) }; } },
+    MailApp: { sendEmail: o => mails.push(o), getRemainingDailyQuota: () => hooks.quota == null ? 100 : hooks.quota },
+    GmailApp: {
+      sendEmail: (to, subject, body, opt) => { if (hooks.gmailDenied) throw new Error('no gmail'); gmail.sent.push({ to, subject, body, opt }); },
+      search: q => { gmail.queries.push(q); return gmail.threads.map(t => ({ getId: () => t.id, getMessages: () => t.messages.map(m => ({ getId: () => m.id, getFrom: () => m.from, getDate: () => new Date(m.date), getSubject: () => m.subject, getPlainBody: () => m.body })) })); }
+    },
+    UrlFetchApp: { fetch: (url, o) => { fetches.push({ url, o }); const r = hooks.reply && hooks.reply(url, o || {}); const code = r && r.__code || 200; return { getResponseCode: () => code, getContentText: () => JSON.stringify(r !== undefined && r !== null ? r : fetchReply(url)) }; } },
     ScriptApp: { getProjectTriggers: () => triggers.map(t => ({ getHandlerFunction: () => t.fn, _t: t })), deleteTrigger: x => { const i = triggers.indexOf(x._t); if (i >= 0) triggers.splice(i, 1); },
       newTrigger: fn => { const t = { fn }; const b = { timeBased: () => b, everyMinutes: n => { t.every = n + 'm'; return b; }, everyDays: n => { t.every = n + 'd'; return b; }, atHour: () => b, create: () => { triggers.push(t); return t; } }; return b; } },
     encodeURIComponent,
@@ -94,6 +99,6 @@ function create(codePath) {
   [].concat(codePath).forEach(f => vm.runInContext(fs.readFileSync(f, 'utf8'), ctx, { filename: require('path').basename(f) }));
   const post = body => JSON.parse(ctx.doPost({ postData: { contents: typeof body === 'string' ? body : JSON.stringify(body) } }).t);
   const get = params => JSON.parse(ctx.doGet({ parameter: params }).t);
-  return { ctx, props, cacheStore, mails, logs, sheets, drive, clock, post, get, fetches, hooks, triggers };
+  return { ctx, props, cacheStore, mails, logs, sheets, drive, clock, post, get, fetches, hooks, triggers, gmail };
 }
 module.exports = { create };
