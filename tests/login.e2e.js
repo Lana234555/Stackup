@@ -194,6 +194,46 @@ const URL_ = `http://localhost:${WEB}/admin.html`;
     await p.screenshot({ path: SHOTS + '/sec-content.png' });
     await c.close();
   });
+  await t('редагування поста: назва і порядок кадрів зберігаються на сервері', async () => {
+    const c = await browser.newContext({ viewport: { width: 1440, height: 900 } }); const p = await c.newPage(); watch(p);
+    await p.goto(URL_); await p.waitForSelector('#app:not([hidden]), #codeInput');
+    if (await p.isVisible('#codeInput')) { await p.fill('#codeInput', '48271593'); await p.click('#codeBtn');
+      const step = await Promise.race([p.waitForSelector('#otpForm:not([hidden])').then(() => 'otp'), p.waitForSelector('#app:not([hidden])').then(() => 'app')]);
+      if (step === 'otp') await p.fill('#otpInput', otp()); await p.waitForSelector('#app:not([hidden])'); }
+    await p.click('.side-nav [data-sec=content][data-ctab=review]'); await p.waitForSelector('.ccard.k-carousel, .ccard');
+    await p.click('.ccard:nth-child(2)'); await p.waitForSelector('#viewer.in #vTitle');
+    await p.fill('#vTitle', 'Моя назва'); await p.click('[data-move="0"][data-dir="1"]'); await p.click('[data-hide="2"]');
+    await p.click('[data-op=edit]'); await p.waitForFunction(() => /Зміни збережено/.test(document.querySelector('#toast').textContent));
+    const tok = await p.evaluate(() => localStorage.getItem('stackup-crm-session'));
+    const st = g.post({ action: 'content', token: tok }).state; const row = Object.values(st).find(x => x.title === 'Моя назва');
+    ok(row && /^1,0,/.test(row.slides) && !row.slides.split(',').includes('2'), JSON.stringify(row));
+    await p.screenshot({ path: SHOTS + '/sec-edit.png' });
+    // задачі
+    await p.click('#vClose'); await p.click('.side-nav [data-sec=tasks]'); await p.waitForSelector('#taskForm');
+    await p.fill('#tTitle', 'Надіслати КП <img src=x onerror=alert(1)>'); await p.click('.tk-prio .pr-err'); await p.click('#taskForm [type=submit]');
+    await p.waitForSelector('.task.p-urgent');
+    const tasks = g.post({ action: 'tasks', token: tok }).items; ok(tasks.length === 1 && tasks[0].priority === 'urgent', JSON.stringify(tasks));
+    ok(!(await p.$('.task img')), 'task title must be escaped');
+    await p.click('[data-tdone]'); await p.waitForFunction(() => !document.querySelector('.task.p-urgent'));
+    ok(g.post({ action: 'tasks', token: tok }).items[0].status === 'done');
+    await c.close();
+  });
+  await t('лист клієнту з картки заявки йде лише після підтвердження', async () => {
+    const c = await browser.newContext({ viewport: { width: 1440, height: 900 } }); const p = await c.newPage(); watch(p);
+    await p.goto(URL_); await p.waitForSelector('#app:not([hidden]), #codeInput');
+    if (await p.isVisible('#codeInput')) { await p.fill('#codeInput', '48271593'); await p.click('#codeBtn');
+      const step = await Promise.race([p.waitForSelector('#otpForm:not([hidden])').then(() => 'otp'), p.waitForSelector('#app:not([hidden])').then(() => 'app')]);
+      if (step === 'otp') await p.fill('#otpInput', otp()); await p.waitForSelector('#app:not([hidden])'); }
+    await p.click('.side-nav [data-view=list]'); await p.waitForSelector('tr.row'); await p.click('tr.row');
+    await p.waitForSelector('#tkBody'); const before = g.gmail.sent.length;
+    await p.fill('#tkBody', 'Вітаю! Дякую за заявку.'); await p.click('#tkSend'); await p.waitForSelector('#tkYes');
+    ok(g.gmail.sent.length === before, 'sent before confirm');
+    await p.click('#tkNo'); await p.click('#tkSend'); await p.click('#tkYes');
+    await p.waitForFunction(() => /Лист пішов/.test(document.querySelector('#toast').textContent));
+    ok(g.gmail.sent.length === before + 1 && /Дякую за заявку/.test(g.gmail.sent[g.gmail.sent.length - 1].body), 'not sent');
+    await p.screenshot({ path: SHOTS + '/sec-mail.png' });
+    await c.close();
+  });
   await t('бриф і CRM без порушень CSP (стилі, шрифти, скрипти)', async () => {
     const p4 = await ctxA.newPage(); watch(p4);
     await p4.goto(`http://localhost:${WEB}/brief.html?mode=none`); await p4.waitForTimeout(1200);
