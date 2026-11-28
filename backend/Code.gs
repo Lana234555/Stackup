@@ -127,7 +127,11 @@ function doPost(e) {
       case 'session': requireSession(d); return out({ ok: true });
       case 'logout': return out(logout(d));
       case 'logoutAll': requireSession(d); revokeEverything(); audit('logout-all', ua(d)); return out({ ok: true });
-      case 'list': requireSession(d); return out({ ok: true, items: list(), stages: getStages() });
+      case 'list': requireSession(d); return out({ ok: true, items: list(), stages: getStages(), profiles: profilesAll(), schema: getSchema() });
+      case 'profile': requireSession(d); return out(saveProfile(d));
+      case 'schema': requireSession(d); return out(saveSchema(d));
+      case 'campaignSave': requireSession(d); return out(campaignSave(d));
+      case 'campaignDel': requireSession(d); return out(campaignDel(d));
       case 'get': requireSession(d); return out(get(d.id));
       case 'update': requireSession(d); return out(update(d));
       case 'stages': requireSession(d); return out(saveStages(d.stages));
@@ -611,7 +615,7 @@ function publicError(err) {
     'too many requests', 'bad id or token', 'upload window closed', 'file too large', 'too many files', 'not found', 'bad status', 'bad stages', 'stage "new" is required', 'unknown action', 'mail failed',
     'bad item', 'bad op', 'bad date', 'locked item', 'instagram not connected',
     'confirm required', 'ai not configured', 'ai error', 'ai busy', 'mail quota', 'no recipients', 'gmail not allowed',
-    'bad channel', 'no channel', 'telegram not connected'];
+    'bad channel', 'no channel', 'telegram not connected', 'too many drafts', 'already sent'];
   if (/^locked:\d+$/.test(m)) return m;
   if (/^(IG|TG): /.test(m)) return m.slice(0, 220);
   return known.indexOf(m) >= 0 ? m : 'server error';
@@ -1024,7 +1028,7 @@ function taskDelete(d) {
    Кожен лист записується в аркуш «Листування».
    ===================================================================== */
 const MAIL_SHEET = 'Листування';
-const MCOLS = ['time', 'lead', 'to', 'subject', 'kind', 'status'];
+const MCOLS = ['time', 'lead', 'to', 'subject', 'kind', 'status', 'campaign'];
 const EMAIL_RE = /^[^\s@<>"'(),;:\\]+@[^\s@<>"'(),;:\\]+\.[a-z]{2,}$/i;
 const MAILING_MAX = 60;
 const OPTOUT_NOTE = '\n\n—\nЯкщо не хочете отримувати такі листи, дайте відповідь «відписатися», і ми більше не напишемо.';
@@ -1077,8 +1081,12 @@ function mailing(d) {
   const subject = str(d.subject, 200), body = String(d.body == null ? '' : d.body).replace(/\r/g, '').slice(0, 20000).trim();
   if (!ids.length) throw new Error('no recipients');
   if (!subject || !body) throw new Error('bad request');
+  const cid = d.campaign ? str(d.campaign, 40) : '';
+  const camp = cid ? campaignRows().filter(x => x.id === cid).pop() : null;
+  if (cid && !camp) throw new Error('not found');
+  const got = camp && d.again !== true ? campaignGot(cid) : {}; // хто вже отримав цю розсилку — не дублюємо
   const off = optouts(), seen = {}, list = [];
-  ids.forEach(id => { try { const c = leadContact(id); if (off.indexOf(c.email) < 0 && !seen[c.email]) { seen[c.email] = 1; list.push(c); } } catch (e) { /* без email */ } });
+  ids.forEach(id => { if (got[id]) return; try { const c = leadContact(id); if (off.indexOf(c.email) < 0 && !seen[c.email]) { seen[c.email] = 1; list.push(c); } } catch (e) { /* без email */ } });
   if (!list.length) throw new Error('no recipients');
   if (MailApp.getRemainingDailyQuota() < list.length) throw new Error('mail quota');
   rateLimit('mailing', 5);
@@ -1087,14 +1095,16 @@ function mailing(d) {
   list.forEach(c => {
     try {
       gmail().sendEmail(c.email, fill(subject, c.r.obj), fill(body, c.r.obj) + OPTOUT_NOTE, { name: props().getProperty('MAIL_NAME') || 'Stackup' });
-      logMail(c.r.obj.id, c.email, subject, 'розсилка', 'надіслано'); sent++;
-    } catch (e) { logMail(c.r.obj.id, c.email, subject, 'розсилка', 'помилка'); }
+      logMail(c.r.obj.id, c.email, subject, 'розсилка', 'надіслано', cid); sent++;
+    } catch (e) { logMail(c.r.obj.id, c.email, subject, 'розсилка', 'помилка', cid); }
   });
+  if (camp && sent) withLock(() => { const sh = tableSheet(CAMP_SHEET, CPCOLS), r = campaignRows().filter(x => x.id === cid).pop(); if (!r) return; const at = new Date().toISOString();
+    sh.getRange(r._row, 1, 1, CPCOLS.length).setValues([[r.id, r.name, r.subject, r.body, JSON.stringify(r.audience), 'sent', r.created, at, r.sentAt || at, (+r.sent || 0) + sent].map(cell)]); });
   audit('mailing', sent + ' листів · ' + subject);
   return { ok: true, sent, skipped: ids.length - sent };
 }
-function logMail(lead, to, subject, kind, status) {
-  try { tableSheet(MAIL_SHEET, MCOLS).appendRow([now(), lead, to, cell(subject), kind, status].map(cell)); } catch (e) { /* журнал не критичний */ }
+function logMail(lead, to, subject, kind, status, campaign) {
+  try { tableSheet(MAIL_SHEET, MCOLS).appendRow([now(), lead, to, cell(subject), kind, status, campaign || ''].map(cell)); } catch (e) { /* журнал не критичний */ }
 }
 function optouts() { try { return JSON.parse(props().getProperty('OPTOUT') || '[]'); } catch (e) { return []; } }
 function setOptout(d) {
@@ -1110,7 +1120,121 @@ function setOptout(d) {
 function mailMeta() {
   let log = [];
   try { log = tableRows(MAIL_SHEET, MCOLS).slice(-60).reverse().map(r => ({ time: String(r.obj.time), lead: String(r.obj.lead), subject: String(r.obj.subject), kind: String(r.obj.kind), status: String(r.obj.status) })); } catch (e) { /* ще немає */ }
-  return { ok: true, optout: optouts(), quota: MailApp.getRemainingDailyQuota(), log };
+  let campaigns = [];
+  try { const gotAll = {}; tableRows(MAIL_SHEET, MCOLS).forEach(r => { const c = String(r.obj.campaign || ''); if (c && r.obj.status === 'надіслано') (gotAll[c] = gotAll[c] || {})[String(r.obj.lead)] = 1; });
+    campaigns = campaignRows().map(c => Object.assign(campaignOut(c), { got: Object.keys(gotAll[c.id] || {}) })).reverse(); } catch (e) { campaigns = []; }
+  return { ok: true, optout: optouts(), quota: MailApp.getRemainingDailyQuota(), log, campaigns };
+}
+
+/* ---------- розсилки як окремі кампанії: чернетка → надіслано; аудиторія редагується ---------- */
+const CAMP_SHEET = 'Розсилки';
+const CPCOLS = ['id', 'name', 'subject', 'body', 'audience', 'status', 'created', 'updated', 'sentAt', 'sent'];
+const AUD_KINDS = ['all', 'new', 'stage', 'tag', 'manual'];
+function campaignRows() {
+  return tableRows(CAMP_SHEET, CPCOLS).map(r => { let a = {}; try { a = JSON.parse(String(r.obj.audience || '{}')); } catch (e) { a = {}; }
+    return { _row: r.row, id: String(r.obj.id), name: uncell(String(r.obj.name || '')), subject: uncell(String(r.obj.subject || '')), body: uncell(String(r.obj.body || '')), audience: a, status: String(r.obj.status || 'draft'), created: String(r.obj.created || ''), updated: String(r.obj.updated || ''), sentAt: String(r.obj.sentAt || ''), sent: +r.obj.sent || 0 }; });
+}
+function campaignOut(c) { return { id: c.id, name: c.name, subject: c.subject, body: c.body, audience: c.audience, status: c.status, created: c.created, updated: c.updated, sentAt: c.sentAt, sent: c.sent }; }
+function campaignGot(cid) { const got = {}; try { tableRows(MAIL_SHEET, MCOLS).forEach(r => { if (String(r.obj.campaign) === cid && r.obj.status === 'надіслано') got[String(r.obj.lead)] = 1; }); } catch (e) { /* ще немає */ } return got; }
+function cleanAudience(a) {
+  a = a && typeof a === 'object' ? a : {};
+  const kind = AUD_KINDS.indexOf(a.kind) >= 0 ? a.kind : 'all';
+  return { kind, value: str(a.value, 60), ids: kind === 'manual' && Array.isArray(a.ids) ? a.ids.slice(0, 500).map(x => str(x, 40)).filter(Boolean) : [] };
+}
+function campaignSave(d) {
+  const name = str(d.name, 120), subject = str(d.subject, 200), body = String(d.body == null ? '' : d.body).replace(/\r/g, '').slice(0, 20000);
+  if (!name) throw new Error('bad request');
+  rateLimit('campaign', 300);
+  return withLock(() => {
+    const sh = tableSheet(CAMP_SHEET, CPCOLS), at = new Date().toISOString(), cid = d.cid ? str(d.cid, 40) : '';
+    const old = cid ? campaignRows().filter(x => x.id === cid).pop() : null;
+    if (cid && !old) throw new Error('not found');
+    const c = old ? Object.assign(old, { name, subject, body, audience: cleanAudience(d.audience), updated: at })
+      : { id: 'c' + Date.now().toString(36) + randomDigits(3), name, subject, body, audience: cleanAudience(d.audience), status: 'draft', created: at, updated: at, sentAt: '', sent: 0 };
+    const vals = [c.id, c.name, c.subject, c.body, JSON.stringify(c.audience), c.status, c.created, c.updated, c.sentAt, c.sent].map(cell);
+    if (old) sh.getRange(old._row, 1, 1, CPCOLS.length).setValues([vals]); else sh.appendRow(vals);
+    return { ok: true, campaign: campaignOut(c) };
+  });
+}
+function campaignDel(d) {
+  return withLock(() => {
+    const c = campaignRows().filter(x => x.id === str(d.cid, 40)).pop();
+    if (!c) throw new Error('not found');
+    if (c.sent) throw new Error('already sent'); // надіслані лишаються в історії
+    tableSheet(CAMP_SHEET, CPCOLS).deleteRow(c._row);
+    return { ok: true };
+  });
+}
+
+/* =====================================================================
+   ПРОФІЛЬ КЛІЄНТА: компанія, соцмережі, теги, свої групи й поля (як у ManyChat)
+   Схема (групи, поля, теги) — у властивості SCHEMA; значення — в аркуші «Профілі».
+   ===================================================================== */
+const PROF_SHEET = 'Профілі';
+const PRCOLS = ['lead', 'data', 'updated'];
+const SOCIALS = ['instagram', 'telegram', 'facebook', 'tiktok', 'linkedin', 'website'];
+const FIELD_TYPES = ['text', 'long', 'number', 'date', 'url', 'select', 'bool'];
+const TAG_TONES = ['peach', 'blue', 'mint', 'lav', 'rose', 'sand', 'stone'];
+const slug = (v, n) => String(v || '').toLowerCase().replace(/[^a-z0-9_-]/g, '').slice(0, n || 40);
+function getSchema() {
+  let sc = null; try { sc = JSON.parse(props().getProperty('SCHEMA') || 'null'); } catch (e) { sc = null; }
+  return sc && Array.isArray(sc.groups) && Array.isArray(sc.tags) ? sc : { groups: [], tags: [] };
+}
+function cleanSchema(d) {
+  const seen = {}, fseen = {};
+  const groups = (Array.isArray(d.groups) ? d.groups : []).slice(0, 20).map(g => ({
+    id: slug(g && g.id), name: str(g && g.name, 60),
+    fields: (Array.isArray(g && g.fields) ? g.fields : []).slice(0, 40).map(f => ({
+      id: slug(f && f.id), name: str(f && f.name, 60), type: FIELD_TYPES.indexOf(f && f.type) >= 0 ? f.type : 'text',
+      options: f && f.type === 'select' && Array.isArray(f.options) ? f.options.slice(0, 30).map(o => str(o, 60)).filter(Boolean) : []
+    })).filter(f => f.id && f.name && !fseen[f.id] && (fseen[f.id] = 1))
+  })).filter(g => g.id && g.name && !seen[g.id] && (seen[g.id] = 1));
+  const tseen = {};
+  const tags = (Array.isArray(d.tags) ? d.tags : []).slice(0, 200).map(t => ({ id: slug(t && t.id), name: str(t && t.name, 40), tone: TAG_TONES.indexOf(t && t.tone) >= 0 ? t.tone : 'peach' }))
+    .filter(t => t.id && t.name && !tseen[t.id] && (tseen[t.id] = 1));
+  return { groups, tags };
+}
+function saveSchema(d) {
+  const sc = cleanSchema(d);
+  rateLimit('schema', 200);
+  props().setProperty('SCHEMA', JSON.stringify(sc));
+  return { ok: true, schema: sc };
+}
+function profileRows() { return tableRows(PROF_SHEET, PRCOLS).map(r => { let o = {}; try { o = JSON.parse(String(uncell(r.obj.data) || '{}')); } catch (e) { o = {}; } return { _row: r.row, lead: String(r.obj.lead), data: o }; }); }
+function profilesAll() { const out = {}; try { profileRows().forEach(r => { out[r.lead] = r.data; }); } catch (e) { /* ще немає */ } return out; }
+function saveProfile(d) {
+  const id = str(d.id, 40), r = findRow(id);
+  if (!r) throw new Error('not found');
+  rateLimit('profile', 600);
+  // основні контакти — у самій заявці
+  const sh = sheet(), set = (k, v) => sh.getRange(r.row, COLS.indexOf(k) + 1).setValue(cell(v));
+  if (d.name != null) set('name', str(d.name, 120));
+  if (d.company != null) set('company', str(d.company, 120));
+  if (d.phone != null) set('phone', str(d.phone, 80));
+  if (d.email != null) { const e = String(d.email).trim().toLowerCase(); if (e && !EMAIL_RE.test(e)) throw new Error('bad email'); set('email', e); }
+  const sc = getSchema(), known = {}, ftype = {};
+  sc.tags.forEach(t => { known[t.id] = 1; });
+  sc.groups.forEach(g => g.fields.forEach(f => { ftype[f.id] = f; }));
+  return withLock(() => {
+    const cur = profileRows().filter(x => x.lead === id).pop(), data = cur ? cur.data : {};
+    if (d.socials && typeof d.socials === 'object') { data.socials = {}; SOCIALS.forEach(k => { const v = str(d.socials[k], 200); if (v) data.socials[k] = v; }); }
+    if (Array.isArray(d.tags)) data.tags = d.tags.map(t => slug(t)).filter(t => known[t]).filter((t, i, a) => a.indexOf(t) === i).slice(0, 50);
+    if (d.fields && typeof d.fields === 'object') {
+      data.fields = data.fields || {};
+      Object.keys(d.fields).slice(0, 200).forEach(k => { const f = ftype[k]; if (!f) return; let v = d.fields[k];
+        if (v === '' || v == null) { delete data.fields[k]; return; }
+        if (f.type === 'bool') v = v === true || v === 'true';
+        else if (f.type === 'number') { v = Number(v); if (!isFinite(v)) return; }
+        else if (f.type === 'select') { v = str(v, 60); if (f.options.indexOf(v) < 0) return; }
+        else v = String(v).replace(/\r/g, '').slice(0, f.type === 'long' ? 4000 : 500);
+        data.fields[k] = v; });
+    }
+    const vals = [id, JSON.stringify(data), new Date().toISOString()].map(cell);
+    const ps = tableSheet(PROF_SHEET, PRCOLS);
+    if (cur) ps.getRange(cur._row, 1, 1, PRCOLS.length).setValues([vals]); else ps.appendRow(vals);
+    sh.getRange(r.row, COLS.indexOf('updated') + 1).setValue(new Date().toISOString());
+    return { ok: true, profile: data };
+  });
 }
 
 /* =====================================================================

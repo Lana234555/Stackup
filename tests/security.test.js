@@ -620,6 +620,38 @@ t('чернетки: лише з сесією; зберегти, замінит�
   eq(g.post({ action: 'draft', token: s.token, op: 'del', id: 'nope', did: e.draft.id }).error, 'not found');
   ok(!JSON.stringify(g.post({ action: 'chat', token: s.token, id })).includes('sk-ant'), 'no key');
 });
+t('профіль: схема груп, полів і тегів; збереження компанії, соцмереж, тегів і полів; погані дані відкидаються', () => {
+  const g = fresh(); g.ctx.setupContent(); const s = signIn(g); const b = seedBrief(g);
+  eq(g.post({ action: 'schema', groups: [] }).error, 'unauthorized');
+  const sc = g.post({ action: 'schema', token: s.token, groups: [{ id: 'biz', name: 'Бізнес', fields: [{ id: 'niche', name: 'Ніша', type: 'text' }, { id: 'size', name: 'Команда', type: 'number' }, { id: 'src', name: 'Звідки', type: 'select', options: ['Instagram', 'Сарафан'] }, { id: 'vip', name: 'VIP', type: 'bool' }, { id: 'bad<', name: 'x', type: 'evil' }] }, { id: '', name: 'без id' }], tags: [{ id: 'hot', name: 'Гарячий', tone: 'rose' }, { id: 'hot', name: 'дубль' }, { id: 'shop', name: 'Магазин', tone: 'nope' }] });
+  ok(sc.ok, JSON.stringify(sc)); eq(sc.schema.groups.length, 1); eq(sc.schema.groups[0].fields.length, 5); eq(sc.schema.groups[0].fields[4].id, 'bad'); eq(sc.schema.groups[0].fields[4].type, 'text');
+  eq(sc.schema.tags.length, 2); eq(sc.schema.tags[1].tone, 'peach');
+  eq(g.post({ action: 'profile', id: b.id, company: 'X' }).error, 'unauthorized');
+  const p = g.post({ action: 'profile', token: s.token, id: b.id, company: '=HYPERLINK("x")', socials: { instagram: '@nail.bar', evil: 'x', website: 'https://nail.example' }, tags: ['hot', 'unknown', 'hot'], fields: { niche: 'Манікюр', size: '7', src: 'TikTok', vip: true, ghost: 'x' } });
+  ok(p.ok, JSON.stringify(p)); eq(p.profile.socials.instagram, '@nail.bar'); eq(p.profile.socials.evil, undefined); eq(p.profile.tags.join(), 'hot');
+  eq(p.profile.fields.niche, 'Манікюр'); eq(p.profile.fields.size, 7); eq(p.profile.fields.src, undefined, 'unknown option'); eq(p.profile.fields.vip, true); eq(p.profile.fields.ghost, undefined);
+  ok(g.sheets['Заявки'][1].some(v => v && v.text === '=HYPERLINK("x")'), 'company stored as text');
+  eq(g.post({ action: 'profile', token: s.token, id: b.id, email: 'not-an-email' }).error, 'bad email');
+  eq(g.post({ action: 'profile', token: s.token, id: 'nope' }).error, 'not found');
+  const p2 = g.post({ action: 'profile', token: s.token, id: b.id, fields: { niche: '' } }); eq(p2.profile.fields.niche, undefined); eq(p2.profile.tags.join(), 'hot', 'tags untouched');
+  const l = g.post({ action: 'list', token: s.token }); eq(l.profiles[b.id].socials.instagram, '@nail.bar'); eq(l.schema.tags.length, 2);
+});
+t('розсилки-кампанії: чернетка з аудиторією, повторно тим самим не надсилається, видно хто отримав, надіслану не видалити', () => {
+  const g = fresh(); g.ctx.setupContent(); const s = signIn(g); const b = seedBrief(g);
+  eq(g.post({ action: 'campaignSave', name: 'x' }).error, 'unauthorized');
+  const c = g.post({ action: 'campaignSave', token: s.token, name: 'Чорна п’ятниця', subject: 'Знижка', body: 'Привіт, {{name}}!', audience: { kind: 'tag', value: 'hot' } });
+  ok(c.ok, JSON.stringify(c)); eq(c.campaign.status, 'draft'); eq(c.campaign.audience.kind, 'tag');
+  const c2 = g.post({ action: 'campaignSave', token: s.token, cid: c.campaign.id, name: 'Чорна п’ятниця', subject: 'Знижка', body: 'Привіт!', audience: { kind: 'evil' } }); eq(c2.campaign.audience.kind, 'all');
+  eq(g.post({ action: 'mailing', token: s.token, ids: [b.id], subject: 'Знижка', body: 'Привіт!', campaign: c.campaign.id }).error, 'confirm required');
+  const n0 = g.gmail.sent.length;
+  const r = g.post({ action: 'mailing', token: s.token, ids: [b.id], subject: 'Знижка', body: 'Привіт!', campaign: c.campaign.id, confirm: true }); ok(r.ok, JSON.stringify(r)); eq(r.sent, 1); eq(g.gmail.sent.length, n0 + 1);
+  const r2 = g.post({ action: 'mailing', token: s.token, ids: [b.id], subject: 'Знижка', body: 'Привіт!', campaign: c.campaign.id, confirm: true }); eq(r2.error, 'no recipients', 'not sent twice'); eq(g.gmail.sent.length, n0 + 1);
+  const m = g.post({ action: 'mailMeta', token: s.token }); const cm = m.campaigns.find(x => x.id === c.campaign.id);
+  eq(cm.status, 'sent'); eq(cm.sent, 1); eq(cm.got.join(), b.id); ok(cm.sentAt);
+  eq(g.post({ action: 'campaignDel', token: s.token, cid: c.campaign.id }).error, 'already sent');
+  const d = g.post({ action: 'campaignSave', token: s.token, name: 'Чернетка' }); ok(g.post({ action: 'campaignDel', token: s.token, cid: d.campaign.id }).ok);
+  eq(g.post({ action: 'mailMeta', token: s.token }).campaigns.length, 1);
+});
 for (const [m, n] of results) console.log(m, n);
 console.log(`\n${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);

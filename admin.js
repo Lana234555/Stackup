@@ -59,10 +59,12 @@ let token = sess.get();
 let challenge = '';
 let firstLoadEvent = true;
 let items = [], current = null, cache = {}, pollTimer = null, firstLoad = true, flashIds = [];
+// профіль клієнта (соцмережі, теги, свої поля) і схема (групи, поля, теги) — як у ManyChat
+let profiles = {}, schema = { groups: [], tags: [] };
 let seen = new Set(store.get(SEEN_STORE, null) || []);
 let seenInit = store.get(SEEN_STORE, null) !== null;
 let view = store.get(VIEW_STORE, 'board');
-const F0 = { status: 'active', mode: 'all', type: 'all', period: 'all', budget: 'all', sort: 'new', unread: false, q: '' };
+const F0 = { status: 'active', mode: 'all', type: 'all', period: 'all', budget: 'all', tag: 'all', sort: 'new', unread: false, q: '' };
 let F = { ...F0, ...store.get(FILTER_STORE, {}), q: '' };
 
 /* ---------- api ---------- */
@@ -180,6 +182,8 @@ async function load(background) {
   const before = new Set(items.map(x => x.id));
   items = j.items || [];
   if (j.stages) setStages(j.stages);
+  if (j.profiles) profiles = j.profiles;
+  if (j.schema && Array.isArray(j.schema.groups)) schema = { groups: j.schema.groups, tags: j.schema.tags || [] };
   items.forEach(x => { if (x.status !== 'archive' && !PIPE.includes(x.status)) x.status = 'new'; });
   if (!seenInit) { items.filter(x => x.status !== 'new').forEach(x => seen.add(x.id)); seenInit = true; saveSeen(); }
   const fresh = firstLoad ? [] : items.filter(x => !before.has(x.id));
@@ -254,9 +258,10 @@ function filtered(ignoreStatus) {
     if (F.mode !== 'all' && x.mode !== F.mode) return false;
     if (F.type !== 'all' && x.type !== F.type) return false;
     if (F.budget !== 'all' && x.budget !== F.budget) return false;
+    if (F.tag !== 'all' && !tagsOf(x.id).includes(F.tag)) return false;
     if (F.unread && !isUnread(x)) return false;
     if (!inPeriod(x)) return false;
-    if (q && ![x.name, x.company, x.email, x.phone, x.id, x.type, notesText(x.notes)].join(' ').toLowerCase().includes(q)) return false;
+    if (q && ![x.name, x.company, x.email, x.phone, x.id, x.type, notesText(x.notes), tagsOf(x.id).map(tagName).join(' '), Object.values((profiles[x.id] || {}).socials || {}).join(' ')].join(' ').toLowerCase().includes(q)) return false;
     return true;
   });
   const dl = x => { const i = DL_ORDER.indexOf(x.deadline); return i < 0 ? 99 : i; };
@@ -271,6 +276,7 @@ function renderFilters() {
   $('#fMode').value = F.mode;
   $('#fType').innerHTML = options('type', uniq('type'), 'Усі проєкти');
   $('#fBudget').innerHTML = options('budget', uniq('budget'), 'Будь-який бюджет');
+  const ft = $('#fTag'); if (ft) { if (F.tag !== 'all' && !schema.tags.some(t => t.id === F.tag)) F.tag = 'all'; ft.innerHTML = `<option value="all">Усі теги</option>` + schema.tags.map(t => `<option value="${esc(t.id)}"${t.id === F.tag ? ' selected' : ''}>${esc(t.name)}</option>`).join(''); ft.hidden = !schema.tags.length; }
   $('#fPeriod').value = F.period; $('#fSort').value = F.sort; $('#fUnread').checked = F.unread;
   $('#resetBtn').hidden = !(JSON.stringify({ ...F, q: '', status: 'active' }) !== JSON.stringify({ ...F0, q: '' }) || F.q || (view === 'list' && F.status !== 'active'));
 }
@@ -301,13 +307,16 @@ function renderKpis() {
   ].map(([l, n, t, q]) => `<${q ? 'button type="button" data-quick="' + q + '"' : 'div'} class="kpi ${t}"><span class="mono">${l}</span><b>${n}</b></${q ? 'button' : 'div'}>`).join('');
 }
 
+const tagsOf = id => ((profiles[id] || {}).tags || []).filter(t => schema.tags.some(k => k.id === t));
+const tagName = id => (schema.tags.find(t => t.id === id) || {}).name || id;
+const tagTone = id => (schema.tags.find(t => t.id === id) || {}).tone || 'peach';
 const modeTag = x => x.mode === 'has' ? 'ТЗ ✓' : x.mode === 'lead' ? 'САЙТ' : x.mode === 'chat' ? (x.type === 'Instagram' ? 'INSTAGRAM' : 'TELEGRAM') : 'БРИФ';
 function card(x) {
   return `<article class="card${isUnread(x) ? ' unread' : ''}${flashIds.includes(x.id) ? ' flash' : ''}${current === x.id ? ' cur' : ''}" draggable="true" data-open="${esc(x.id)}" tabindex="0">
     <div class="card-top"><span class="ava ${stTone(x.status)}">${esc(initials(x))}</span><span class="mono card-age">${esc(ago(x.created))}</span>${isUnread(x) ? '<em class="new-tag mono">НОВА</em>' : ''}</div>
     <strong>${esc(x.company || x.name)}</strong>
     <span class="card-sub">${esc(x.company ? x.name : x.email)}</span>
-    <div class="tags"><span class="tag mono">${modeTag(x)}</span>${x.type && x.mode === 'none' ? `<span class="tag">${esc(x.type)}</span>` : ''}</div>
+    <div class="tags"><span class="tag mono">${modeTag(x)}</span>${x.type && x.mode === 'none' ? `<span class="tag">${esc(x.type)}</span>` : ''}${tagsOf(x.id).slice(0, 3).map(t => `<span class="ctag ${esc(tagTone(t))}">${esc(tagName(t))}</span>`).join('')}${tagsOf(x.id).length > 3 ? `<span class="ctag more">+${tagsOf(x.id).length - 3}</span>` : ''}</div>
     <div class="card-foot mono">${x.budget ? `<span>${esc(x.budget)}</span>` : ''}${x.deadline ? `<span>⏱ ${esc(x.deadline)}</span>` : ''}${num(x.files) ? `<span>📎 ${num(x.files)}</span>` : ''}${x.notes ? '<span title="Є нотатки">✎</span>' : ''}</div>
   </article>`;
 }
@@ -460,9 +469,9 @@ function renderDetail(d) {
     <div class="d-pane" data-pane="client" id="pane-client" role="tabpanel" aria-labelledby="tab-client" hidden>
     <p class="mono d-label">ЕТАП</p>
     <div class="stage" role="group" aria-label="Етап">${STATUS.map(([v, l, t], i) => `<button type="button" class="${t}${PIPE.indexOf(v) <= PIPE.indexOf(live.status) && PIPE.includes(live.status) && PIPE.includes(v) ? ' passed' : ''}" data-st="${esc(v)}" aria-pressed="${live.status === v}"><span class="mono">${v === 'archive' ? '×' : String(i + 1).padStart(2, '0')}</span>${esc(l)}</button>`).join('')}</div>
-    <p class="mono d-label">КОНТАКТИ</p>
-    <dl class="d-kv"><dt>Ім’я</dt><dd>${esc(c.name || '—')}</dd>${c.company ? `<dt>Компанія</dt><dd>${esc(c.company)}</dd>` : ''}<dt>Email</dt><dd>${c.email ? esc(c.email) : '—'}</dd><dt>Телефон / нік</dt><dd>${c.phone ? esc(c.phone) : '—'}</dd>${row.type ? `<dt>Що потрібно</dt><dd>${esc(row.type)}</dd>` : ''}${row.budget ? `<dt>Бюджет</dt><dd>${esc(row.budget)}</dd>` : ''}${row.deadline ? `<dt>Терміни</dt><dd>${esc(row.deadline)}</dd>` : ''}</dl>
     <div class="act-row">${contactLinks(c)}${safeUrl(d.folderUrl) ? `<a class="button ghost" href="${esc(safeUrl(d.folderUrl))}" target="_blank" rel="noopener noreferrer"><b>Папка на Drive</b> <span>↗︎</span></a>` : ''}</div>
+    ${row.type || row.budget || row.deadline ? `<dl class="d-kv d-req">${row.type ? `<dt>Що потрібно</dt><dd>${esc(row.type)}</dd>` : ''}${row.budget ? `<dt>Бюджет</dt><dd>${esc(row.budget)}</dd>` : ''}${row.deadline ? `<dt>Терміни</dt><dd>${esc(row.deadline)}</dd>` : ''}</dl>` : ''}
+    <section class="d-sec prof" id="dProfile"></section>
     <section class="d-sec ai" id="dAi"></section>
     <section class="d-sec d-tasks" id="dTasks"></section>
     <section class="d-sec notes"><h3><span class="mono">✎</span>Мої нотатки</h3>
@@ -536,6 +545,7 @@ $('#search').addEventListener('input', e => { F.q = e.target.value; render(); })
 $('#fMode').addEventListener('change', e => setF('mode', e.target.value));
 $('#fType').addEventListener('change', e => setF('type', e.target.value));
 $('#fBudget').addEventListener('change', e => setF('budget', e.target.value));
+$('#fTag') && $('#fTag').addEventListener('change', e => setF('tag', e.target.value));
 $('#fPeriod').addEventListener('change', e => setF('period', e.target.value));
 $('#fSort').addEventListener('change', e => setF('sort', e.target.value));
 $('#fUnread').addEventListener('change', e => setF('unread', e.target.checked));
@@ -645,16 +655,24 @@ function demoData() {
     { id: '261002-N1DD', created: h(720), status: 'done', name: 'Анна Руденко', company: 'Rudenko Law', email: 'anna@rudenko.example', phone: '', mode: 'none', type: 'Лендинг', deadline: 'До 1 місяця', budget: '$1 000–3 000', files: 2, notes: 'Здано 25.10.', record: { estimate: [], sections: [] }, fileList: [] }
   ];
 }
+const DEMO_SCHEMA = { tags: [{ id: 'hot', name: 'Гарячий', tone: 'rose' }, { id: 'shop', name: 'Магазин', tone: 'blue' }, { id: 'vip', name: 'VIP', tone: 'sand' }, { id: 'repeat', name: 'Повторний', tone: 'mint' }, { id: 'kyiv', name: 'Київ', tone: 'lav' }],
+  groups: [{ id: 'biz', name: 'Бізнес', fields: [{ id: 'niche', name: 'Ніша', type: 'text' }, { id: 'team', name: 'Людей у команді', type: 'number' }, { id: 'source', name: 'Звідки дізнались', type: 'select', options: ['Instagram', 'Сарафан', 'Google', 'Telegram'] }] },
+    { id: 'deal', name: 'Угода', fields: [{ id: 'price', name: 'Ціна в КП, $', type: 'number' }, { id: 'call', name: 'Дзвінок', type: 'date' }, { id: 'prepaid', name: 'Передоплата отримана', type: 'bool' }] }] };
+const DEMO_PROFILES = { '261101-A7F2': { tags: ['hot', 'shop', 'kyiv'], socials: { instagram: '@coffeelab.kyiv', website: 'https://coffeelab.example' }, fields: { niche: 'Кав’ярня і обсмажка', team: 12, source: 'Instagram' } }, '261031-K2D9': { tags: ['vip'], socials: { linkedin: 'nexa-logistics' }, fields: {} }, '261015-P8LA': { tags: ['repeat'], socials: {}, fields: { prepaid: true, price: 7800 } } };
 let demo = null;
 function demoGet(p) {
   demo = demo || demoData();
-  if (p.action === 'list') return Promise.resolve({ ok: true, stages: store.get('stackup-demo-stages', null), items: demo.map(({ record, fileList, ...r }) => r) });
+  if (p.action === 'list') return Promise.resolve({ ok: true, stages: store.get('stackup-demo-stages', null), items: demo.map(({ record, fileList, ...r }) => r), profiles: store.get('stackup-demo-profiles', DEMO_PROFILES), schema: store.get('stackup-demo-schema', DEMO_SCHEMA) });
   const x = demo.find(d => d.id === p.id);
   const { record, fileList, ...row } = x;
   return new Promise(ok => setTimeout(() => ok({ ok: true, row, record: { client: row, ...record }, folderUrl: 'https://drive.google.com/',
     files: fileList.map(([field, label, name, sz]) => ({ field, label, name, size: sz, url: 'https://drive.google.com/' })) }), 200));
 }
-function demoPost(b) { if (b.action === 'stages') { store.set('stackup-demo-stages', b.stages); return Promise.resolve({ ok: true }); } const x = demo.find(d => d.id === b.id); if (b.status) x.status = b.status; if (b.notes != null) x.notes = b.notes; return Promise.resolve({ ok: true }); }
+function demoPost(b) {
+  if (b.action === 'profile') { const all = store.get('stackup-demo-profiles', DEMO_PROFILES), cur = all[b.id] || {}; if (b.socials) cur.socials = b.socials; if (b.tags) cur.tags = b.tags; if (b.fields) { cur.fields = Object.assign(cur.fields || {}, b.fields); Object.keys(cur.fields).forEach(k => { if (cur.fields[k] === '' || cur.fields[k] == null) delete cur.fields[k]; }); } all[b.id] = cur; store.set('stackup-demo-profiles', all);
+    const x = demo.find(d => d.id === b.id); ['name', 'company', 'email', 'phone'].forEach(k => { if (b[k] != null && x) x[k] = b[k]; }); return Promise.resolve({ ok: true, profile: cur }); }
+  if (b.action === 'schema') { const sc = { groups: b.groups || [], tags: b.tags || [] }; store.set('stackup-demo-schema', sc); return Promise.resolve({ ok: true, schema: sc }); }
+  if (b.action === 'stages') { store.set('stackup-demo-stages', b.stages); return Promise.resolve({ ok: true }); } const x = demo.find(d => d.id === b.id); if (b.status) x.status = b.status; if (b.notes != null) x.notes = b.notes; return Promise.resolve({ ok: true }); }
 
 // demo: a fresh brief "arrives" 20 s after opening, to show how new ones look
 if (DEMO) setTimeout(() => {
@@ -674,6 +692,20 @@ window.StackupCRM = {
   open: (id, tab) => { if (tab) { dtab = tab; store.set('stackup-dtab', tab); } openDrawer(id); },
   tab: t => setDtab(t),
   current: () => current,
+  profile: id => JSON.parse(JSON.stringify(profiles[id] || { tags: [], socials: {}, fields: {} })),
+  profiles: () => profiles,
+  schema: () => JSON.parse(JSON.stringify(schema)),
+  /* зберегти профіль клієнта: контакти пишуться в заявку, решта — в аркуш «Профілі» */
+  saveProfile: async (id, patch) => {
+    const r = await apiPost({ action: 'profile', id, ...patch });
+    profiles[id] = r.profile || profiles[id];
+    const row = items.find(x => x.id === id), c = cache[id];
+    ['name', 'company', 'email', 'phone'].forEach(k => { if (patch[k] == null) return; if (row) row[k] = patch[k]; if (c) { c.row[k] = patch[k]; if (c.record && c.record.client) c.record.client[k] = patch[k]; } });
+    if (current === id && c && (patch.name != null || patch.company != null)) { const h = $('#detail .d-hero h2'); if (h) h.textContent = c.row.company || (c.record && c.record.client && c.record.client.company) || c.row.name; }
+    render(); document.dispatchEvent(new CustomEvent('stackup:leads'));
+    return profiles[id];
+  },
+  saveSchema: async sc => { const r = await apiPost({ action: 'schema', groups: sc.groups, tags: sc.tags }); schema = r.schema || sc; render(); document.dispatchEvent(new CustomEvent('stackup:leads')); return schema; },
   toast: (html, ms) => { const t = $('#toast'); t.innerHTML = html + '<button type="button" class="x" aria-label="Закрити">×</button>'; t.hidden = false; clearTimeout(t._h); t._h = setTimeout(() => { t.hidden = true; }, ms || 3200); }
 };
 
