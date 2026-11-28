@@ -535,14 +535,34 @@ async function toggleOptout(email, on) {
 }
 
 /* ---------- стратегія ---------- */
-const STABS = [['trends', 'Тренди дня'], ['week', 'Стратегія тижня'], ['market', 'Ринок і конкуренти'], ['learn', 'Навчання'], ['dates', 'Свята і можливості']];
+const STABS = [['trends', 'Тренди дня'], ['clients', 'Пошук клієнтів'], ['week', 'Стратегія тижня'], ['market', 'Ринок і конкуренти'], ['learn', 'Навчання'], ['dates', 'Свята і можливості']];
 let stab = store.get('stackup-hub-stab', 'trends');
 const learnDone = () => store.get('stackup-learn-done', {});
 const text = s => esc(s).replace(/\*\*(.+?)\*\*/g, '<b>$1</b>').replace(/\n/g, '<br>');
 const ul = l => (l || []).length ? `<ul class="bul">${l.map(x => `<li>${text(x)}</li>`).join('')}</ul>` : '';
 const EVKIND = { holiday: ['Свято', 'peach'], sale: ['Знижки', 'rose'], opportunity: ['Можливість', 'mint'], industry: ['Індустрія', 'blue'], content: ['Контент', 'lav'] };
 function upcoming(days) { const t0 = new Date(today() + 'T00:00:00').getTime(); return ((cal && cal.events) || []).filter(e => { const t = new Date(e.date + 'T12:00:00').getTime(); return t >= t0 && t - t0 < days * DAY; }).sort((a, b) => a.date.localeCompare(b.date)); }
-function evRow(e) { const [l, t] = EVKIND[e.kind] || EVKIND.holiday; return `<li class="ev"><span class="ev-d"><b>${esc(e.date.slice(8, 10))}</b><span class="mono">${esc(fmt(e.date + 'T12:00:00', { month: 'short' }).toUpperCase())}</span></span><div><span class="pill ${t}">${l}</span><b>${esc(e.title)}</b>${e.idea ? `<p>${text(e.idea)}</p>` : ''}${e.prep ? `<small class="mono">ГОТУВАТИ: ${esc(e.prep)}</small>` : ''}</div></li>`; }
+function evRow(e) { const [l, t] = EVKIND[e.kind] || EVKIND.holiday; return `<li class="ev"><span class="ev-d"><b>${esc(e.date.slice(8, 10))}</b><span class="mono">${esc(fmt(e.date + 'T12:00:00', { month: 'short' }).toUpperCase())}</span></span><div><span class="pill ${t}">${l}</span><b>${esc(e.title)}</b>${e.idea ? `<p>${text(e.idea)}</p>` : ''}${e.prep ? `<small class="mono">ГОТУВАТИ: ${esc(e.prep)}</small>` : ''}${evExamples(e)}</div></li>`; }
+// готові приклади сторіс/постів до події (id з manifest.json), клік відкриває перегляд і затвердження
+function evExamples(e) {
+  const l = (e.example || []).map(id => manifest.items.find(x => x.id === id)).filter(Boolean);
+  return l.length ? `<div class="ev-ex"><span class="mono">ГОТОВИЙ ПРИКЛАД</span><div>${l.map(x => `<button type="button" data-item="${esc(x.id)}" title="${esc(x.title)}"><img src="${esc(thumbOf(x))}" alt="" loading="lazy"><span>${esc(KIND[x.kind] || '')}${(x.media || []).length > 1 ? ' · ' + x.media.length : ''}</span></button>`).join('')}</div></div>` : '';
+}
+const trKey = (d, k, j) => d.date + ':' + k + ':' + j;
+function trAction(d, k, j) { const t = (d.items || [])[k]; return t && (t.actions || [])[j]; }
+function renderClients(I) {
+  const c = I.clients;
+  if (!c) return '<p class="empty big">План пошуку клієнтів ще готується.</p>';
+  const P = c.positioning || {};
+  return `<section class="panel"><div class="panel-h"><h2>Як знайти перших клієнтів</h2><span class="mono">ОНОВЛЕНО ${esc(String(c.updated || '').toUpperCase())}</span></div>${c.summary ? `<p class="lib-note">${text(c.summary)}</p>` : ''}
+    ${(c.metrics || []).length ? `<div class="mk-facts">${c.metrics.map(m => `<div><b>${esc(m.target)}</b><span>${esc(m.name)}</span></div>`).join('')}</div>` : ''}</section>
+    ${P.text ? `<section class="panel acid-p"><div class="panel-h"><h2>${esc(P.title || 'Наше позиціювання')}</h2></div><p class="big-quote">${text(P.text)}</p>${ul(P.proofs)}${c.aiAnswer ? `<p class="tr-use"><span class="mono">ЯКЩО КЛІЄНТ ПИТАЄ «ВИ Ж ТЕЖ РОБИТЕ ЧЕРЕЗ AI?»</span>${text(c.aiAnswer)}</p>` : ''}</section>` : ''}
+    <h3 class="sub-h">Де шукаємо клієнтів</h3><div class="mk-grid">${(c.channels || []).map(ch => `<article class="panel mk"><span class="mono">${esc(['', 'ПРІОРИТЕТ 1 · ПОЧАТИ ЗАРАЗ', 'ПРІОРИТЕТ 2 · З 2-ГО ТИЖНЯ', 'ПРІОРИТЕТ 3 · ФОНОМ'][ch.priority] || 'КАНАЛ')}</span><h3>${esc(ch.name)}</h3>${ch.why ? `<p>${text(ch.why)}</p>` : ''}<p class="mono">ЯК</p>${ul(ch.how)}${ch.firstStep ? `<p class="tr-use"><span class="mono">ПЕРШИЙ КРОК СЬОГОДНІ</span>${text(ch.firstStep)}</p>` : ''}${ch.effort ? `<small class="mono">ЧАС: ${esc(ch.effort)}</small>` : ''}</article>`).join('')}</div>
+    <h3 class="sub-h">Що ми пропонуємо</h3><div class="mk-grid">${(c.offers || []).map(o => `<article class="panel mk"><span class="mono">${esc(String(o.kind || '').toUpperCase())}</span><h3>${esc(o.name)}</h3><p>${text(o.what)}</p>${o.why ? `<p class="tr-use"><span class="mono">НАВІЩО НАМ</span>${text(o.why)}</p>` : ''}${o.cta ? `<small class="mono">ЗАКЛИК: ${esc(o.cta)}</small>` : ''}</article>`).join('')}</div>
+    ${(c.plan || []).length ? `<section class="panel"><div class="panel-h"><h2>План на перші 30 днів</h2></div><ol class="wk-plan">${c.plan.map(p => `<li><span class="mono">${esc(p.week)}</span><b>${esc(p.goal)}</b>${ul(p.actions)}${p.target ? `<small>Мета: ${esc(p.target)}</small>` : ''}</li>`).join('')}</ol></section>` : ''}
+    ${(c.scripts || []).length ? `<h3 class="sub-h">Готові повідомлення</h3>${c.scripts.map((x, k) => `<details class="panel wk-old"><summary><b>${esc(x.title)}</b><span class="mono">${esc(x.when || '')}</span></summary><p class="cl-script">${text(x.text)}</p><div class="v-acts"><button type="button" class="button ghost sm" data-clscript="${k}"><b>Скопіювати</b><span>⧉</span></button></div></details>`).join('')}` : ''}
+    ${(c.avoid || []).length ? `<section class="panel minus"><div class="panel-h"><h2>Чого не робимо</h2></div>${ul(c.avoid)}</section>` : ''}`;
+}
 function renderStrategy() {
   const I = insights || {};
   const tabs = STABS.map(([k, l]) => `<button type="button" role="tab" data-stab="${k}" aria-selected="${stab === k}">${l}</button>`).join('');
@@ -551,7 +571,11 @@ function renderStrategy() {
   else if (stab === 'trends') {
     const list = I.trends || [];
     body = list.length ? list.slice(0, 14).map((d, k) => `<section class="panel tr-day${k ? '' : ' fresh'}"><div class="panel-h"><h2>${esc(d.title)}</h2><span class="mono">${esc(dayName(d.date + 'T12:00:00').toUpperCase())}</span></div>${d.summary ? `<p class="lib-note">${text(d.summary)}</p>` : ''}
-      <div class="tr-grid">${(d.items || []).map(t => `<article class="tr"><span class="mono">${esc(t.tag || 'ТРЕНД')}</span><h3>${esc(t.title)}</h3><p>${text(t.what)}</p><p class="tr-use"><span class="mono">ЯК НАМ ВИКОРИСТАТИ</span>${text(t.use)}</p>${t.source ? `<small class="mono">ДЖЕРЕЛО: ${esc(t.source)}</small>` : ''}</article>`).join('')}</div></section>`).join('') : '<p class="empty big">Трендів поки немає.</p>';
+      ${d.focus ? `<div class="tr-focus"><span class="mono">ГОЛОВНЕ НА СЬОГОДНІ</span><b>${text(d.focus.title)}</b>${d.focus.why ? `<p>${text(d.focus.why)}</p>` : ''}${ul(d.focus.steps)}</div>` : ''}
+      <div class="tr-grid">${(d.items || []).map((t, k) => `<article class="tr"><span class="mono">${esc(t.tag || 'ТРЕНД')}</span><h3>${esc(t.title)}</h3><p>${text(t.what)}</p>${t.plus ? `<p class="tr-plus"><span class="mono">ЩО ЦЕ ДАЄ НАМ</span>${text(t.plus)}</p>` : ''}<p class="tr-use"><span class="mono">ЯК НАМ ВИКОРИСТАТИ</span>${text(t.use)}</p>${(t.actions || []).length ? `<ul class="tr-acts">${t.actions.map((a, j) => `<li><span>${text(a)}</span><button type="button" class="link mono" data-trtask="${esc(trKey(d, k, j))}" title="Додати в задачі">＋ ЗАДАЧА</button></li>`).join('')}</ul>` : ''}${t.source ? `<small class="mono">ДЖЕРЕЛО: ${esc(t.source)}</small>` : ''}</article>`).join('')}</div>
+      ${d.idea ? `<div class="tr-idea"><span class="mono">ІДЕЯ ДЛЯ РОЗВИТКУ STACKUP</span><b>${text(d.idea.title)}</b>${d.idea.text ? `<p>${text(d.idea.text)}</p>` : ''}</div>` : ''}</section>`).join('') : '<p class="empty big">Трендів поки немає.</p>';
+  } else if (stab === 'clients') {
+    body = renderClients(I);
   } else if (stab === 'week') {
     const w = (I.weekly || [])[0];
     body = w ? `<section class="panel"><div class="panel-h"><h2>${esc(w.title)}</h2><span class="mono">${esc(w.range || '')}</span></div>${w.summary ? `<p class="lib-note">${text(w.summary)}</p>` : ''}
@@ -593,7 +617,7 @@ function homeDates() {
 }
 function homeTrend() {
   const d = insights && (insights.trends || [])[0];
-  return `<section class="panel"><div class="panel-h"><h2>Тренд дня</h2><button type="button" class="link mono" data-sec="strategy" data-stab="trends">УСІ →</button></div>${d ? `<p class="mono">${esc(dayName(d.date + 'T12:00:00').toUpperCase())}</p>${(d.items || []).slice(0, 2).map(t => `<div class="tr mini"><h3>${esc(t.title)}</h3><p class="tr-use">${text(t.use)}</p></div>`).join('')}` : '<p class="empty">Перший звіт трендів скоро буде.</p>'}</section>`;
+  return `<section class="panel"><div class="panel-h"><h2>Тренд дня</h2><button type="button" class="link mono" data-sec="strategy" data-stab="trends">УСІ →</button></div>${d ? `<p class="mono">${esc(dayName(d.date + 'T12:00:00').toUpperCase())}</p>${d.focus ? `<div class="tr-focus mini"><span class="mono">ГОЛОВНЕ НА СЬОГОДНІ</span><b>${text(d.focus.title)}</b></div>` : ''}${(d.items || []).slice(0, 2).map(t => `<div class="tr mini"><h3>${esc(t.title)}</h3><p class="tr-use">${text(t.use)}</p></div>`).join('')}` : '<p class="empty">Перший звіт трендів скоро буде.</p>'}</section>`;
 }
 
 /* ---------- у картці заявки: листування і Claude ---------- */
@@ -704,6 +728,8 @@ document.addEventListener('click', e => {
   if (t.closest('#tCancel')) { tedit = null; renderTasks(); return; }
   const sb = t.closest('[data-stab]'); if (sb) { stab = sb.dataset.stab; store.set('stackup-hub-stab', stab); renderStrategy(); return; }
   const lr = t.closest('[data-learn]'); if (lr) { const d = learnDone(); if (d[lr.dataset.learn]) delete d[lr.dataset.learn]; else d[lr.dataset.learn] = new Date().toISOString(); store.set('stackup-learn-done', d); renderStrategy(); return; }
+  const tt = t.closest('[data-trtask]'); if (tt) { const [dt, k, j] = tt.dataset.trtask.split(':'); const d = ((insights && insights.trends) || []).find(x => x.date === dt); const a = d && trAction(d, +k, +j); if (a) saveTask({ title: a.replace(/\*\*/g, '').slice(0, 200), priority: 'normal', status: 'open', due: localInput(new Date(Date.now() + 2 * DAY).toISOString()).slice(0, 10), lead: '', note: 'Тренд дня: ' + ((d.items[+k] || {}).title || '') }).then(x => x && C.toast('<span class="mono">ЗАДАЧІ</span> <b>Додано.</b>')); return; }
+  const cs = t.closest('[data-clscript]'); if (cs) { const x = ((insights && insights.clients && insights.clients.scripts) || [])[+cs.dataset.clscript]; if (x && navigator.clipboard) navigator.clipboard.writeText(x.text.replace(/\*\*/g, '')).then(() => C.toast('<span class="mono">СКОПІЙОВАНО</span> <b>Підстав імʼя і деталі перед відправкою.</b>')); return; }
   const lt = t.closest('[data-learntask]'); if (lt) { const l = ((insights && insights.lessons) || []).find(x => x.id === lt.dataset.learntask); if (l) saveTask({ title: l.task.replace(/\*\*/g, '').slice(0, 200), priority: 'normal', status: 'open', due: localInput(new Date(Date.now() + 3 * DAY).toISOString()).slice(0, 10), lead: '', note: 'Урок: ' + l.title }).then(x => x && C.toast('<span class="mono">ЗАДАЧІ</span> <b>Додано.</b>')); return; }
   const ms = t.closest('[data-mstage]'); if (ms) { mailStage = ms.dataset.mstage; renderMail(); return; }
   const mp = t.closest('[data-mpick]'); if (mp) { mailPick[mp.dataset.mpick] = mp.checked; mailConfirm = false; renderMail(); return; }
