@@ -24,8 +24,8 @@
 
 ## insights.json і calendar.json
 
-`insights.json` — розділ «Стратегія»: `trends[]` (новіші першими: `date`, `title`, `summary`, `items[{tag,title,what,use,source}]`), `weekly[]` (`title`, `range`, `summary`, `blocks[{title,items}]`, `plan[{day,what,why}]`, `questions[]`), `market{summary,facts,ourPluses,ourMinuses,competitors,gaps,positioning,sources}`, `lessons[{id,module,minutes,title,body[],task}]`. У тексті можна `**жирний**`.
+`insights.json` — розділ «Стратегія»: `trends[]` (новіші першими: `date`, `title`, `summary`, `focus{title,why,steps[]}` — головне на сьогодні, `items[{tag,title,what,plus,use,actions[],source}]` — `plus` що це дає нам, `actions` конкретні дії, кожну можна одним кліком додати в задачі, `idea{title,text}` — ідея для розвитку Stackup), `clients{updated,summary,metrics[{target,name}],positioning{title,text,proofs[]},aiAnswer,channels[{priority 1-3,name,why,how[],firstStep,effort}],offers[{kind,name,what,why,cta}],plan[{week,goal,actions[],target}],scripts[{title,when,text}],avoid[]}` — вкладка «Пошук клієнтів», `weekly[]` (`title`, `range`, `summary`, `blocks[{title,items}]`, `plan[{day,what,why}]`, `questions[]`), `market{summary,facts,ourPluses,ourMinuses,competitors,gaps,positioning,sources}`, `lessons[{id,module,minutes,title,body[],task}]`. У тексті можна `**жирний**`.
 
-`calendar.json` — `events[{date:'YYYY-MM-DD', title, kind: holiday|sale|opportunity|industry|content, idea, prep}]`.
+`calendar.json` — `events[{date:'YYYY-MM-DD', title, kind: holiday|sale|opportunity|industry|content, idea, prep, example:[id з manifest.json]}]`. Готові кадри до події робить `tools/event-kit` (див. його README).
 
 Обидва файли Claude може оновлювати напряму в main (лише папка content/).
