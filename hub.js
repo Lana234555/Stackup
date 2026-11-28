@@ -23,8 +23,8 @@ const STATUS = {
   review: ['На затвердженні', 'peach'], changes: ['Правки', 'rose'], scheduled: ['Заплановано', 'blue'],
   publishing: ['Публікується', 'lav'], published: ['Опубліковано', 'mint'], failed: ['Помилка', 'err'], skipped: ['Пропущено', 'line']
 };
-const SECS = ['home', 'leads', 'content', 'tasks', 'mail', 'strategy', 'library', 'settings'];
-const TITLES = { home: 'Огляд', leads: 'Заявки', content: 'Контент', tasks: 'Задачі', mail: 'Розсилки', strategy: 'Стратегія', library: 'Матеріали', settings: 'Налаштування' };
+const SECS = ['home', 'chats', 'leads', 'content', 'tasks', 'mail', 'strategy', 'library', 'settings'];
+const TITLES = { home: 'Огляд', chats: 'Чати', leads: 'Заявки', content: 'Контент', tasks: 'Задачі', mail: 'Розсилки', strategy: 'Стратегія', library: 'Матеріали', settings: 'Налаштування' };
 const CTABS = [['review', 'На затвердженні'], ['changes', 'Правки'], ['scheduled', 'Заплановано'], ['published', 'Опубліковано'], ['all', 'Усе'], ['plan', 'Календар'], ['grid', 'Сітка профілю']];
 
 let sec = SECS.includes(new URLSearchParams(location.search).get('s')) ? new URLSearchParams(location.search).get('s') : store.get('stackup-hub-sec', 'home');
@@ -117,15 +117,18 @@ function applySec() {
   const r = byStatus('review').length, ch = byStatus('changes').length;
   $('#cntReview').textContent = r || ''; $('#tabReview').textContent = r || '';
   const nNew = C.leads().filter(C.isUnread).length; $('#tabNew').textContent = nNew || '';
-  const hot = hotTasks().length; $('#cntTasks').textContent = hot || ''; $('#tabTasks').textContent = hot || '';
+  const hot = hotTasks().length; $('#cntTasks').textContent = hot || '';
   document.title = TITLES[sec] + ' — Stackup';
-  $('#grpLeads').textContent = nNew || ''; $('#grpContent').textContent = r || ''; $('#grpWork').textContent = hot || '';
+  const nChat = window.StackupChat ? window.StackupChat.unread() : 0;
+  $('#cntChats').textContent = nChat || ''; $('#tabChats').textContent = nChat || '';
+  $('#grpLeads').textContent = (nNew + nChat) || ''; $('#grpContent').textContent = r || ''; $('#grpWork').textContent = hot || '';
   sideGroups();
   void ch;
 }
 function renderAll() {
   applySec();
   if (sec === 'home') renderHome();
+  if (sec === 'chats' && window.StackupChat) window.StackupChat.render();
   if (sec === 'content') renderContent();
   if (sec === 'tasks') renderTasks();
   if (sec === 'mail') renderMail();
@@ -353,7 +356,7 @@ function openLib(gid, k) {
 /* ---------- налаштування ---------- */
 function renderSettings() {
   const exp = ig.tokenExp ? new Date(ig.tokenExp) : null;
-  $('#secSettings').innerHTML = head('Налаштування', '') + `<nav class="more-nav">${[['strategy', '◎', 'Стратегія', 'Тренди, ринок, навчання'], ['mail', '✉', 'Розсилки', 'Листи клієнтам'], ['library', '❒', 'Матеріали', 'Бренд, логотипи, фото']].map(([k, i, l, d]) => `<button type="button" data-sec="${k}"><span>${i}</span><b>${l}</b><small>${d}</small></button>`).join('')}</nav><div class="set-grid">
+  $('#secSettings').innerHTML = head('Налаштування', '') + `<nav class="more-nav">${[['tasks', '☐', 'Задачі', 'Що зробити і коли'], ['strategy', '◎', 'Стратегія', 'Тренди, ринок, навчання'], ['mail', '✉', 'Розсилки', 'Листи клієнтам'], ['library', '❒', 'Матеріали', 'Бренд, логотипи, фото']].map(([k, i, l, d]) => `<button type="button" data-sec="${k}"><span>${i}</span><b>${l}</b><small>${d}</small></button>`).join('')}</nav><div class="set-grid">
     <section class="panel"><div class="panel-h"><h2>Claude в адмінці</h2>${ai.connected ? '<span class="pill mint">ПІДКЛЮЧЕНО</span>' : C.demo ? '<span class="pill line">ДЕМО</span>' : '<span class="pill peach">ПОТРІБЕН КЛЮЧ</span>'}</div>
       <p class="lib-note">Аналіз заявок, чернетки відповідей і нагадувань. Claude нічого не надсилає сам: чернетка з’являється в полі листа, а надсилаєш ти після підтвердження.</p>
       ${ai.connected ? '' : `<ol class="steps"><li>Зайди на console.anthropic.com, увійди і поповни баланс (вистачить $5–10 на місяці).</li><li>API keys → Create key, скопіюй ключ (починається з sk-ant-).</li><li>Google Apps Script → Project Settings → Script properties: <code>ANTHROPIC_KEY</code> = ключ.</li><li>Онови сторінку. Ключ не потрапляє в адмінку і в браузер.</li></ol>`}</section>
@@ -596,83 +599,8 @@ function homeTrend() {
   return `<section class="panel"><div class="panel-h"><h2>Тренд дня</h2><button type="button" class="link mono" data-sec="strategy" data-stab="trends">УСІ →</button></div>${d ? `<p class="mono">${esc(dayName(d.date + 'T12:00:00').toUpperCase())}</p>${(d.items || []).slice(0, 2).map(t => `<div class="tr mini"><h3>${esc(t.title)}</h3><p class="tr-use">${text(t.use)}</p></div>`).join('')}` : '<p class="empty">Перший звіт трендів скоро буде.</p>'}</section>`;
 }
 
-/* ---------- у картці заявки: листування і Claude ---------- */
-const talk = {}, aiOut = {};
-let cur = null, sendStep = false;
-const DEMO_THREAD = [
-  { mine: false, date: new Date(Date.now() - 3 * DAY).toISOString(), subject: 'Сайт для кав’ярні', text: 'Добрий день! Хочемо оновити сайт і додати онлайн-замовлення. Скільки це може коштувати?' },
-  { mine: true, date: new Date(Date.now() - 2 * DAY).toISOString(), subject: 'Re: Сайт для кав’ярні', text: 'Вітаю, Олено! Дякую за звернення. Заповніть, будь ласка, короткий бриф, і я підготую оцінку.' }
-];
-async function loadTalk(id) {
-  talk[id] = { loading: true }; renderTalk();
-  try {
-    const r = C.demo ? await new Promise(ok => setTimeout(() => ok({ email: (cur && cur.row.email) || '', messages: DEMO_THREAD }), 300)) : await C.call({ action: 'thread', id });
-    talk[id] = { messages: r.messages || [], email: r.email };
-  } catch (e) { talk[id] = { error: e.message }; }
-  if (cur && cur.id === id) renderTalk();
-}
-function renderTalk() {
-  const box = $('#dTalk'); if (!box || !cur) return;
-  const row = cur.row, id = cur.id, t = talk[id] || {}, a = aiOut[id] || {};
-  const email = String(row.email || '').trim();
-  const msgs = t.messages || [];
-  const last = msgs.slice().reverse().find(m => !m.mine) || msgs[msgs.length - 1];
-  const subjDefault = last ? (/^re:/i.test(last.subject) ? last.subject : 'Re: ' + last.subject) : 'Stackup: ' + (row.type || 'ваш проєкт');
-  const draft = talk['d:' + id] || { subject: subjDefault, body: '' };
-  talk['d:' + id] = draft;
-  box.innerHTML = `<h3><span class="mono">✉</span>Листування</h3>
-    ${!validEmail(email) ? '<p class="lead">У заявці немає email. Напиши клієнту в Telegram або за телефоном.</p>' :
-      t.loading ? '<p class="mono loading">ЗАВАНТАЖУЄМО ЛИСТИ…</p>' :
-      t.error ? `<p class="lead">${esc(t.error === 'gmail not allowed' || t.error === 'server error' ? 'Пошта ще не підключена. Запусти setupContent у Google Apps Script і дозволь доступ до Gmail.' : 'Не вдалося завантажити листи.')}</p>` :
-      msgs.length ? `<ol class="tk-msgs">${msgs.map(m => `<li class="${m.mine ? 'me' : 'them'}"><span class="mono">${m.mine ? 'ТИ' : 'КЛІЄНТ'} · ${esc(when(m.date).toUpperCase())}</span><p>${esc(m.text).replace(/\n/g, '<br>')}</p></li>`).join('')}</ol>` : '<p class="lead">Листів з цим клієнтом ще не було.</p>'}
-    ${validEmail(email) ? `<div class="tk-compose">
-      <input type="text" id="tkSubject" maxlength="200" value="${esc(draft.subject)}" aria-label="Тема">
-      <textarea id="tkBody" rows="5" maxlength="20000" placeholder="Текст листа. Або натисни «Чернетка від Claude».">${esc(draft.body)}</textarea>
-      ${sendStep ? `<div class="confirm-box"><p><b>Надіслати лист клієнту?</b><br>Кому: ${esc(email)}</p><div class="v-acts"><button type="button" class="button primary sm" id="tkYes"><b>Підтверджую, надіслати</b><span>✓</span></button><button type="button" class="button ghost sm" id="tkNo"><b>Ні</b><span>×</span></button></div></div>`
-      : `<div class="v-acts"><button type="button" class="button ghost sm" data-ai="reply"${a.busy ? ' disabled' : ''}><b>${a.busy === 'reply' ? 'Claude пише…' : 'Чернетка від Claude'}</b><span>✱</span></button><button type="button" class="button ghost sm" data-ai="followup"${a.busy ? ' disabled' : ''}><b>${a.busy === 'followup' ? 'Claude пише…' : 'Нагадування'}</b><span>↻</span></button><button type="button" class="button primary sm" id="tkSend"><b>Надіслати…</b><span>→</span></button></div>`}
-      <p class="mono v-hint">ЛИСТ ПІДЕ З ТВОЄЇ ПОШТИ ЛИШЕ ПІСЛЯ ПІДТВЕРДЖЕННЯ</p></div>` : ''}`;
-  const ab = $('#dAi'); if (!ab) return;
-  ab.innerHTML = `<h3><span class="mono">✱</span>Аналіз Claude</h3>
-    ${a.analyze ? `<div class="ai-out">${text(a.analyze)}</div>` : '<p class="lead">Claude прочитає бриф, нотатки і листування, оцінить, наскільки клієнт гарячий, і підкаже ціну та наступні кроки.</p>'}
-    <div class="v-acts"><button type="button" class="button ghost sm" data-ai="analyze"${a.busy ? ' disabled' : ''}><b>${a.busy === 'analyze' ? 'Аналізую…' : a.analyze ? 'Проаналізувати ще раз' : 'Проаналізувати заявку'}</b><span>✱</span></button>
-    <button type="button" class="button ghost sm" id="tkTask"><b>Створити задачу</b><span>＋</span></button></div>
-    ${!ai.connected && !C.demo ? '<p class="mono v-hint">ПОТРІБЕН КЛЮЧ CLAUDE API (НАЛАШТУВАННЯ)</p>' : ''}`;
-}
-const DEMO_AI = {
-  analyze: '**Суть.** Кав’ярня хоче оновити сайт і додати онлайн-замовлення з самовивозом.\n\n**Наскільки гаряча: 4 з 5.** Є бюджет, чіткий термін і готові фото.\n\n**Обсяг і ціна.** 6–8 сторінок, меню з кошиком, оплата карткою: орієнтовно $3 500–5 000, 5–7 тижнів.\n\n**Що уточнити**\n• Яка каса чи POS у них стоїть\n• Доставка чи лише самовивіз\n• Хто наповнює меню\n\n**Наступні кроки**\n• Сьогодні: відповісти і запропонувати дзвінок на 20 хв\n• До п’ятниці: надіслати КП з двома варіантами\n• Через тиждень: нагадування, якщо мовчить',
-  reply: 'Вітаю, Олено!\n\nДякую за бриф, задача зрозуміла: новий сайт для Coffee Lab з онлайн-замовленням і самовивозом.\n\nЩоб точно оцінити, підкажіть, будь ласка:\n• яка у вас каса чи POS-система;\n• чи плануєте доставку, чи лише самовивіз;\n• хто наповнюватиме меню.\n\nМожемо коротко поговорити 20 хвилин цього тижня? Напишіть зручний час.\n\nЛана, Stackup',
-  followup: 'Вітаю, Олено!\n\nНагадую про пропозицію для Coffee Lab. До речі, кав’ярні, які додають замовлення на сайті, зазвичай отримують чималу частку замовлень онлайн уже в перший місяць.\n\nЯкщо є питання, я на зв’язку.\n\nЛана'
-};
-async function runAi(task) {
-  if (!cur) return; const id = cur.id, a = aiOut[id] = aiOut[id] || {};
-  if (!ai.connected && !C.demo) { C.toast('<b>Спершу додай ключ Claude API (див. Налаштування).</b>', 5000); return; }
-  a.busy = task; renderTalk();
-  try {
-    const r = C.demo ? await new Promise(ok => setTimeout(() => ok({ text: DEMO_AI[task] }), 900)) : await C.call({ action: 'aiLead', id, task });
-    if (task === 'analyze') a.analyze = r.text;
-    else { const d = talk['d:' + id]; d.body = r.text; }
-  } catch (e) { C.toast('<span class="mono">CLAUDE</span> <b>' + esc(e.message === 'ai not configured' ? 'Ключ Claude API ще не додано.' : e.message === 'ai busy' ? 'Claude зараз перевантажений. Спробуй за хвилину.' : 'Не вдалося отримати відповідь.') + '</b>', 5000); }
-  finally { a.busy = false; if (cur && cur.id === id) renderTalk(); }
-}
-async function sendOne() {
-  if (!cur) return; const id = cur.id, d = talk['d:' + id];
-  if (!d.subject.trim() || !d.body.trim()) { sendStep = false; renderTalk(); return C.toast('<b>Заповни тему і текст.</b>'); }
-  try {
-    if (C.demo) C.toast('<span class="mono">ДЕМО</span> <b>У демо листи не надсилаються.</b>');
-    else { await C.call({ action: 'sendMessage', id, subject: d.subject, body: d.body, confirm: true }); C.toast('<span class="mono">НАДІСЛАНО</span> <b>Лист пішов клієнту.</b>'); }
-    talk['d:' + id] = null; sendStep = false;
-    if (!C.demo) loadTalk(id); else renderTalk();
-  } catch (e) { sendStep = false; renderTalk(); C.toast('<span class="mono">ПОМИЛКА</span> <b>' + esc(e.message === 'gmail not allowed' ? 'Немає доступу до Gmail.' : e.message === 'mail quota' ? 'Ліміт листів на сьогодні вичерпано.' : 'Лист не надіслано.') + '</b>', 6000); }
-}
-document.addEventListener('stackup:detail', e => {
-  const d = e.detail || {}; const changed = !cur || cur.id !== d.id;
-  cur = { id: d.id, row: d.row || {} };
-  if (changed) sendStep = false;
-  if (!talk[d.id] && validEmail(cur.row.email)) loadTalk(d.id); else renderTalk();
-});
-
 /* ---------- бокове меню: секції згортаються, відкрита та, де ти зараз ---------- */
-const GROUP_OF = { leads: 'leads', mail: 'leads', content: 'content', tasks: 'work', strategy: 'work', library: 'company', settings: 'company' };
+const GROUP_OF = { chats: 'leads', leads: 'leads', mail: 'leads', content: 'content', tasks: 'work', strategy: 'work', library: 'company', settings: 'company' };
 function sideGroups() {
   const closed = store.get('stackup-side-closed', {}), active = GROUP_OF[sec];
   $$('.side-sec').forEach(g => { const open = g.dataset.group === active || !closed[g.dataset.group]; g.querySelector('.side-group').setAttribute('aria-expanded', String(open)); });
@@ -740,7 +668,6 @@ document.addEventListener('input', e => {
   const id = e.target.id;
   if (id === 'vCaption') $('#capLen').textContent = e.target.value.length + ' / 2200';
   if (id === 'mSubject' || id === 'mBody') { mailDraft[id === 'mSubject' ? 'subject' : 'body'] = e.target.value; store.set('stackup-mail-draft', mailDraft); mailPreview(); }
-  if ((id === 'tkSubject' || id === 'tkBody') && cur) { const d = talk['d:' + cur.id]; if (d) d[id === 'tkSubject' ? 'subject' : 'body'] = e.target.value; }
 });
 document.addEventListener('change', e => {
   if (e.target.id === 'mTpl' && e.target.value) { const t = TEMPLATES.find(x => x.id === e.target.value); if (t) { mailDraft.subject = t.subject; mailDraft.body = t.body; store.set('stackup-mail-draft', mailDraft); mailConfirm = false; renderMail(); } }
@@ -752,13 +679,7 @@ document.addEventListener('submit', e => {
   const base = tasks.find(x => x.id === tedit) || {};
   saveTask({ ...base, id: tedit || undefined, title, priority: (($('input[name=tPrio]:checked') || {}).value) || 'normal', status: base.status || 'open', due: $('#tDue').value, lead: $('#tLead').value, note: $('#tNote').value.trim() }).then(x => { if (x) { tedit = null; renderTasks(); C.toast('<span class="mono">ЗАДАЧІ</span> <b>Збережено.</b>'); } });
 });
-function detailClick(t) {
-  const ab = t.closest('[data-ai]'); if (ab) { runAi(ab.dataset.ai); return; }
-  if (t.closest('#tkSend')) { sendStep = true; renderTalk(); return; }
-  if (t.closest('#tkNo')) { sendStep = false; renderTalk(); return; }
-  if (t.closest('#tkYes')) { sendOne(); return; }
-  if (t.closest('#tkTask') && cur) { const r = cur.row; saveTask({ title: 'Відповісти: ' + (r.company || r.name || 'клієнт'), priority: r.status === 'new' ? 'urgent' : 'high', status: 'open', due: today(), lead: cur.id, note: '' }).then(x => x && C.toast('<span class="mono">ЗАДАЧІ</span> <b>Задачу створено.</b>')); }
-}
+function detailClick() { /* картку клієнта веде chat.js */ }
 /* свайп у перегляді */
 (() => { let x0 = null; document.addEventListener('touchstart', e => { if (e.target.closest('.v-frame')) x0 = e.touches[0].clientX; }, { passive: true });
   document.addEventListener('touchend', e => { if (x0 == null) return; const dx = e.changedTouches[0].clientX - x0; x0 = null; if (Math.abs(dx) > 40) { const b = $('#viewer .v-arrow.' + (dx < 0 ? 'r' : 'l') + ':not([disabled])'); if (b) b.click(); } }, { passive: true }); })();
@@ -769,8 +690,10 @@ async function refresh() {
 function onEnter() { applySec(); refresh(); clearInterval(pollT); pollT = setInterval(() => { if (!document.hidden && !busy && !open) refresh(); }, 60000); }
 document.addEventListener('stackup:enter', onEnter);
 document.addEventListener('stackup:leads', () => { applySec(); if (sec === 'home') renderHome(); });
-document.addEventListener('stackup:wipe', () => { clearInterval(pollT); state = {}; tasks = []; tasksLoaded = false; mailMeta = null; cur = null; Object.keys(talk).forEach(k => delete talk[k]); Object.keys(aiOut).forEach(k => delete aiOut[k]); manifest = { items: [] }; library = null; open = null; $$('.sec:not(#secLeads)').forEach(x => { x.innerHTML = ''; }); const v = $('#viewer'); if (v) { v.hidden = true; v.innerHTML = ''; } });
+document.addEventListener('stackup:wipe', () => { clearInterval(pollT); state = {}; tasks = []; tasksLoaded = false; mailMeta = null; manifest = { items: [] }; library = null; open = null; $$('.sec:not(#secLeads)').forEach(x => { x.innerHTML = ''; }); const v = $('#viewer'); if (v) { v.hidden = true; v.innerHTML = ''; } });
 document.addEventListener('visibilitychange', () => { if (!document.hidden && !$('#app').hidden && !open) refresh(); });
+/* міст для chat.js: Claude, задачі, розділи */
+window.StackupHub = { ai: () => ai, ig: () => ig, tasks: () => tasks, saveTask, today, PRIO, sec: () => sec, setSec, applySec, validEmail, text, when, fmt };
 applySec();
 if (!$('#app').hidden) onEnter(); // admin.js міг увійти раніше, ніж завантажився цей файл
 })();

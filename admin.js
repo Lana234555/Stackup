@@ -206,7 +206,7 @@ function updateBadge() {
   document.title = (n ? `(${n}) ` : '') + 'Заявки — STACKUP.';
   const b = $('#newBadge'); b.hidden = !n; b.textContent = '◆ ' + n + ' ' + (n === 1 ? 'НОВА' : n < 5 ? 'НОВІ' : 'НОВИХ');
   $('#cntNew').textContent = n || '';
-  $('#cntAll').textContent = items.filter(x => x.status !== 'archive').length;
+  $('#cntAll').textContent = n ? '' : items.filter(x => x.status !== 'archive').length;
   $('#cntArch').textContent = items.filter(x => x.status === 'archive').length || '';
 }
 function announce(fresh) {
@@ -278,9 +278,9 @@ function renderFilters() {
 /* ---------- render ---------- */
 function render() {
   updateBadge(); renderFilters(); renderKpis();
-  $$('[data-view]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.view === view)));
+  $$('[data-view]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.view === view && !(b.dataset.plain && F.status === 'archive'))));
   $$('[data-quick]').forEach(b => b.setAttribute('aria-pressed', String((b.dataset.quick === 'unread' && F.unread) || (b.dataset.quick === 'archive' && view === 'list' && F.status === 'archive'))));
-  $('#viewTitle').textContent = view === 'board' ? 'Воронка' : (F.status === 'archive' ? 'Архів' : 'Усі заявки');
+  $('#viewTitle').textContent = view === 'list' && F.status === 'archive' ? 'Архів' : 'Заявки';
   $('#board').hidden = view !== 'board'; $('#listview').hidden = view !== 'list';
   if (view === 'board') renderBoard(); else renderTable();
   flashIds = [];
@@ -301,12 +301,13 @@ function renderKpis() {
   ].map(([l, n, t, q]) => `<${q ? 'button type="button" data-quick="' + q + '"' : 'div'} class="kpi ${t}"><span class="mono">${l}</span><b>${n}</b></${q ? 'button' : 'div'}>`).join('');
 }
 
+const modeTag = x => x.mode === 'has' ? 'ТЗ ✓' : x.mode === 'lead' ? 'САЙТ' : x.mode === 'chat' ? (x.type === 'Instagram' ? 'INSTAGRAM' : 'TELEGRAM') : 'БРИФ';
 function card(x) {
   return `<article class="card${isUnread(x) ? ' unread' : ''}${flashIds.includes(x.id) ? ' flash' : ''}${current === x.id ? ' cur' : ''}" draggable="true" data-open="${esc(x.id)}" tabindex="0">
     <div class="card-top"><span class="ava ${stTone(x.status)}">${esc(initials(x))}</span><span class="mono card-age">${esc(ago(x.created))}</span>${isUnread(x) ? '<em class="new-tag mono">НОВА</em>' : ''}</div>
     <strong>${esc(x.company || x.name)}</strong>
     <span class="card-sub">${esc(x.company ? x.name : x.email)}</span>
-    <div class="tags"><span class="tag mono">${x.mode === 'has' ? 'ТЗ ✓' : x.mode === 'lead' ? 'САЙТ' : 'БРИФ'}</span>${x.type && x.mode === 'none' ? `<span class="tag">${esc(x.type)}</span>` : ''}</div>
+    <div class="tags"><span class="tag mono">${modeTag(x)}</span>${x.type && x.mode === 'none' ? `<span class="tag">${esc(x.type)}</span>` : ''}</div>
     <div class="card-foot mono">${x.budget ? `<span>${esc(x.budget)}</span>` : ''}${x.deadline ? `<span>⏱ ${esc(x.deadline)}</span>` : ''}${num(x.files) ? `<span>📎 ${num(x.files)}</span>` : ''}${x.notes ? '<span title="Є нотатки">✎</span>' : ''}</div>
   </article>`;
 }
@@ -364,7 +365,7 @@ function renderTable() {
       <td class="c-dot"><span class="ava ${stTone(x.status)}">${esc(initials(x))}</span></td>
       <td class="c-date"><b>${esc(fmtDay(x.created))}</b><span class="mono">${esc(ago(x.created))} тому</span></td>
       <td class="c-client"><b>${esc(x.company || x.name)}${isUnread(x) ? ' <em class="new-tag mono">НОВА</em>' : ''}</b><span>${esc(x.company ? x.name : x.email)}</span></td>
-      <td class="c-what"><span class="tag mono">${x.mode === 'has' ? 'ТЗ ✓' : x.mode === 'lead' ? 'САЙТ' : 'БРИФ'}</span> ${esc(x.mode === 'has' ? 'Власне ТЗ' : x.type || '—')}</td>
+      <td class="c-what"><span class="tag mono">${modeTag(x)}</span> ${esc(x.mode === 'has' ? 'Власне ТЗ' : x.type || '—')}</td>
       <td class="c-dl">${esc(x.deadline || '—')}</td>
       <td class="c-bg">${esc(x.budget || '—')}</td>
       <td class="c-files mono">${x.files ? '📎 ' + x.files : ''}</td>
@@ -410,11 +411,23 @@ function valueHTML(r) {
 }
 function contactLinks(c) {
   const out = [];
-  if (c.email) out.push(`<a class="button primary" href="mailto:${esc(c.email)}"><b>Написати</b> <span>↗︎</span></a>`);
+  out.push(`<button type="button" class="button primary" data-dtab="chat"><b>Написати в чаті</b> <span>→</span></button>`);
   const ph = String(c.phone || '').trim();
   if (/^@?[a-z0-9_]{4,}$/i.test(ph) && !/^\d+$/.test(ph.replace('@', ''))) out.push(`<a class="button ghost" href="https://t.me/${esc(ph.replace('@', ''))}" target="_blank" rel="noopener"><b>Telegram</b> <span>↗︎</span></a>`);
   else if (ph) out.push(`<a class="button ghost" href="tel:${esc(ph.replace(/[^\d+]/g, ''))}"><b>${esc(ph)}</b> <span>↗︎</span></a>`);
   return out.join('');
+}
+/* Картка клієнта: одна картка, три вкладки. Чат (усі канали), Бриф (ТЗ, відповіді, файли), Клієнт (етап, контакти, Claude, задачі, нотатки). */
+const DTABS = [['chat', 'Чат'], ['brief', 'Бриф'], ['client', 'Клієнт']];
+let dtab = store.get('stackup-dtab', 'chat');
+function setDtab(t, focus) {
+  if (!DTABS.some(x => x[0] === t)) t = 'chat';
+  dtab = t; store.set('stackup-dtab', t);
+  $$('#detail [data-dtab]').forEach(b => { const on = b.dataset.dtab === t; b.setAttribute('aria-selected', String(on)); b.tabIndex = on ? 0 : -1; if (on && focus) b.focus(); });
+  $$('#detail [data-pane]').forEach(p => { p.hidden = p.dataset.pane !== t; });
+  const bar = $('#detail .d-tabs'), on = bar && bar.querySelector('[aria-selected=true]');
+  if (bar && on) { bar.style.setProperty('--ux', on.offsetLeft + 'px'); bar.style.setProperty('--uw', on.offsetWidth + 'px'); }
+  document.dispatchEvent(new CustomEvent('stackup:dtab', { detail: { tab: t, id: current } }));
 }
 function renderDetail(d) {
   const row = d.row, rec = d.record || {}, c = rec.client || row;
@@ -422,37 +435,45 @@ function renderDetail(d) {
   const groups = {};
   (d.files || []).forEach(f => (groups[f.label] = groups[f.label] || []).push(f));
   const spec = (d.files || []).filter(f => f.field === 'specFiles');
+  const hasBrief = !!(spec.length || (rec.sections || []).length || (rec.estimate || []).length || (d.files || []).length);
+  const who = c.company ? c.name : (row.mode === 'has' ? 'надіслав(ла) ТЗ' : row.mode === 'lead' ? 'залишив(ла) заявку на сайті' : row.mode === 'chat' ? 'написав(ла) в ' + (row.type || 'месенджер') : 'створив(ла) ТЗ');
   $('#detail').innerHTML = `
     <div class="d-nav"><button type="button" class="icon-btn" id="closeDrawer" aria-label="Закрити">×</button>${navBtns(row.id)}</div>
-    <div class="d-bar mono"><span>№ ${esc(row.id)}</span><span>${esc(fmtDate(row.created))}</span></div>
     <div class="d-hero"><span class="ava big ${stTone(live.status)}">${esc(initials(c))}</span>
-      <div><h2>${esc(c.company || c.name)}</h2><p class="serif d-who">${esc(c.company ? c.name : (row.mode === 'has' ? 'надіслав(ла) ТЗ' : row.mode === 'lead' ? 'залишив(ла) заявку на сайті' : 'створив(ла) ТЗ'))}</p></div></div>
-    <p class="contact-line">${esc(c.email || '')}${c.phone ? ' · ' + esc(c.phone) : ''}</p>
+      <div class="d-hero-t"><h2>${esc(c.company || c.name)}</h2><p class="d-who"><span class="serif">${esc(who)}</span></p><p class="mono d-id">№ ${esc(row.id)} · ${esc(fmtDate(row.created))} · <b>${esc(stLabel(live.status)).toUpperCase()}</b></p></div></div>
+    <div class="d-tabs" role="tablist" aria-label="Розділи картки">${DTABS.map(([k, l]) => `<button type="button" role="tab" data-dtab="${k}" aria-selected="false" aria-controls="pane-${k}" id="tab-${k}">${l}${k === 'chat' ? '<em class="hot" id="dChatNew"></em>' : k === 'brief' && !hasBrief ? '<i class="mono">НЕМАЄ</i>' : ''}</button>`).join('')}<span class="d-ux" aria-hidden="true"></span></div>
+
+    <div class="d-pane" data-pane="chat" id="pane-chat" role="tabpanel" aria-labelledby="tab-chat"><section class="talk" id="dTalk"></section></div>
+
+    <div class="d-pane" data-pane="brief" id="pane-brief" role="tabpanel" aria-labelledby="tab-brief" hidden>
+    ${hasBrief ? '' : `<div class="d-empty"><p><b>Брифу ще немає.</b> Надішли клієнту посилання, і відповіді з’являться тут.</p><div class="act-row"><button type="button" class="button ghost sm" data-copy="brief.html?mode=none"><b>Бриф: ТЗ немає</b> <span class="mono">КОПІЮВАТИ</span></button><button type="button" class="button ghost sm" data-copy="brief.html?mode=has"><b>Бриф: є ТЗ</b> <span class="mono">КОПІЮВАТИ</span></button></div></div>`}
+    ${spec.length ? `<div class="spec-box"><span class="mono">ТЗ КЛІЄНТА</span>${spec.map(f => `<a href="${esc(safeUrl(f.url))}" target="_blank" rel="noopener noreferrer"><span class="mono">${esc(ext(f.name))}</span><b>${esc(f.name)}</b><em>${size(f.size)}</em><i>↗︎</i></a>`).join('')}</div>` : ''}
+    ${rec.estimate && rec.estimate.length ? `<section class="d-sec d-est"><h3><span class="mono">✱</span>Для оцінки</h3><div class="est">${rec.estimate.map(([k, v]) => `<div><span class="mono">${esc(k)}</span><b>${esc(v)}</b></div>`).join('')}</div></section>` : ''}
+    ${(rec.sections || []).map((s, i) => `<details class="d-sec acc"${i < 2 ? ' open' : ''}><summary><h3><span class="mono">${String(i + 1).padStart(2, '0')}</span>${esc(s.title)}</h3><i aria-hidden="true">+</i></summary>
+      <dl>${s.rows.map(r => `<dt>${esc(r.label)}</dt><dd>${valueHTML(r)}</dd>`).join('')}</dl></details>`).join('')}
+    ${hasBrief ? `<section class="d-sec"><h3><span class="mono">📎</span>Файли · ${(d.files || []).length}</h3>
+      ${Object.keys(groups).length ? Object.entries(groups).map(([label, list]) => `<p class="f-group mono">${esc(label).toUpperCase()}</p><ul class="file-list">${list.map(f => `<li><span class="mono">${esc(ext(f.name))}</span><b><a href="${esc(safeUrl(f.url))}" target="_blank" rel="noopener noreferrer">${esc(f.name)}</a></b><em>${size(f.size)}</em></li>`).join('')}</ul>`).join('') : '<p class="lead">Файлів немає.</p>'}
+      ${safeUrl(d.folderUrl) ? `<p class="d-folder"><a class="link mono" href="${esc(safeUrl(d.folderUrl))}" target="_blank" rel="noopener noreferrer">ПАПКА НА GOOGLE DRIVE ↗︎</a></p>` : ''}
+    </section>` : ''}
+    </div>
+
+    <div class="d-pane" data-pane="client" id="pane-client" role="tabpanel" aria-labelledby="tab-client" hidden>
     <p class="mono d-label">ЕТАП</p>
     <div class="stage" role="group" aria-label="Етап">${STATUS.map(([v, l, t], i) => `<button type="button" class="${t}${PIPE.indexOf(v) <= PIPE.indexOf(live.status) && PIPE.includes(live.status) && PIPE.includes(v) ? ' passed' : ''}" data-st="${esc(v)}" aria-pressed="${live.status === v}"><span class="mono">${v === 'archive' ? '×' : String(i + 1).padStart(2, '0')}</span>${esc(l)}</button>`).join('')}</div>
+    <p class="mono d-label">КОНТАКТИ</p>
+    <dl class="d-kv"><dt>Ім’я</dt><dd>${esc(c.name || '—')}</dd>${c.company ? `<dt>Компанія</dt><dd>${esc(c.company)}</dd>` : ''}<dt>Email</dt><dd>${c.email ? esc(c.email) : '—'}</dd><dt>Телефон / нік</dt><dd>${c.phone ? esc(c.phone) : '—'}</dd>${row.type ? `<dt>Що потрібно</dt><dd>${esc(row.type)}</dd>` : ''}${row.budget ? `<dt>Бюджет</dt><dd>${esc(row.budget)}</dd>` : ''}${row.deadline ? `<dt>Терміни</dt><dd>${esc(row.deadline)}</dd>` : ''}</dl>
     <div class="act-row">${contactLinks(c)}${safeUrl(d.folderUrl) ? `<a class="button ghost" href="${esc(safeUrl(d.folderUrl))}" target="_blank" rel="noopener noreferrer"><b>Папка на Drive</b> <span>↗︎</span></a>` : ''}</div>
-
-    <section class="d-sec talk" id="dTalk"></section>
     <section class="d-sec ai" id="dAi"></section>
-
-    ${spec.length ? `<div class="spec-box"><span class="mono">ТЗ КЛІЄНТА</span>${spec.map(f => `<a href="${esc(safeUrl(f.url))}" target="_blank" rel="noopener noreferrer"><span class="mono">${esc(ext(f.name))}</span><b>${esc(f.name)}</b><em>${size(f.size)}</em><i>↗︎</i></a>`).join('')}</div>` : ''}
-
+    <section class="d-sec d-tasks" id="dTasks"></section>
     <section class="d-sec notes"><h3><span class="mono">✎</span>Мої нотатки</h3>
       <ol class="nt-list" id="noteList">${notesHTML(live.notes)}</ol>
       <div class="nt-compose"><textarea id="notes" rows="2" placeholder="Нова нотатка: оцінка, години, ціна, питання до клієнта…">${esc(noteDraft[current] || '')}</textarea>
       <button type="button" class="nt-send" id="saveNotes" aria-label="Додати нотатку">↑</button></div>
       <div class="notes-bar"><span class="mono">ENTER: ДОДАТИ · SHIFT+ENTER: НОВИЙ РЯДОК</span><span class="mono" id="notesState"></span></div>
     </section>
-
-    ${rec.estimate && rec.estimate.length ? `<section class="d-sec d-est"><h3><span class="mono">✱</span>Для оцінки</h3><div class="est">${rec.estimate.map(([k, v]) => `<div><span class="mono">${esc(k)}</span><b>${esc(v)}</b></div>`).join('')}</div></section>` : ''}
-
-    ${(rec.sections || []).map((s, i) => `<details class="d-sec acc"${i < 2 ? ' open' : ''}><summary><h3><span class="mono">${String(i + 1).padStart(2, '0')}</span>${esc(s.title)}</h3><i aria-hidden="true">+</i></summary>
-      <dl>${s.rows.map(r => `<dt>${esc(r.label)}</dt><dd>${valueHTML(r)}</dd>`).join('')}</dl></details>`).join('')}
-
-    <section class="d-sec"><h3><span class="mono">📎</span>Файли · ${(d.files || []).length}</h3>
-      ${Object.keys(groups).length ? Object.entries(groups).map(([label, list]) => `<p class="f-group mono">${esc(label).toUpperCase()}</p><ul class="file-list">${list.map(f => `<li><span class="mono">${esc(ext(f.name))}</span><b><a href="${esc(safeUrl(f.url))}" target="_blank" rel="noopener noreferrer">${esc(f.name)}</a></b><em>${size(f.size)}</em></li>`).join('')}</ul>`).join('') : '<p class="lead">Файлів немає.</p>'}
-    </section>`;
-  document.dispatchEvent(new CustomEvent('stackup:detail', { detail: { id: row.id, row: { ...row, email: c.email || row.email, name: c.name || row.name, company: c.company || row.company } } }));
+    </div>`;
+  setDtab(dtab);
+  document.dispatchEvent(new CustomEvent('stackup:detail', { detail: { id: row.id, row: { ...row, email: c.email || row.email, name: c.name || row.name, company: c.company || row.company, phone: c.phone || row.phone } } }));
 }
 
 async function setStatus(id, st) {
@@ -525,6 +546,7 @@ $('#scrim').addEventListener('click', () => closeDrawer());
 document.addEventListener('click', e => {
   if (e.target.closest('#toast .x')) { $('#toast').hidden = true; return; }
   if (e.target.closest('#closeDrawer')) { closeDrawer(); return; }
+  const dt = e.target.closest('[data-dtab]'); if (dt) { setDtab(dt.dataset.dtab); return; }
   const v = e.target.closest('[data-view]'); if (v) { if (v.closest('.side-nav')) { F.unread = false; if (F.status === 'archive') F.status = 'active'; } setView(v.dataset.view); return; }
   const q = e.target.closest('[data-quick]');
   if (q) {
@@ -543,6 +565,7 @@ document.addEventListener('click', e => {
 });
 document.addEventListener('keydown', e => {
   if (e.key === 'Escape' && current) closeDrawer();
+  if ((e.key === 'ArrowRight' || e.key === 'ArrowLeft') && e.target.matches && e.target.matches('[data-dtab]')) { const i = DTABS.findIndex(x => x[0] === dtab), j = (i + (e.key === 'ArrowRight' ? 1 : DTABS.length - 1)) % DTABS.length; setDtab(DTABS[j][0], true); }
   if (e.key === 'Enter' && e.target.matches('[data-open].card, tr.row')) openDrawer(e.target.dataset.open);
   if ((e.metaKey || e.ctrlKey) && e.key === 's' && document.activeElement && document.activeElement.id === 'notes') { e.preventDefault(); saveNotes(); }
   if (e.key === 'Enter' && !e.shiftKey && !e.isComposing && document.activeElement && document.activeElement.id === 'notes') { e.preventDefault(); saveNotes(); }
@@ -648,7 +671,9 @@ window.StackupCRM = {
   leads: () => items.slice(),
   stages: () => stages.slice(),
   isUnread: x => isUnread(x),
-  open: id => openDrawer(id),
+  open: (id, tab) => { if (tab) { dtab = tab; store.set('stackup-dtab', tab); } openDrawer(id); },
+  tab: t => setDtab(t),
+  current: () => current,
   toast: (html, ms) => { const t = $('#toast'); t.innerHTML = html + '<button type="button" class="x" aria-label="Закрити">×</button>'; t.hidden = false; clearTimeout(t._h); t._h = setTimeout(() => { t.hidden = true; }, ms || 3200); }
 };
 
