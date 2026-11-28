@@ -75,6 +75,7 @@ function demoMsgs(p) {
 function demoInbox() {
   const convs = {}, seen = store.get('stackup-demo-chat-read', {});
   demoPlan().forEach(p => { const m = demoMsgs(p), last = m[m.length - 1]; convs[p.l.id] = { unread: seen[p.l.id] ? 0 : p.unread, channels: [p.ch], last: { channel: last.channel, mine: last.mine, text: last.subject ? last.subject : last.text, at: last.at } }; });
+  Object.entries(demoDraftStore()).forEach(([id, list]) => { if (!list.length) return; const c = convs[id] = convs[id] || { unread: 0, channels: [], last: null }; c.drafts = list.length; c.draft = { channel: list[0].channel, text: list[0].text, at: list[0].at }; });
   return { ok: true, convs, channels: { telegram: { on: true, bot: 'Stackup_studio_bot' }, instagram: { on: false, username: '' }, email: { on: true } } };
 }
 function demoChat(id) {
@@ -83,8 +84,24 @@ function demoChat(id) {
   const ch = {}; if (p) ch[p.ch] = p.ch === 'email' ? (p.l.email || 'client@example.com') : p.ch === 'telegram' ? '@' + String(p.l.name || 'client').split(/\s+/)[0].toLowerCase() : '@studio_client';
   const lead = C.leads().find(x => x.id === id) || {};
   if (H.validEmail(lead.email)) ch.email = lead.email;
-  return new Promise(ok => setTimeout(() => ok({ ok: true, messages: (p ? demoMsgs(p) : []).concat(extra), channels: ch, invite: ch.telegram ? '' : 'https://t.me/Stackup_studio_bot?start=' + id + '_demo' }), 500));
+  return new Promise(ok => setTimeout(() => ok({ ok: true, messages: (p ? demoMsgs(p) : []).concat(extra), drafts: demoDraftStore()[id] || [], channels: ch, invite: ch.telegram ? '' : 'https://t.me/Stackup_studio_bot?start=' + id + '_demo' }), 500));
 }
+/* демо-чернетки: кілька штук у перших клієнтів, щоб було видно, як виглядає довгий список */
+function demoDraftStore() {
+  let all = store.get('stackup-demo-drafts', null);
+  if (all) return all;
+  all = {}; const plan = demoPlan(), at = m => new Date(Date.now() - m * 60e3).toISOString();
+  if (plan[0]) all[plan[0].l.id] = [
+    { id: 'dd1', channel: 'telegram', subject: '', text: 'Дякую, що розповіли! Для квіткової майстерні онлайн-оплата і зручне замовлення з телефона — саме те, що треба. Можемо созвонитись на 15 хвилин завтра? 🌷', at: at(3), src: 'ai:reply' },
+    { id: 'dd2', channel: 'telegram', subject: '', text: 'Підготую для вас 2 варіанти: швидкий лендинг з каталогом і повноцінний магазин з кошиком. Скажіть, скільки приблизно букетів у вас в асортименті?', at: at(40), src: 'me' },
+    { id: 'dd3', channel: 'telegram', subject: '', text: 'Нагадую про себе 🙂 Якщо зручно, надішлю короткий бриф — 5 хвилин, і я порахую ціну.', at: at(300), src: 'ai:followup' },
+    { id: 'dd4', channel: 'telegram', subject: '', text: 'Ось кілька наших робіт для натхнення: stackup.studio/#work', at: at(1500), src: 'me' }
+  ];
+  if (plan[2]) all[plan[2].l.id] = [{ id: 'dd5', channel: 'email', subject: 'Re: Сайт для кав’ярні', text: 'Вітаю, Олено!\n\nДякую за бриф. Орієнтовно це $3 000–4 500 і 5–6 тижнів. Надішлю детальну пропозицію до п’ятниці.\n\nЛана, Stackup', at: at(90), src: 'ai:reply' }];
+  store.set('stackup-demo-drafts', all);
+  return all;
+}
+function demoDraftSet(id, list) { const all = demoDraftStore(); all[id] = list; store.set('stackup-demo-drafts', all); }
 const DEMO_AI = {
   analyze: '**Суть.** Квіткова майстерня хоче новий сайт з онлайн-замовленням букетів і оплатою карткою.\n\n**Наскільки гаряча: 4 з 5.** Пише сама, є біль (з телефона незручно) і зрозуміла мета.\n\n**Обсяг і ціна.** Каталог на 30–60 букетів, кошик, оплата, доставка за 2 години: орієнтовно $2 500–4 000, 4–6 тижнів.\n\n**Що уточнити**\n• Скільки букетів і як часто змінюється асортимент\n• Яку платіжку хочуть (LiqPay, WayForPay, Monobank)\n• Хто робить фото\n\n**Наступні кроки**\n• Сьогодні: відповісти і запропонувати дзвінок на 15 хв\n• Завтра: надіслати бриф\n• Через 3 дні: нагадати, якщо мовчить',
   reply: { telegram: 'Дякую, зрозуміла 🌷 Онлайн-оплату й зручне замовлення з телефона зробимо. Підкажіть, скільки приблизно букетів у каталозі і чи потрібна доставка в той самий день? Можемо коротко созвонитись на 15 хв, коли вам зручно?', instagram: 'Супер, косметика ручної роботи це гарно 🙌 Підкажіть, будь ласка, чи вже є фото товарів і яку оплату хочете підключити? Тоді одразу скажу орієнтовну ціну.', email: 'Вітаю, Олено!\n\nДякую за бриф, задача зрозуміла: новий сайт для кав’ярні з онлайн-замовленням і самовивозом.\n\nЩоб точно оцінити, підкажіть, будь ласка:\n• яка у вас каса чи POS-система;\n• чи плануєте доставку, чи лише самовивіз;\n• хто наповнюватиме меню.\n\nМожемо коротко поговорити 20 хвилин цього тижня?\n\nЛана, Stackup' },
@@ -125,10 +142,10 @@ function convRows() {
 function render() {
   const box = $('#secChats'); if (!box) return;
   const all = convRows(), chs = inbox.channels || {};
-  const counts = { all: all.length, unread: all.filter(x => x.c.unread).length, telegram: 0, instagram: 0, email: 0 };
+  const counts = { all: all.length, unread: all.filter(x => x.c.unread).length, drafts: all.filter(x => x.c.drafts).length, telegram: 0, instagram: 0, email: 0 };
   all.forEach(x => x.ch.forEach(k => { counts[k]++; }));
   const ql = q.trim().toLowerCase();
-  const list = all.filter(x => filter === 'all' || (filter === 'unread' ? x.c.unread : x.ch.includes(filter)))
+  const list = all.filter(x => filter === 'all' || (filter === 'unread' ? x.c.unread : filter === 'drafts' ? x.c.drafts : x.ch.includes(filter)))
     .filter(x => !ql || [x.l.name, x.l.company, x.l.email, x.l.phone, x.c.last && x.c.last.text].some(v => String(v || '').toLowerCase().includes(ql)))
     .sort((a, b) => String(b.at).localeCompare(String(a.at)));
   const tg = chs.telegram || {}, igc = chs.instagram || {}, em = chs.email || {};
@@ -142,7 +159,7 @@ function render() {
       <div class="ch-chan ${igc.on ? 'on' : ''}"><span class="ch-ico ig">${CH.instagram.i}</span><div><b>Instagram Direct</b><small>${igc.on ? 'Повідомлення @' + esc(igc.username) : 'Запрацює, щойно підключимо Instagram'}</small>${igc.error ? `<small class="err">${esc(igc.error)}</small>` : ''}</div></div>
       <div class="ch-chan ${em.on !== false ? 'on' : ''}"><span class="ch-ico em">${CH.email.i}</span><div><b>Пошта</b><small>Листи клієнтів з твоєї Gmail</small>${em.error ? `<small class="err">${esc(em.error)}</small>` : ''}</div></div>
     </div>
-    <div class="ch-filters" role="group" aria-label="Фільтр">${chip('all', 'Усі')}${chip('unread', 'Непрочитані')}${chip('telegram', 'Telegram')}${chip('instagram', 'Instagram')}${chip('email', 'Пошта')}</div>
+    <div class="ch-filters" role="group" aria-label="Фільтр">${chip('all', 'Усі')}${chip('unread', 'Непрочитані')}${chip('drafts', '✎ Чернетки')}${chip('telegram', 'Telegram')}${chip('instagram', 'Instagram')}${chip('email', 'Пошта')}</div>
     ${!inbox.loaded ? `<ol class="cv-list">${[0, 1, 2, 3].map(i => `<li class="cv sk" style="--i:${i}"><span class="ava sk-b"></span><span class="cv-main"><span class="sk-l w40"></span><span class="sk-l w70"></span></span></li>`).join('')}</ol>`
       : list.length ? `<ol class="cv-list">${list.map((x, i) => convRow(x, i)).join('')}</ol>`
       : `<div class="ch-none"><span class="ch-none-i" aria-hidden="true">✺</span><p><b>${all.length ? 'Тут порожньо.' : 'Поки що розмов немає.'}</b><br>${all.length ? 'Зміни фільтр або пошук.' : 'Коли клієнт напише боту в Telegram, у Direct Instagram або на пошту, розмова з’явиться тут, а для нового клієнта одразу створиться картка.'}</p></div>`}`;
@@ -153,8 +170,8 @@ function convRow(x, i) {
   return `<li><button type="button" class="cv${c.unread ? ' un' : ''}" data-chat="${esc(l.id)}" style="--i:${Math.min(i, 12)}">
     <span class="ava ${tone(l.id)}">${esc(initials(l))}${main ? `<i class="cv-ch ${main}" title="${CH[main].l}">${CH[main].i}</i>` : ''}</span>
     <span class="cv-main"><span class="cv-top"><b>${esc(nameOf(l))}</b><time class="mono">${esc(ago(x.at))}</time></span>
-    <span class="cv-prev">${last ? (last.mine ? '<em>Ти:</em> ' : '') + esc(String(last.text).replace(/\s+/g, ' ').slice(0, 110)) : `<i>${esc(l.mode === 'chat' ? 'Нова розмова' : l.mode === 'lead' ? 'Заявка з сайту' : 'Бриф')}${x.ch.length ? ' · можна написати: ' + x.ch.map(k => CH[k].l).join(', ') : ' · немає каналу для відповіді'}</i>`}</span></span>
-    ${c.unread ? `<em class="cv-n">${c.unread}</em>` : ''}</button></li>`;
+    <span class="cv-prev">${c.draft && !c.unread ? `<em class="cv-dr">Чернетка:</em> ${esc(String(c.draft.text).replace(/\s+/g, ' ').slice(0, 110))}` : last ? (last.mine ? '<em>Ти:</em> ' : '') + esc(String(last.text).replace(/\s+/g, ' ').slice(0, 110)) : `<i>${esc(l.mode === 'chat' ? 'Нова розмова' : l.mode === 'lead' ? 'Заявка з сайту' : 'Бриф')}${x.ch.length ? ' · можна написати: ' + x.ch.map(k => CH[k].l).join(', ') : ' · немає каналу для відповіді'}</i>`}</span></span>
+    ${c.unread ? `<em class="cv-n">${c.unread}</em>` : c.drafts ? `<em class="cv-d" title="Чернеток: ${c.drafts}">✎ ${c.drafts}</em>` : ''}</button></li>`;
 }
 
 /* ---------- розмова в картці ---------- */
@@ -181,7 +198,10 @@ async function loadChat(id, silent) {
     const pending = prev && prev.list ? prev.list.filter(m => m.local && (m.state === 'sending' || m.state === 'failed' || (Date.now() - new Date(m.at) < 10 * 60e3 && !srv.some(x => same(m, x))))) : [];
     const list = srv.concat(pending);
     fresh = old ? list.filter(m => !m.local && !old.has(keyOf(m))).map(keyOf) : [];
-    chats[id] = { list, channels: r.channels || {}, invite: r.invite || '', mailError: r.mailError || '', fresh };
+    const dPrev = prev && prev.drafts ? prev.drafts.map(x => x.id).join() : null;
+    chats[id] = { list, channels: r.channels || {}, invite: r.invite || '', mailError: r.mailError || '', fresh, drafts: r.drafts || (prev && prev.drafts) || [] };
+    syncDraftConv(id);
+    if (silent && dPrev !== null && dPrev !== chats[id].drafts.map(x => x.id).join() && cur && cur.id === id) renderDrafts();
     if (inbox.convs[id] && inbox.convs[id].unread) { inbox.convs[id].unread = 0; H.applySec(); if (H.sec() === 'chats') render(); }
   } catch (e) {
     if (e.message === 'unauthorized') return;
@@ -200,8 +220,10 @@ function renderChat() {
     ${t.old ? '<p class="ch-warn">Чати запрацюють після оновлення Code.gs у Google Apps Script (setupContent + нова версія розгортання).</p>' : ''}
     ${t.mailError ? `<p class="ch-warn">${t.mailError === 'gmail not allowed' ? 'Пошта ще не підключена: запусти setupContent у Google Apps Script і дозволь доступ до Gmail.' : 'Не вдалося завантажити листи з Gmail.'}</p>` : ''}
     <ol class="ch-stream" id="chStream" aria-live="polite"></ol>
+    <section class="ch-drafts" id="chDrafts" aria-label="Чернетки по клієнту" hidden></section>
     <div class="ch-compose" id="chCompose"></div>`;
   renderStream(false);
+  renderDrafts();
   renderCompose();
   fitTalk();
   void r; void ch;
@@ -260,6 +282,7 @@ function renderCompose() {
     <div class="ch-tools">
       <button type="button" class="ch-ai" data-cai="reply"${a.busy ? ' disabled' : ''}><span class="ai-spark">✱</span>Відповідь від Claude</button>
       <button type="button" class="ch-ai" data-cai="followup"${a.busy ? ' disabled' : ''}><span>↻</span>Нагадування</button>
+      <button type="button" class="ch-ai ch-keep" data-dsave${writing ? ' disabled' : ''} title="Зберегти текст із поля в чернетки цього клієнта"><span>✎</span>${d.did ? 'Оновити чернетку' : 'У чернетки'}</button>
       <span class="grow"></span>
       ${conf ? '<button type="button" class="ch-cancel mono" data-cno>НІ</button>' : ''}
       <button type="button" class="ch-send${conf ? ' confirm' : ''}" id="chSend"${writing ? ' disabled' : ''}><b>${conf ? 'Так, надіслати в ' + esc(CH[ch].l) : 'Надіслати'}</b><span>${conf ? '✓' : '→'}</span></button>
@@ -278,6 +301,86 @@ function badgeDrawer() {
   b.textContent = paneOn() ? '' : (n || '');
 }
 
+/* ---------- чернетки по клієнту ----------
+   Кожна чернетка Claude і кожен текст, збережений кнопкою «У чернетки», лежать у картці клієнта.
+   Список видно над полем відповіді, щойно відкриваєш чат; довгий список гортається всередині. */
+let draftsOpen = store.get('stackup-chat-drafts-open', true);
+const SRC = { me: 'Ти', 'ai:reply': 'Claude · відповідь', 'ai:followup': 'Claude · нагадування' };
+const freshDraft = {};
+function syncDraftConv(id) {
+  const list = (chats[id] || {}).drafts || [], c = inbox.convs[id] = inbox.convs[id] || { unread: 0, channels: [], last: null };
+  c.drafts = list.length; c.draft = list[0] ? { channel: list[0].channel, text: list[0].text, at: list[0].at } : null;
+  if (H.sec() === 'chats') render();
+}
+function addDraft(id, x) { const t = chats[id] = chats[id] || {}; t.drafts = [x].concat((t.drafts || []).filter(k => k.id !== x.id)); freshDraft[x.id] = 1; syncDraftConv(id); }
+function dropDraft(id, did) { const t = chats[id]; if (!t || !t.drafts) return; t.drafts = t.drafts.filter(k => k.id !== did); const d = drafts[id]; if (d && d.did === did) d.did = ''; syncDraftConv(id); if (cur && cur.id === id) renderDrafts(); }
+function renderDrafts() {
+  const box = $('#chDrafts'); if (!box || !cur) return;
+  const id = cur.id, t = chats[id] || {}, list = t.drafts || [], d = drafts[id] || {};
+  if (!list.length || (t.loading && !t.list)) { box.hidden = true; box.innerHTML = ''; fitTalk(); return; }
+  box.hidden = false;
+  box.className = 'ch-drafts' + (draftsOpen ? ' open' : '') + (list.length > 3 ? ' many' : '');
+  const top = list[0];
+  box.innerHTML = `<button type="button" class="chd-head" data-dtoggle aria-expanded="${draftsOpen}" aria-controls="chdList"><span class="chd-i" aria-hidden="true">✎</span><b>Чернетки по клієнту</b><em>${list.length}</em><span class="chd-peek">${draftsOpen ? '' : esc(String(top.text).replace(/\s+/g, ' ').slice(0, 90))}</span><span class="chd-arr" aria-hidden="true">⌃</span></button>
+    <ol class="chd-list" id="chdList"${draftsOpen ? '' : ' hidden'}>${list.map((x, i) => `<li class="chd ${esc(x.channel)}${x.id === d.did ? ' on' : ''}${freshDraft[x.id] ? ' new' : ''}" style="--i:${Math.min(i, 8)}" data-did="${esc(x.id)}">
+      <button type="button" class="chd-use" data-duse="${esc(x.id)}" title="Взяти в поле відповіді"><span class="chd-meta mono"><i aria-hidden="true">${CH[x.channel] ? CH[x.channel].i : ''}</i>${esc(SRC[x.src] || (String(x.src).indexOf('ai') === 0 ? 'Claude' : 'Ти'))} · ${esc(ago(x.at))}${x.id === d.did ? ' · <b>У ПОЛІ</b>' : ''}</span>${x.subject ? `<b class="chd-s">${esc(x.subject)}</b>` : ''}<span class="chd-t">${esc(x.text)}</span></button>
+      <button type="button" class="chd-del" data-ddel="${esc(x.id)}" aria-label="Видалити чернетку">✕</button></li>`).join('')}</ol>`;
+  Object.keys(freshDraft).forEach(k => delete freshDraft[k]);
+  fitTalk();
+}
+/* якщо в полі є свій текст, що ще не збережений, — спершу кладемо його в чернетки, щоб нічого не загубилось */
+function stashField(id) {
+  const d = drafts[id]; if (!d) return;
+  const text = String(d.text || '').trim(); if (!text) return;
+  const t = chats[id] || {}, same = (t.drafts || []).find(x => x.id === d.did);
+  if (same && same.text.trim() === text && String(same.subject || '') === String(d.subject || '')) return;
+  saveDraft(id, true);
+}
+async function saveDraft(id, quiet) {
+  const d = drafts[id], ch = pickChannel(id), text = String((d && d.text) || '').trim();
+  if (!text) { if (!quiet) shake($('#chText')); return; }
+  const subject = ch === 'email' ? String(d.subject || defaultSubject(id)).trim() : '';
+  const old = d.did || '';
+  const tmp = { id: 'dl' + Date.now().toString(36), channel: ch, subject, text, at: new Date().toISOString(), src: 'me' };
+  if (old) dropDraft(id, old);
+  addDraft(id, tmp); if (!quiet) d.did = tmp.id;
+  if (cur && cur.id === id) { renderDrafts(); if (!quiet) renderCompose(); }
+  try {
+    if (C.demo) demoDraftSet(id, chats[id].drafts);
+    else {
+      const r = await C.call({ action: 'draft', id, channel: ch, text, subject, did: old && !/^dl/.test(old) ? old : undefined });
+      const t = chats[id]; t.drafts = (t.drafts || []).map(x => x.id === tmp.id ? r.draft : x);
+      if (d.did === tmp.id) d.did = r.draft.id;
+      syncDraftConv(id); if (cur && cur.id === id) renderDrafts();
+    }
+    if (!quiet) C.toast('<span class="mono">ЧЕРНЕТКА</span> <b>Збережено в картці клієнта.</b>');
+  } catch (e) {
+    dropDraft(id, tmp.id);
+    C.toast('<span class="mono">ЧЕРНЕТКА</span> <b>' + esc(e.message === 'too many drafts' ? 'Забагато чернеток: видали старі.' : e.message === 'unknown action' ? 'Онови Code.gs у Google Apps Script.' : 'Не вдалося зберегти чернетку.') + '</b>', 5000);
+  }
+}
+function useDraft(id, did) {
+  const t = chats[id] || {}, x = (t.drafts || []).find(k => k.id === did); if (!x) return;
+  const d = drafts[id] = drafts[id] || {};
+  if (d.did !== did) stashField(id);
+  const avail = chans(t);
+  d.channel = avail.includes(x.channel) ? x.channel : pickChannel(id);
+  d.text = x.text; d.subject = x.subject || ''; d.did = x.local ? '' : x.id;
+  confirmFor = null; renderDrafts(); renderCompose();
+  const ta = $('#chText'); if (ta) { ta.classList.remove('pulled'); void ta.offsetWidth; ta.classList.add('pulled'); ta.focus(); ta.setSelectionRange(ta.value.length, ta.value.length); }
+  if (x.channel !== d.channel) C.toast('<b>Цей канал недоступний, чернетку взято в ' + esc(CH[d.channel] ? CH[d.channel].l : 'інший канал') + '.</b>', 4000);
+}
+async function delDraft(id, did) {
+  const li = $(`#chDrafts [data-did="${CSS.escape(did)}"]`);
+  if (li) { li.classList.add('out'); await new Promise(ok => setTimeout(ok, calm() ? 0 : 260)); }
+  const t = chats[id] || {}, keep = (t.drafts || []).slice();
+  dropDraft(id, did); if (cur && cur.id === id) renderCompose();
+  try {
+    if (C.demo) demoDraftSet(id, chats[id].drafts);
+    else if (!/^dl/.test(did)) await C.call({ action: 'draft', op: 'del', id, did });
+  } catch (e) { if (e.message !== 'not found') { chats[id].drafts = keep; syncDraftConv(id); if (cur && cur.id === id) renderDrafts(); C.toast('<b>Не вдалося видалити чернетку.</b>'); } }
+}
+
 /* ---------- надсилання (два натискання) ---------- */
 function askSend() {
   if (!cur) return;
@@ -292,9 +395,9 @@ function askSend() {
     return;
   }
   confirmFor = null; clearTimeout(confirmT);
-  doSend(id, ch, text, ch === 'email' ? String(d.subject || defaultSubject(id)).trim() : '');
+  doSend(id, ch, text, ch === 'email' ? String(d.subject || defaultSubject(id)).trim() : '', d.did || '');
 }
-async function doSend(id, ch, text, subject) {
+async function doSend(id, ch, text, subject, did) {
   const t = chats[id]; if (!t) return;
   const m = { id: 'l' + Date.now().toString(36), local: true, channel: ch, mine: true, at: new Date().toISOString(), text, subject: subject || undefined, state: 'sending' };
   t.list = (t.list || []).concat(m);
@@ -302,10 +405,11 @@ async function doSend(id, ch, text, subject) {
   renderStream(false); renderCompose();
   try {
     if (C.demo) { await new Promise(ok => setTimeout(ok, 900)); const all = store.get('stackup-demo-chat-sent', {}); (all[id] = all[id] || []).push({ id: 'ds' + Date.now(), channel: ch, mine: true, at: m.at, text, subject: m.subject }); store.set('stackup-demo-chat-sent', all); }
-    else await C.call({ action: 'chatSend', id, channel: ch, text, subject, confirm: true });
+    else await C.call({ action: 'chatSend', id, channel: ch, text, subject, confirm: true, draft: did || undefined });
     m.state = 'sent';
+    if (did) { dropDraft(id, did); if (C.demo) demoDraftSet(id, t.drafts); }
     const c = inbox.convs[id] = inbox.convs[id] || { unread: 0, channels: [ch] }; c.last = { channel: ch, mine: true, text: subject || text, at: m.at };
-  } catch (e) { m.state = 'failed'; m.error = e.message; }
+  } catch (e) { m.state = 'failed'; m.error = e.message; m.did = did; }
   if (cur && cur.id === id) renderStream(false);
   if (m.state === 'sent') setTimeout(() => { if (cur && cur.id === id) loadChat(id, true); }, 2500);
 }
@@ -336,6 +440,11 @@ async function runAi(task) {
   }
   if (task === 'analyze') { a.analyze = res.text; a.reveal = true; if (cur && cur.id === id) renderAi(); return; }
   const d = drafts[id] = drafts[id] || {}; d.channel = ch;
+  stashField(id);
+  // чернетка Claude одразу зберігається в списку чернеток клієнта (на сервері — в аркуші «Чат»)
+  const nd = res.draft || { id: 'dl' + Date.now().toString(36), channel: ch, subject: '', text: res.text, at: new Date().toISOString(), src: 'ai:' + task, local: !C.demo };
+  addDraft(id, nd); d.did = nd.local ? '' : nd.id; d.subject = '';
+  if (cur && cur.id === id) renderDrafts();
   if (!(cur && cur.id === id)) { d.text = res.text; return; }
   d.text = '';
   renderCompose();
@@ -402,11 +511,15 @@ document.addEventListener('click', e => {
   if (!t.closest('#detail')) return;
   const via = t.closest('[data-cvia]'); if (via && cur) { drafts[cur.id].channel = via.dataset.cvia; confirmFor = null; renderCompose(); const x = $('#chText'); x && x.focus(); return; }
   if (t.closest('#chSend')) { askSend(); return; }
+  if (t.closest('[data-dtoggle]')) { draftsOpen = !draftsOpen; store.set('stackup-chat-drafts-open', draftsOpen); renderDrafts(); return; }
+  const du = t.closest('[data-duse]'); if (du && cur) { useDraft(cur.id, du.dataset.duse); return; }
+  const dd = t.closest('[data-ddel]'); if (dd && cur) { delDraft(cur.id, dd.dataset.ddel); return; }
+  if (t.closest('[data-dsave]') && cur) { saveDraft(cur.id); return; }
   if (t.closest('[data-cno]')) { confirmFor = null; renderCompose(); return; }
   const ai = t.closest('[data-cai]'); if (ai) { runAi(ai.dataset.cai); return; }
   if (t.closest('[data-creload]') && cur) { loadChat(cur.id); return; }
   const mr = t.closest('[data-cmore]'); if (mr) { const p = mr.previousElementSibling; p && p.classList.remove('clamp'); mr.remove(); return; }
-  const rt = t.closest('[data-cretry]'); if (rt && cur) { const c = chats[cur.id], m = c && c.list.find(x => x.id === rt.dataset.cretry); if (m) { c.list = c.list.filter(x => x !== m); drafts[cur.id] = { channel: m.channel, subject: m.subject || '', text: m.text }; renderStream(true); renderCompose(); $('#chText') && $('#chText').focus(); } return; }
+  const rt = t.closest('[data-cretry]'); if (rt && cur) { const c = chats[cur.id], m = c && c.list.find(x => x.id === rt.dataset.cretry); if (m) { c.list = c.list.filter(x => x !== m); drafts[cur.id] = { channel: m.channel, subject: m.subject || '', text: m.text, did: m.did || '' }; renderStream(true); renderCompose(); $('#chText') && $('#chText').focus(); } return; }
   const td = t.closest('[data-ctdone]'); if (td) { const x = H.tasks().find(k => k.id === td.dataset.ctdone); if (x) { td.closest('.ct').classList.add('ticking'); addTask({ ...x, status: x.status === 'done' ? 'open' : 'done' }); } return; }
   if (t.closest('[data-ctask-ai]') && cur) {
     const id = cur.id, text = (aiS[id] || {}).analyze || '';

@@ -596,6 +596,30 @@ t('чати: Claude бачить розмову з усіх каналів, пи
   const u = body.messages[0].content; ok(/магазин косметики/.test(u), 'conversation included'); ok(/Канал: Telegram/.test(u)); ok(!/ira_flowers|555/.test(u), 'no handle or chat id');
 });
 
+t('чернетки: лише з сесією; зберегти, замінити, видалити; не потрапляють у розмову; Claude зберігає свою; надіслана зникає', () => {
+  const g = fresh(); g.ctx.setupContent(); const s = signIn(g); g.props.ANTHROPIC_KEY = 'sk-ant-x';
+  const sent = tgWorld(g, [tgMsg(1, 555, 'Привіт')]); g.ctx.pollChannels();
+  const id = g.sheets['Контакти'][1][1];
+  eq(g.post({ action: 'draft', id, channel: 'telegram', text: 'x' }).error, 'unauthorized');
+  const a = g.post({ action: 'draft', token: s.token, id, channel: 'telegram', text: 'Перша' }); ok(a.ok, JSON.stringify(a)); eq(a.drafts.length, 1);
+  const b = g.post({ action: 'draft', token: s.token, id, channel: 'telegram', text: 'Перша, виправлена', did: a.draft.id }); eq(b.drafts.length, 1); eq(b.drafts[0].text, 'Перша, виправлена');
+  const e = g.post({ action: 'draft', token: s.token, id, channel: 'email', subject: 'Тема', text: 'Лист' }); eq(e.drafts.length, 2); eq(e.draft.subject, 'Тема'); eq(e.draft.text, 'Лист');
+  eq(g.post({ action: 'draft', token: s.token, id, channel: 'sms', text: 'x' }).error, 'bad channel');
+  eq(g.post({ action: 'draft', token: s.token, id, channel: 'telegram', text: '  ' }).error, 'bad request');
+  eq(g.post({ action: 'draft', token: s.token, id: 'nope', channel: 'telegram', text: 'x' }).error, 'not found');
+  const c = g.post({ action: 'chat', token: s.token, id }); eq(c.messages.length, 1, 'drafts are not messages'); eq(c.drafts.length, 2);
+  const inb = g.post({ action: 'inbox', token: s.token }); eq(inb.convs[id].drafts, 2); eq(inb.convs[id].last.text, 'Привіт'); eq(inb.convs[id].unread, 0);
+  eq(sent.filter(x => String(x.chat_id) === '555').length, 0, 'a draft is never sent');
+  const base = g.hooks.reply; g.hooks.reply = (url, o) => /anthropic/.test(url) ? { stop_reason: 'end_turn', content: [{ type: 'text', text: 'Чернетка Claude' }] } : base(url, o);
+  const ai = g.post({ action: 'aiLead', token: s.token, id, task: 'reply', channel: 'telegram' }); ok(ai.draft && ai.draft.src === 'ai:reply', JSON.stringify(ai));
+  eq(g.post({ action: 'aiLead', token: s.token, id, task: 'analyze' }).draft, undefined, 'analysis is not a draft');
+  eq(g.post({ action: 'chat', token: s.token, id }).drafts.length, 3);
+  const r = g.post({ action: 'chatSend', token: s.token, id, channel: 'telegram', text: 'Чернетка Claude', confirm: true, draft: ai.draft.id }); ok(r.ok, JSON.stringify(r));
+  eq(g.post({ action: 'chat', token: s.token, id }).drafts.length, 2, 'sent draft is gone');
+  const del = g.post({ action: 'draft', token: s.token, op: 'del', id, did: e.draft.id }); eq(del.drafts.length, 1);
+  eq(g.post({ action: 'draft', token: s.token, op: 'del', id: 'nope', did: e.draft.id }).error, 'not found');
+  ok(!JSON.stringify(g.post({ action: 'chat', token: s.token, id })).includes('sk-ant'), 'no key');
+});
 for (const [m, n] of results) console.log(m, n);
 console.log(`\n${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);
