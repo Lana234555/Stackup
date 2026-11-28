@@ -184,7 +184,8 @@ const URL_ = `http://localhost:${WEB}/admin.html`;
     await p.waitForSelector('#app:not([hidden])');
     await p.click('.side-nav [data-sec=content][data-ctab=review]'); await p.waitForSelector('.ccard');
     const n = (await p.$$('.ccard')).length; ok(n >= 9, 'cards ' + n);
-    await p.click('.ccard'); await p.waitForSelector('#viewer.in #vCaption');
+    // перша карусель: у сторіс немає підпису, а порядок карток залежить від дат у manifest.json
+    await p.locator('.ccard:has(.k-carousel)').first().click(); await p.waitForSelector('#viewer.in #vCaption');
     await p.fill('#vCaption', 'Підпис з кабінету ✦'); await p.fill('#vAt', '2030-05-01T10:30');
     await p.click('[data-op=approve]'); await p.waitForFunction(() => /Заплановано/.test(document.querySelector('#toast').textContent));
     const tok = await p.evaluate(() => localStorage.getItem('stackup-crm-session'));
@@ -201,7 +202,7 @@ const URL_ = `http://localhost:${WEB}/admin.html`;
       const step = await Promise.race([p.waitForSelector('#otpForm:not([hidden])').then(() => 'otp'), p.waitForSelector('#app:not([hidden])').then(() => 'app')]);
       if (step === 'otp') await p.fill('#otpInput', otp()); await p.waitForSelector('#app:not([hidden])'); }
     await p.click('.side-nav [data-sec=content][data-ctab=review]'); await p.waitForSelector('.ccard.k-carousel, .ccard');
-    await p.click('.ccard:nth-child(2)'); await p.waitForSelector('#viewer.in #vTitle');
+    await p.locator('.ccard:has(.k-carousel)').nth(1).click(); await p.waitForSelector('#viewer.in #vTitle');
     await p.fill('#vTitle', 'Моя назва'); await p.click('[data-move="0"][data-dir="1"]'); await p.click('[data-hide="2"]');
     await p.click('[data-op=edit]'); await p.waitForFunction(() => /Зміни збережено/.test(document.querySelector('#toast').textContent));
     const tok = await p.evaluate(() => localStorage.getItem('stackup-crm-session'));
