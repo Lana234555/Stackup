@@ -93,7 +93,7 @@ const URL_ = `http://localhost:${WEB}/admin.html`;
   await t('правильний код із листа → відкривається воронка із заявками', async () => {
     ok(await page.isChecked('#trustInput'), 'trust should be on by default');
     await page.uncheck('#trustInput'); await page.fill('#otpInput', otp());
-    await page.waitForSelector('#app:not([hidden])'); await page.waitForSelector('#secHome:not([hidden])'); await page.click('.side-nav [data-view=board]'); await page.waitForSelector('.card');
+    await page.waitForSelector('#app:not([hidden])'); await page.waitForSelector('#secHome:not([hidden])'); await page.click('.side-nav [data-sec=leads]'); await page.click('.seg [data-view=board]'); await page.waitForSelector('.card');
     ok((await page.$$('.card')).length === 2, 'cards: ' + (await page.$$('.card')).length);
     await page.screenshot({ path: SHOTS + '/sec-board.png' });
   });
@@ -224,12 +224,15 @@ const URL_ = `http://localhost:${WEB}/admin.html`;
     if (await p.isVisible('#codeInput')) { await p.fill('#codeInput', '48271593'); await p.click('#codeBtn');
       const step = await Promise.race([p.waitForSelector('#otpForm:not([hidden])').then(() => 'otp'), p.waitForSelector('#app:not([hidden])').then(() => 'app')]);
       if (step === 'otp') await p.fill('#otpInput', otp()); await p.waitForSelector('#app:not([hidden])'); }
-    await p.click('.side-nav [data-view=list]'); await p.waitForSelector('tr.row'); await p.click('tr.row');
-    await p.waitForSelector('#tkBody'); const before = g.gmail.sent.length;
-    await p.fill('#tkBody', 'Вітаю! Дякую за заявку.'); await p.click('#tkSend'); await p.waitForSelector('#tkYes');
+    await p.click('.side-nav [data-sec=leads]'); await p.click('.seg [data-view=list]'); await p.waitForSelector('tr.row'); await p.click('tr.row');
+    await p.click('.d-tabs [data-dtab=chat]'); await p.waitForSelector('#chText'); const before = g.gmail.sent.length;
+    if (await p.isVisible('#chSubject')) await p.fill('#chSubject', 'Stackup');
+    await p.fill('#chText', 'Вітаю! Дякую за заявку.'); await p.click('#chSend'); await p.waitForSelector('#chSend.confirm');
     ok(g.gmail.sent.length === before, 'sent before confirm');
-    await p.click('#tkNo'); await p.click('#tkSend'); await p.click('#tkYes');
-    await p.waitForFunction(() => /Лист пішов/.test(document.querySelector('#toast').textContent));
+    await p.click('.ch-cancel'); await p.waitForSelector('#chSend:not(.confirm)'); await p.waitForTimeout(200);
+    ok(g.gmail.sent.length === before, 'sent after cancel');
+    await p.click('#chSend'); await p.waitForSelector('#chSend.confirm'); await p.click('#chSend');
+    await p.waitForFunction(() => document.querySelector('.msg-st[aria-label="Надіслано"]'));
     ok(g.gmail.sent.length === before + 1 && /Дякую за заявку/.test(g.gmail.sent[g.gmail.sent.length - 1].body), 'not sent');
     await p.screenshot({ path: SHOTS + '/sec-mail.png' });
     await c.close();
@@ -238,7 +241,7 @@ const URL_ = `http://localhost:${WEB}/admin.html`;
     const p4 = await ctxA.newPage(); watch(p4);
     await p4.goto(`http://localhost:${WEB}/brief.html?mode=none`); await p4.waitForTimeout(1200);
     await p4.screenshot({ path: SHOTS + '/sec-brief-csp.png' });
-    const p5 = await ctxA.newPage(); watch(p5); await p5.goto(URL_ + '?demo'); await p5.waitForSelector('.card, tr.row'); await p5.waitForTimeout(500);
+    const p5 = await ctxA.newPage(); watch(p5); await p5.goto(URL_ + '?demo&s=leads'); await p5.waitForSelector('.card, tr.row'); await p5.waitForTimeout(500);
     ok(cspErrors.length === 0, cspErrors.slice(0, 3).join(' || '));
   });
 

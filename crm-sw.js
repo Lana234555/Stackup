@@ -1,8 +1,8 @@
 // Stackup CRM as an installable app. Keeps the CRM's own files so it opens fast and
 // shows the login screen even with a weak connection. Never touches the Apps Script
 // backend: applications, tokens and files always go straight to the network.
-const CACHE = 'stackup-crm-v4';
-const SHELL = ['/admin.html', '/admin.css', '/brief.css', '/admin.js', '/hub.css', '/hub.js', '/config.js', '/assets/icons/crm-192.png?v=2'];
+const CACHE = 'stackup-crm-v5';
+const SHELL = ['/admin.html', '/admin.css', '/brief.css', '/admin.js', '/hub.css', '/hub.js', '/chat.css', '/chat.js', '/profile.js', '/mail.js', '/config.js', '/assets/icons/crm-192.png?v=2'];
 
 self.addEventListener('install', e => {
   e.waitUntil(caches.open(CACHE).then(c => c.addAll(SHELL)).catch(() => {}));

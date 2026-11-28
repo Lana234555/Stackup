@@ -23,8 +23,8 @@ const STATUS = {
   review: ['На затвердженні', 'peach'], changes: ['Правки', 'rose'], scheduled: ['Заплановано', 'blue'],
   publishing: ['Публікується', 'lav'], published: ['Опубліковано', 'mint'], failed: ['Помилка', 'err'], skipped: ['Пропущено', 'line']
 };
-const SECS = ['home', 'leads', 'content', 'tasks', 'mail', 'strategy', 'library', 'settings'];
-const TITLES = { home: 'Огляд', leads: 'Заявки', content: 'Контент', tasks: 'Задачі', mail: 'Розсилки', strategy: 'Стратегія', library: 'Матеріали', settings: 'Налаштування' };
+const SECS = ['home', 'chats', 'leads', 'content', 'tasks', 'mail', 'strategy', 'library', 'settings'];
+const TITLES = { home: 'Огляд', chats: 'Чати', leads: 'Заявки', content: 'Контент', tasks: 'Задачі', mail: 'Розсилки', strategy: 'Стратегія', library: 'Матеріали', settings: 'Налаштування' };
 const CTABS = [['review', 'На затвердженні'], ['changes', 'Правки'], ['scheduled', 'Заплановано'], ['published', 'Опубліковано'], ['all', 'Усе'], ['plan', 'Календар'], ['grid', 'Сітка профілю']];
 
 let sec = SECS.includes(new URLSearchParams(location.search).get('s')) ? new URLSearchParams(location.search).get('s') : store.get('stackup-hub-sec', 'home');
@@ -117,15 +117,18 @@ function applySec() {
   const r = byStatus('review').length, ch = byStatus('changes').length;
   $('#cntReview').textContent = r || ''; $('#tabReview').textContent = r || '';
   const nNew = C.leads().filter(C.isUnread).length; $('#tabNew').textContent = nNew || '';
-  const hot = hotTasks().length; $('#cntTasks').textContent = hot || ''; $('#tabTasks').textContent = hot || '';
+  const hot = hotTasks().length; $('#cntTasks').textContent = hot || '';
   document.title = TITLES[sec] + ' — Stackup';
-  $('#grpLeads').textContent = nNew || ''; $('#grpContent').textContent = r || ''; $('#grpWork').textContent = hot || '';
+  const nChat = window.StackupChat ? window.StackupChat.unread() : 0;
+  $('#cntChats').textContent = nChat || ''; $('#tabChats').textContent = nChat || '';
+  $('#grpLeads').textContent = (nNew + nChat) || ''; $('#grpContent').textContent = r || ''; $('#grpWork').textContent = hot || '';
   sideGroups();
   void ch;
 }
 function renderAll() {
   applySec();
   if (sec === 'home') renderHome();
+  if (sec === 'chats' && window.StackupChat) window.StackupChat.render();
   if (sec === 'content') renderContent();
   if (sec === 'tasks') renderTasks();
   if (sec === 'mail') renderMail();
@@ -353,7 +356,7 @@ function openLib(gid, k) {
 /* ---------- налаштування ---------- */
 function renderSettings() {
   const exp = ig.tokenExp ? new Date(ig.tokenExp) : null;
-  $('#secSettings').innerHTML = head('Налаштування', '') + `<nav class="more-nav">${[['strategy', '◎', 'Стратегія', 'Тренди, ринок, навчання'], ['mail', '✉', 'Розсилки', 'Листи клієнтам'], ['library', '❒', 'Матеріали', 'Бренд, логотипи, фото']].map(([k, i, l, d]) => `<button type="button" data-sec="${k}"><span>${i}</span><b>${l}</b><small>${d}</small></button>`).join('')}</nav><div class="set-grid">
+  $('#secSettings').innerHTML = head('Налаштування', '') + `<nav class="more-nav">${[['tasks', '☐', 'Задачі', 'Що зробити і коли'], ['strategy', '◎', 'Стратегія', 'Тренди, ринок, навчання'], ['mail', '✉', 'Розсилки', 'Листи клієнтам'], ['library', '❒', 'Матеріали', 'Бренд, логотипи, фото']].map(([k, i, l, d]) => `<button type="button" data-sec="${k}"><span>${i}</span><b>${l}</b><small>${d}</small></button>`).join('')}</nav><div class="set-grid">
     <section class="panel"><div class="panel-h"><h2>Claude в адмінці</h2>${ai.connected ? '<span class="pill mint">ПІДКЛЮЧЕНО</span>' : C.demo ? '<span class="pill line">ДЕМО</span>' : '<span class="pill peach">ПОТРІБЕН КЛЮЧ</span>'}</div>
       <p class="lib-note">Аналіз заявок, чернетки відповідей і нагадувань. Claude нічого не надсилає сам: чернетка з’являється в полі листа, а надсилаєш ти після підтвердження.</p>
       ${ai.connected ? '' : `<ol class="steps"><li>Зайди на console.anthropic.com, увійди і поповни баланс (вистачить $5–10 на місяці).</li><li>API keys → Create key, скопіюй ключ (починається з sk-ant-).</li><li>Google Apps Script → Project Settings → Script properties: <code>ANTHROPIC_KEY</code> = ключ.</li><li>Онови сторінку. Ключ не потрапляє в адмінку і в браузер.</li></ol>`}</section>
@@ -457,82 +460,9 @@ function renderTasks() {
     ${taskForm()}</div>`;
 }
 
-/* ---------- розсилки ---------- */
-const TEMPLATES = [
-  { id: 'ny', name: 'Привітання з Новим роком', subject: 'З Новим роком від Stackup ✦', body: 'Вітаю, {{name}}!\n\nДякую, що цього року були з нами. Бажаю, щоб у новому році ваш бізнес ріс, а сайт приводив клієнтів, поки ви відпочиваєте.\n\nЯкщо плануєте оновлення сайту чи новий проєкт у 2027, напишіть, підготую ідеї безкоштовно.\n\nЛана, Stackup\nstackup.studio' },
-  { id: 'follow', name: 'Нагадування після КП', subject: 'Щодо проєкту {{company}}', body: 'Вітаю, {{name}}!\n\nНагадую про пропозицію для {{company}}. Якщо є питання чи хочеться щось змінити в обсязі або бюджеті, давайте обговоримо, підлаштуємось.\n\nЛана, Stackup' },
-  { id: 'case', name: 'Новий кейс у портфоліо', subject: 'Новий проєкт Stackup', body: 'Вітаю, {{name}}!\n\nМи щойно запустили новий проєкт і хочу поділитися: stackup.studio\n\nЯкщо вам теж потрібен сайт, який продає, буду рада допомогти.\n\nЛана, Stackup' },
-  { id: 'blank', name: 'Порожній лист', subject: '', body: 'Вітаю, {{name}}!\n\n\n\nЛана, Stackup' }
-];
-let mailMeta = null, mailPick = null, mailStage = 'all', mailConfirm = false, mailBusy = false;
-const mailDraft = store.get('stackup-mail-draft', { subject: TEMPLATES[0].subject, body: TEMPLATES[0].body });
+/* ---------- розсилки: див. mail.js (кампанії, аудиторії, хто вже отримав) ---------- */
 const validEmail = e => /^[^\s@<>"'(),;:\\]+@[^\s@<>"'(),;:\\]+\.[a-z]{2,}$/i.test(String(e || '').trim());
-const optout = () => (mailMeta && mailMeta.optout) || store.get('stackup-demo-optout', []);
-const fillTpl = (s, l) => String(s).replace(/\{\{\s*name\s*\}\}/g, String(l.name || '').split(/\s+/)[0] || 'вітаю').replace(/\{\{\s*company\s*\}\}/g, l.company || l.name || '');
-async function loadMailMeta() {
-  if (C.demo) { mailMeta = { optout: store.get('stackup-demo-optout', []), quota: 100, log: store.get('stackup-demo-maillog', []) }; return; }
-  try { mailMeta = await C.call({ action: 'mailMeta' }); } catch (e) { mailMeta = { optout: [], quota: null, log: [], error: e.message }; }
-}
-function renderMail() {
-  const el = $('#secMail');
-  if (!mailMeta) { el.innerHTML = head('Розсилки', 'ЗАВАНТАЖУЄМО…'); loadMailMeta().then(() => { if (sec === 'mail') renderMail(); }); return; }
-  const off = optout().map(x => x.toLowerCase());
-  const L = C.leads().filter(l => validEmail(l.email));
-  const stages = C.stages();
-  const shown = L.filter(l => mailStage === 'all' ? l.status !== 'archive' : l.status === mailStage);
-  if (!mailPick) mailPick = {};
-  const picked = L.filter(l => mailPick[l.id] && !off.includes(String(l.email).toLowerCase()));
-  const first = picked[0] || shown[0] || { name: 'Олена', company: 'Coffee Lab' };
-  const sel = mailDraft; previewFor = first;
-  el.innerHTML = head('Розсилки', 'ЛИСТИ ЙДУТЬ З ТВОЄЇ ПОШТИ · ЛИШЕ ПІСЛЯ ПІДТВЕРДЖЕННЯ') + `<div class="ml-wrap">
-    <section class="panel ml-compose"><div class="panel-h"><h2>Лист</h2><select id="mTpl" aria-label="Шаблон"><option value="">Шаблони…</option>${TEMPLATES.map(t => `<option value="${t.id}">${esc(t.name)}</option>`).join('')}</select></div>
-      <label class="v-label mono" for="mSubject">ТЕМА</label><input type="text" id="mSubject" maxlength="200" value="${esc(sel.subject)}">
-      <label class="v-label mono" for="mBody">ТЕКСТ <em>{{name}} — ІМʼЯ · {{company}} — КОМПАНІЯ</em></label><textarea id="mBody" rows="11" maxlength="20000">${esc(sel.body)}</textarea>
-      <p class="v-label mono">ТАК ПОБАЧИТЬ ${esc(String(first.name || '').toUpperCase())}</p>
-      <div class="ml-preview" id="mPreview"><b>${esc(fillTpl(sel.subject, first))}</b><p>${esc(fillTpl(sel.body, first)).replace(/\n/g, '<br>')}</p><small>—<br>Якщо не хочете отримувати такі листи, дайте відповідь «відписатися», і ми більше не напишемо.</small></div>
-      ${mailConfirm ? `<div class="confirm-box"><p><b>Надіслати ${picked.length} ${picked.length === 1 ? 'лист' : picked.length < 5 ? 'листи' : 'листів'}?</b> Кожен отримає окремий лист зі своїм іменем. Скасувати після надсилання не можна.</p><p class="mono">${picked.slice(0, 12).map(l => esc(l.company || l.name)).join(' · ')}${picked.length > 12 ? ' …' : ''}</p>
-        <div class="v-acts"><button type="button" class="button primary" id="mSendYes"${mailBusy ? ' disabled' : ''}><b>${mailBusy ? 'Надсилаю…' : 'Підтверджую, надіслати'}</b><span>✓</span></button><button type="button" class="button ghost" id="mSendNo"><b>Скасувати</b><span>×</span></button></div></div>`
-      : `<button type="button" class="button primary" id="mSend"${picked.length ? '' : ' disabled'}><b>${picked.length ? 'Надіслати ' + picked.length + ' отримувачам…' : 'Обери отримувачів'}</b><span>→</span></button>`}
-      ${mailMeta.quota != null ? `<p class="mono v-hint">ЛІМІТ GOOGLE НА СЬОГОДНІ: ${esc(mailMeta.quota)} ЛИСТІВ</p>` : ''}
-    </section>
-    <section class="panel ml-to"><div class="panel-h"><h2>Кому</h2><span class="mono">${picked.length} ОБРАНО</span></div>
-      <div class="chips"><button type="button" data-mstage="all" aria-pressed="${mailStage === 'all'}">Усі активні</button>${stages.map(s => `<button type="button" data-mstage="${esc(s.id)}" aria-pressed="${mailStage === s.id}">${esc(s.name)}</button>`).join('')}<button type="button" data-mstage="archive" aria-pressed="${mailStage === 'archive'}">Архів</button></div>
-      <div class="ml-bulk"><button type="button" class="link mono" id="mAll">ОБРАТИ ВСІХ ТУТ</button><button type="button" class="link mono" id="mNone">ЗНЯТИ ВСЕ</button></div>
-      <ul class="ml-list">${shown.map(l => { const no = off.includes(String(l.email).toLowerCase()); return `<li class="${no ? 'off' : ''}"><label><input type="checkbox" data-mpick="${esc(l.id)}"${mailPick[l.id] && !no ? ' checked' : ''}${no ? ' disabled' : ''}><span><b>${esc(l.company || l.name)}</b><small>${esc(l.email)}</small></span></label><button type="button" class="link mono" data-optout="${esc(l.email)}" data-on="${no ? '0' : '1'}">${no ? 'ПОВЕРНУТИ' : 'ВІДПИСАТИ'}</button></li>`; }).join('') || '<li class="empty">Тут немає клієнтів з email.</li>'}</ul>
-    </section>
-    ${(mailMeta.log || []).length ? `<section class="panel ml-log"><div class="panel-h"><h2>Надіслані</h2></div><ul>${mailMeta.log.slice(0, 20).map(r => `<li><span class="mono">${esc(String(r.time).slice(0, 16))} · ${esc(String(r.kind).toUpperCase())}</span><b>${esc(r.subject)}</b><small>${esc(leadName(r.lead) || r.lead)} · ${esc(r.status)}</small></li>`).join('')}</ul></section>` : ''}
-  </div>`;
-}
-let previewFor = null;
-function mailPreview() {
-  const el = $('#mPreview'); if (!el) return;
-  const l = previewFor || { name: 'Олена', company: 'Coffee Lab' };
-  el.querySelector('b').textContent = fillTpl(mailDraft.subject, l);
-  el.querySelector('p').innerHTML = esc(fillTpl(mailDraft.body, l)).replace(/\n/g, '<br>');
-}
-async function sendMailing() {
-  const off = optout().map(x => x.toLowerCase());
-  const ids = C.leads().filter(l => mailPick[l.id] && validEmail(l.email) && !off.includes(String(l.email).toLowerCase())).map(l => l.id);
-  const subject = mailDraft.subject.trim(), body = mailDraft.body.trim();
-  if (!ids.length || !subject || !body) { mailConfirm = false; renderMail(); return C.toast('<b>Заповни тему, текст і обери отримувачів.</b>'); }
-  mailBusy = true; renderMail();
-  try {
-    let r;
-    if (C.demo) { r = { sent: ids.length }; const log = store.get('stackup-demo-maillog', []); ids.forEach(id => log.unshift({ time: new Date().toISOString().replace('T', ' '), lead: id, subject, kind: 'розсилка', status: 'демо, не надіслано' })); store.set('stackup-demo-maillog', log.slice(0, 60)); }
-    else r = await C.call({ action: 'mailing', ids, subject, body, confirm: true });
-    C.toast('<span class="mono">' + (C.demo ? 'ДЕМО' : 'НАДІСЛАНО') + '</span> <b>' + (C.demo ? 'У демо листи не надсилаються.' : 'Листів: ' + r.sent) + '</b>', 5000);
-    mailPick = {}; mailConfirm = false; mailMeta = null;
-  } catch (e) { C.toast('<span class="mono">ПОМИЛКА</span> <b>' + esc(e.message === 'mail quota' ? 'Google сьогодні вже не дозволяє стільки листів.' : e.message === 'gmail not allowed' ? 'Немає доступу до Gmail: запусти setupContent і дозволь доступ.' : 'Не вдалося надіслати.') + '</b>', 6000); mailConfirm = false; }
-  finally { mailBusy = false; renderMail(); }
-}
-async function toggleOptout(email, on) {
-  try {
-    let list;
-    if (C.demo) { list = store.get('stackup-demo-optout', []).filter(x => x !== email.toLowerCase()); if (on) list.push(email.toLowerCase()); store.set('stackup-demo-optout', list); }
-    else list = (await C.call({ action: 'optout', email, on })).optout;
-    mailMeta = { ...(mailMeta || {}), optout: list }; renderMail();
-  } catch (e) { C.toast('<b>Не вдалося змінити.</b>'); }
-}
+function renderMail() { if (window.StackupMail) window.StackupMail.render(); }
 
 /* ---------- стратегія ---------- */
 const STABS = [['trends', 'Тренди дня'], ['clients', 'Пошук клієнтів'], ['week', 'Стратегія тижня'], ['market', 'Ринок і конкуренти'], ['learn', 'Навчання'], ['dates', 'Свята і можливості']];
@@ -620,83 +550,8 @@ function homeTrend() {
   return `<section class="panel"><div class="panel-h"><h2>Тренд дня</h2><button type="button" class="link mono" data-sec="strategy" data-stab="trends">УСІ →</button></div>${d ? `<p class="mono">${esc(dayName(d.date + 'T12:00:00').toUpperCase())}</p>${d.focus ? `<div class="tr-focus mini"><span class="mono">ГОЛОВНЕ НА СЬОГОДНІ</span><b>${text(d.focus.title)}</b></div>` : ''}${(d.items || []).slice(0, 2).map(t => `<div class="tr mini"><h3>${esc(t.title)}</h3><p class="tr-use">${text(t.use)}</p></div>`).join('')}` : '<p class="empty">Перший звіт трендів скоро буде.</p>'}</section>`;
 }
 
-/* ---------- у картці заявки: листування і Claude ---------- */
-const talk = {}, aiOut = {};
-let cur = null, sendStep = false;
-const DEMO_THREAD = [
-  { mine: false, date: new Date(Date.now() - 3 * DAY).toISOString(), subject: 'Сайт для кав’ярні', text: 'Добрий день! Хочемо оновити сайт і додати онлайн-замовлення. Скільки це може коштувати?' },
-  { mine: true, date: new Date(Date.now() - 2 * DAY).toISOString(), subject: 'Re: Сайт для кав’ярні', text: 'Вітаю, Олено! Дякую за звернення. Заповніть, будь ласка, короткий бриф, і я підготую оцінку.' }
-];
-async function loadTalk(id) {
-  talk[id] = { loading: true }; renderTalk();
-  try {
-    const r = C.demo ? await new Promise(ok => setTimeout(() => ok({ email: (cur && cur.row.email) || '', messages: DEMO_THREAD }), 300)) : await C.call({ action: 'thread', id });
-    talk[id] = { messages: r.messages || [], email: r.email };
-  } catch (e) { talk[id] = { error: e.message }; }
-  if (cur && cur.id === id) renderTalk();
-}
-function renderTalk() {
-  const box = $('#dTalk'); if (!box || !cur) return;
-  const row = cur.row, id = cur.id, t = talk[id] || {}, a = aiOut[id] || {};
-  const email = String(row.email || '').trim();
-  const msgs = t.messages || [];
-  const last = msgs.slice().reverse().find(m => !m.mine) || msgs[msgs.length - 1];
-  const subjDefault = last ? (/^re:/i.test(last.subject) ? last.subject : 'Re: ' + last.subject) : 'Stackup: ' + (row.type || 'ваш проєкт');
-  const draft = talk['d:' + id] || { subject: subjDefault, body: '' };
-  talk['d:' + id] = draft;
-  box.innerHTML = `<h3><span class="mono">✉</span>Листування</h3>
-    ${!validEmail(email) ? '<p class="lead">У заявці немає email. Напиши клієнту в Telegram або за телефоном.</p>' :
-      t.loading ? '<p class="mono loading">ЗАВАНТАЖУЄМО ЛИСТИ…</p>' :
-      t.error ? `<p class="lead">${esc(t.error === 'gmail not allowed' || t.error === 'server error' ? 'Пошта ще не підключена. Запусти setupContent у Google Apps Script і дозволь доступ до Gmail.' : 'Не вдалося завантажити листи.')}</p>` :
-      msgs.length ? `<ol class="tk-msgs">${msgs.map(m => `<li class="${m.mine ? 'me' : 'them'}"><span class="mono">${m.mine ? 'ТИ' : 'КЛІЄНТ'} · ${esc(when(m.date).toUpperCase())}</span><p>${esc(m.text).replace(/\n/g, '<br>')}</p></li>`).join('')}</ol>` : '<p class="lead">Листів з цим клієнтом ще не було.</p>'}
-    ${validEmail(email) ? `<div class="tk-compose">
-      <input type="text" id="tkSubject" maxlength="200" value="${esc(draft.subject)}" aria-label="Тема">
-      <textarea id="tkBody" rows="5" maxlength="20000" placeholder="Текст листа. Або натисни «Чернетка від Claude».">${esc(draft.body)}</textarea>
-      ${sendStep ? `<div class="confirm-box"><p><b>Надіслати лист клієнту?</b><br>Кому: ${esc(email)}</p><div class="v-acts"><button type="button" class="button primary sm" id="tkYes"><b>Підтверджую, надіслати</b><span>✓</span></button><button type="button" class="button ghost sm" id="tkNo"><b>Ні</b><span>×</span></button></div></div>`
-      : `<div class="v-acts"><button type="button" class="button ghost sm" data-ai="reply"${a.busy ? ' disabled' : ''}><b>${a.busy === 'reply' ? 'Claude пише…' : 'Чернетка від Claude'}</b><span>✱</span></button><button type="button" class="button ghost sm" data-ai="followup"${a.busy ? ' disabled' : ''}><b>${a.busy === 'followup' ? 'Claude пише…' : 'Нагадування'}</b><span>↻</span></button><button type="button" class="button primary sm" id="tkSend"><b>Надіслати…</b><span>→</span></button></div>`}
-      <p class="mono v-hint">ЛИСТ ПІДЕ З ТВОЄЇ ПОШТИ ЛИШЕ ПІСЛЯ ПІДТВЕРДЖЕННЯ</p></div>` : ''}`;
-  const ab = $('#dAi'); if (!ab) return;
-  ab.innerHTML = `<h3><span class="mono">✱</span>Аналіз Claude</h3>
-    ${a.analyze ? `<div class="ai-out">${text(a.analyze)}</div>` : '<p class="lead">Claude прочитає бриф, нотатки і листування, оцінить, наскільки клієнт гарячий, і підкаже ціну та наступні кроки.</p>'}
-    <div class="v-acts"><button type="button" class="button ghost sm" data-ai="analyze"${a.busy ? ' disabled' : ''}><b>${a.busy === 'analyze' ? 'Аналізую…' : a.analyze ? 'Проаналізувати ще раз' : 'Проаналізувати заявку'}</b><span>✱</span></button>
-    <button type="button" class="button ghost sm" id="tkTask"><b>Створити задачу</b><span>＋</span></button></div>
-    ${!ai.connected && !C.demo ? '<p class="mono v-hint">ПОТРІБЕН КЛЮЧ CLAUDE API (НАЛАШТУВАННЯ)</p>' : ''}`;
-}
-const DEMO_AI = {
-  analyze: '**Суть.** Кав’ярня хоче оновити сайт і додати онлайн-замовлення з самовивозом.\n\n**Наскільки гаряча: 4 з 5.** Є бюджет, чіткий термін і готові фото.\n\n**Обсяг і ціна.** 6–8 сторінок, меню з кошиком, оплата карткою: орієнтовно $3 500–5 000, 5–7 тижнів.\n\n**Що уточнити**\n• Яка каса чи POS у них стоїть\n• Доставка чи лише самовивіз\n• Хто наповнює меню\n\n**Наступні кроки**\n• Сьогодні: відповісти і запропонувати дзвінок на 20 хв\n• До п’ятниці: надіслати КП з двома варіантами\n• Через тиждень: нагадування, якщо мовчить',
-  reply: 'Вітаю, Олено!\n\nДякую за бриф, задача зрозуміла: новий сайт для Coffee Lab з онлайн-замовленням і самовивозом.\n\nЩоб точно оцінити, підкажіть, будь ласка:\n• яка у вас каса чи POS-система;\n• чи плануєте доставку, чи лише самовивіз;\n• хто наповнюватиме меню.\n\nМожемо коротко поговорити 20 хвилин цього тижня? Напишіть зручний час.\n\nЛана, Stackup',
-  followup: 'Вітаю, Олено!\n\nНагадую про пропозицію для Coffee Lab. До речі, кав’ярні, які додають замовлення на сайті, зазвичай отримують чималу частку замовлень онлайн уже в перший місяць.\n\nЯкщо є питання, я на зв’язку.\n\nЛана'
-};
-async function runAi(task) {
-  if (!cur) return; const id = cur.id, a = aiOut[id] = aiOut[id] || {};
-  if (!ai.connected && !C.demo) { C.toast('<b>Спершу додай ключ Claude API (див. Налаштування).</b>', 5000); return; }
-  a.busy = task; renderTalk();
-  try {
-    const r = C.demo ? await new Promise(ok => setTimeout(() => ok({ text: DEMO_AI[task] }), 900)) : await C.call({ action: 'aiLead', id, task });
-    if (task === 'analyze') a.analyze = r.text;
-    else { const d = talk['d:' + id]; d.body = r.text; }
-  } catch (e) { C.toast('<span class="mono">CLAUDE</span> <b>' + esc(e.message === 'ai not configured' ? 'Ключ Claude API ще не додано.' : e.message === 'ai busy' ? 'Claude зараз перевантажений. Спробуй за хвилину.' : 'Не вдалося отримати відповідь.') + '</b>', 5000); }
-  finally { a.busy = false; if (cur && cur.id === id) renderTalk(); }
-}
-async function sendOne() {
-  if (!cur) return; const id = cur.id, d = talk['d:' + id];
-  if (!d.subject.trim() || !d.body.trim()) { sendStep = false; renderTalk(); return C.toast('<b>Заповни тему і текст.</b>'); }
-  try {
-    if (C.demo) C.toast('<span class="mono">ДЕМО</span> <b>У демо листи не надсилаються.</b>');
-    else { await C.call({ action: 'sendMessage', id, subject: d.subject, body: d.body, confirm: true }); C.toast('<span class="mono">НАДІСЛАНО</span> <b>Лист пішов клієнту.</b>'); }
-    talk['d:' + id] = null; sendStep = false;
-    if (!C.demo) loadTalk(id); else renderTalk();
-  } catch (e) { sendStep = false; renderTalk(); C.toast('<span class="mono">ПОМИЛКА</span> <b>' + esc(e.message === 'gmail not allowed' ? 'Немає доступу до Gmail.' : e.message === 'mail quota' ? 'Ліміт листів на сьогодні вичерпано.' : 'Лист не надіслано.') + '</b>', 6000); }
-}
-document.addEventListener('stackup:detail', e => {
-  const d = e.detail || {}; const changed = !cur || cur.id !== d.id;
-  cur = { id: d.id, row: d.row || {} };
-  if (changed) sendStep = false;
-  if (!talk[d.id] && validEmail(cur.row.email)) loadTalk(d.id); else renderTalk();
-});
-
 /* ---------- бокове меню: секції згортаються, відкрита та, де ти зараз ---------- */
-const GROUP_OF = { leads: 'leads', mail: 'leads', content: 'content', tasks: 'work', strategy: 'work', library: 'company', settings: 'company' };
+const GROUP_OF = { chats: 'leads', leads: 'leads', mail: 'leads', content: 'content', tasks: 'work', strategy: 'work', library: 'company', settings: 'company' };
 function sideGroups() {
   const closed = store.get('stackup-side-closed', {}), active = GROUP_OF[sec];
   $$('.side-sec').forEach(g => { const open = g.dataset.group === active || !closed[g.dataset.group]; g.querySelector('.side-group').setAttribute('aria-expanded', String(open)); });
@@ -731,14 +586,6 @@ document.addEventListener('click', e => {
   const tt = t.closest('[data-trtask]'); if (tt) { const [dt, k, j] = tt.dataset.trtask.split(':'); const d = ((insights && insights.trends) || []).find(x => x.date === dt); const a = d && trAction(d, +k, +j); if (a) saveTask({ title: a.replace(/\*\*/g, '').slice(0, 200), priority: 'normal', status: 'open', due: localInput(new Date(Date.now() + 2 * DAY).toISOString()).slice(0, 10), lead: '', note: 'Тренд дня: ' + ((d.items[+k] || {}).title || '') }).then(x => x && C.toast('<span class="mono">ЗАДАЧІ</span> <b>Додано.</b>')); return; }
   const cs = t.closest('[data-clscript]'); if (cs) { const x = ((insights && insights.clients && insights.clients.scripts) || [])[+cs.dataset.clscript]; if (x && navigator.clipboard) navigator.clipboard.writeText(x.text.replace(/\*\*/g, '')).then(() => C.toast('<span class="mono">СКОПІЙОВАНО</span> <b>Підстав імʼя і деталі перед відправкою.</b>')); return; }
   const lt = t.closest('[data-learntask]'); if (lt) { const l = ((insights && insights.lessons) || []).find(x => x.id === lt.dataset.learntask); if (l) saveTask({ title: l.task.replace(/\*\*/g, '').slice(0, 200), priority: 'normal', status: 'open', due: localInput(new Date(Date.now() + 3 * DAY).toISOString()).slice(0, 10), lead: '', note: 'Урок: ' + l.title }).then(x => x && C.toast('<span class="mono">ЗАДАЧІ</span> <b>Додано.</b>')); return; }
-  const ms = t.closest('[data-mstage]'); if (ms) { mailStage = ms.dataset.mstage; renderMail(); return; }
-  const mp = t.closest('[data-mpick]'); if (mp) { mailPick[mp.dataset.mpick] = mp.checked; mailConfirm = false; renderMail(); return; }
-  const mo2 = t.closest('[data-optout]'); if (mo2) { toggleOptout(mo2.dataset.optout, mo2.dataset.on === '1'); return; }
-  if (t.closest('#mAll')) { const off = optout().map(x => x.toLowerCase()); C.leads().filter(l => validEmail(l.email) && !off.includes(String(l.email).toLowerCase()) && (mailStage === 'all' ? l.status !== 'archive' : l.status === mailStage)).forEach(l => { mailPick[l.id] = true; }); renderMail(); return; }
-  if (t.closest('#mNone')) { mailPick = {}; mailConfirm = false; renderMail(); return; }
-  if (t.closest('#mSend')) { mailConfirm = true; renderMail(); return; }
-  if (t.closest('#mSendNo')) { mailConfirm = false; renderMail(); return; }
-  if (t.closest('#mSendYes')) { sendMailing(); return; }
   const lib = t.closest('[data-lib]'); if (lib) { openLib(lib.dataset.lib, +lib.dataset.k); return; }
   const lg = t.closest('[data-libgo]'); if (lg) { openLib(lg.dataset.libg, +lg.dataset.libgo); return; }
   const lj = t.closest('[data-libjump]'); if (lj) { e.preventDefault(); const target = document.getElementById('lib-' + lj.dataset.libjump); if (target) target.scrollIntoView({ behavior: 'smooth', block: 'start' }); return; }
@@ -765,11 +612,8 @@ document.addEventListener('keydown', e => {
 document.addEventListener('input', e => {
   const id = e.target.id;
   if (id === 'vCaption') $('#capLen').textContent = e.target.value.length + ' / 2200';
-  if (id === 'mSubject' || id === 'mBody') { mailDraft[id === 'mSubject' ? 'subject' : 'body'] = e.target.value; store.set('stackup-mail-draft', mailDraft); mailPreview(); }
-  if ((id === 'tkSubject' || id === 'tkBody') && cur) { const d = talk['d:' + cur.id]; if (d) d[id === 'tkSubject' ? 'subject' : 'body'] = e.target.value; }
 });
 document.addEventListener('change', e => {
-  if (e.target.id === 'mTpl' && e.target.value) { const t = TEMPLATES.find(x => x.id === e.target.value); if (t) { mailDraft.subject = t.subject; mailDraft.body = t.body; store.set('stackup-mail-draft', mailDraft); mailConfirm = false; renderMail(); } }
 });
 document.addEventListener('submit', e => {
   if (e.target.id !== 'taskForm') return;
@@ -778,13 +622,7 @@ document.addEventListener('submit', e => {
   const base = tasks.find(x => x.id === tedit) || {};
   saveTask({ ...base, id: tedit || undefined, title, priority: (($('input[name=tPrio]:checked') || {}).value) || 'normal', status: base.status || 'open', due: $('#tDue').value, lead: $('#tLead').value, note: $('#tNote').value.trim() }).then(x => { if (x) { tedit = null; renderTasks(); C.toast('<span class="mono">ЗАДАЧІ</span> <b>Збережено.</b>'); } });
 });
-function detailClick(t) {
-  const ab = t.closest('[data-ai]'); if (ab) { runAi(ab.dataset.ai); return; }
-  if (t.closest('#tkSend')) { sendStep = true; renderTalk(); return; }
-  if (t.closest('#tkNo')) { sendStep = false; renderTalk(); return; }
-  if (t.closest('#tkYes')) { sendOne(); return; }
-  if (t.closest('#tkTask') && cur) { const r = cur.row; saveTask({ title: 'Відповісти: ' + (r.company || r.name || 'клієнт'), priority: r.status === 'new' ? 'urgent' : 'high', status: 'open', due: today(), lead: cur.id, note: '' }).then(x => x && C.toast('<span class="mono">ЗАДАЧІ</span> <b>Задачу створено.</b>')); }
-}
+function detailClick() { /* картку клієнта веде chat.js */ }
 /* свайп у перегляді */
 (() => { let x0 = null; document.addEventListener('touchstart', e => { if (e.target.closest('.v-frame')) x0 = e.touches[0].clientX; }, { passive: true });
   document.addEventListener('touchend', e => { if (x0 == null) return; const dx = e.changedTouches[0].clientX - x0; x0 = null; if (Math.abs(dx) > 40) { const b = $('#viewer .v-arrow.' + (dx < 0 ? 'r' : 'l') + ':not([disabled])'); if (b) b.click(); } }, { passive: true }); })();
@@ -795,8 +633,10 @@ async function refresh() {
 function onEnter() { applySec(); refresh(); clearInterval(pollT); pollT = setInterval(() => { if (!document.hidden && !busy && !open) refresh(); }, 60000); }
 document.addEventListener('stackup:enter', onEnter);
 document.addEventListener('stackup:leads', () => { applySec(); if (sec === 'home') renderHome(); });
-document.addEventListener('stackup:wipe', () => { clearInterval(pollT); state = {}; tasks = []; tasksLoaded = false; mailMeta = null; cur = null; Object.keys(talk).forEach(k => delete talk[k]); Object.keys(aiOut).forEach(k => delete aiOut[k]); manifest = { items: [] }; library = null; open = null; $$('.sec:not(#secLeads)').forEach(x => { x.innerHTML = ''; }); const v = $('#viewer'); if (v) { v.hidden = true; v.innerHTML = ''; } });
+document.addEventListener('stackup:wipe', () => { clearInterval(pollT); state = {}; tasks = []; tasksLoaded = false; manifest = { items: [] }; library = null; open = null; $$('.sec:not(#secLeads)').forEach(x => { x.innerHTML = ''; }); const v = $('#viewer'); if (v) { v.hidden = true; v.innerHTML = ''; } });
 document.addEventListener('visibilitychange', () => { if (!document.hidden && !$('#app').hidden && !open) refresh(); });
+/* міст для chat.js: Claude, задачі, розділи */
+window.StackupHub = { ai: () => ai, ig: () => ig, tasks: () => tasks, saveTask, today, PRIO, sec: () => sec, setSec, applySec, validEmail, text, when, fmt };
 applySec();
 if (!$('#app').hidden) onEnter(); // admin.js міг увійти раніше, ніж завантажився цей файл
 })();

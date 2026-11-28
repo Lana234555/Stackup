@@ -328,8 +328,8 @@ t('content: publishNow без Instagram пояснює, що не підключ
 t('connectInstagram: чистить токен, зберігає акаунт, ставить тригери, токен не видно в кабінеті', () => {
   const g = fresh(); const s = signIn(g); connected(g);
   eq(g.props.IG_USER_ID, '1789'); eq(g.props.IG_USERNAME, 'stackup.studio'); eq(g.props.IG_TOKEN, 'NEWTOKEN');
-  eq(g.triggers.map(x => x.fn).sort().join(','), 'dailyDigest,publishDue,refreshInstagramToken');
-  g.ctx.connectInstagram(); eq(g.triggers.length, 3, 'no duplicate triggers');
+  eq(g.triggers.map(x => x.fn).sort().join(','), 'dailyDigest,pollChannels,publishDue,refreshInstagramToken');
+  g.ctx.connectInstagram(); eq(g.triggers.length, 4, 'no duplicate triggers');
   const st = g.post({ action: 'content', token: s.token }); eq(st.ig.connected, true); eq(st.ig.username, 'stackup.studio');
   ok(!JSON.stringify(st).includes('NEWTOKEN') && !JSON.stringify(st).includes('IGAA'), 'token leaked');
 });
@@ -489,6 +489,169 @@ t('dailyDigest: Telegram із задачами, затвердженням, за
   ok(/Термінова справа/.test(m), m); ok(/Чекає твого затвердження/.test(m), m); ok(/Нові заявки/.test(m), m); ok(/Тестове свято/.test(m), m); ok(/рілс/.test(m), m);
 });
 
+/* ---------- чати: Telegram, Instagram, пошта ---------- */
+function tgWorld(g, updates, opt = {}) {
+  g.props.TG_TOKEN = '1234567890:AAH_test-token-abcdefghijklmnopqrstuv'; g.props.TG_CHAT = '777'; g.props.TG_BOT = 'Stackup_studio_bot';
+  const sent = [];
+  g.hooks.reply = (url, o) => {
+    if (/getUpdates/.test(url)) { const off = JSON.parse(o.payload || '{}').offset || 0; return { ok: true, result: updates.filter(u => u.update_id >= off) }; }
+    if (/api\.telegram\.org.*sendMessage/.test(url)) { const b = JSON.parse(o.payload); sent.push(b); if (opt.blocked && String(b.chat_id) !== '777') return { ok: false, description: 'Forbidden: bot was blocked by the user' }; return { ok: true, result: { message_id: 900 + sent.length } }; }
+    return undefined;
+  };
+  return sent;
+}
+const tgMsg = (id, chat, text, from = {}) => ({ update_id: id, message: { message_id: id, date: Math.floor(Date.now() / 1000), chat: { id: chat, type: 'private' }, from: { id: chat, first_name: 'Ірина', username: 'ira_flowers', ...from }, text } });
+
+t('чати: новий клієнт пише боту → нова картка, повідомлення, сповіщення Лані; свої повідомлення Лани ігноруються; повтор не дублюється', () => {
+  const g = fresh(); g.ctx.setupContent();
+  const ups = [tgMsg(1, 555, 'Добрий день! Скільки коштує лендинг?'), tgMsg(2, 777, 'це Лана пише боту'), tgMsg(3, 555, '=HYPERLINK("x")')];
+  const sent = tgWorld(g, ups);
+  g.ctx.pollChannels();
+  const leads = g.sheets['Заявки'].slice(1).filter(r => r[7] === 'chat');
+  eq(leads.length, 1, 'one new lead'); eq(leads[0][8], 'Telegram'); eq(leads[0][6].text, '@ira_flowers'); eq(leads[0][2], 'new');
+  const msgs = g.sheets['Чат'].slice(1); eq(msgs.length, 2, 'owner message ignored');
+  ok(msgs[1][4] && msgs[1][4].text === '=HYPERLINK("x")', 'formula stored as text');
+  eq(g.props.TG_OFFSET, '4');
+  ok(sent.some(b => String(b.chat_id) === '777' && /Скільки коштує лендинг|HYPERLINK/.test(b.text)), 'Lana notified');
+  ok(!sent.some(b => String(b.chat_id) === '555'), 'nothing sent to the client automatically');
+  g.props.TG_OFFSET = '0'; g.ctx.pollChannels();
+  eq(g.sheets['Чат'].slice(1).length, 2, 'no duplicates on re-poll');
+  eq(g.sheets['Заявки'].slice(1).filter(r => r[7] === 'chat').length, 1, 'no duplicate lead');
+});
+t('чати: посилання «Запросити в Telegram» прив’язує чат до існуючої картки лише з правильним підписом', () => {
+  const g = fresh(); g.ctx.setupContent(); const s = signIn(g); const b = seedBrief(g);
+  tgWorld(g, []);
+  const c = g.post({ action: 'chat', token: s.token, id: b.id });
+  ok(c.ok, JSON.stringify(c)); ok(/^https:\/\/t\.me\/Stackup_studio_bot\?start=/.test(c.invite), c.invite);
+  const payload = c.invite.split('start=')[1];
+  tgWorld(g, [tgMsg(1, 601, '/start ' + b.id + '_AAAAAAAAAA', { username: 'fake' }), tgMsg(2, 602, '/start ' + payload, { username: 'real' })]);
+  g.ctx.pollChannels();
+  const peers = g.sheets['Контакти'].slice(1);
+  eq(peers.find(p => p[0] === 'tg:602')[1], b.id, 'valid link → existing card');
+  ok(peers.find(p => p[0] === 'tg:601')[1] !== b.id, 'forged link → new card');
+  const c2 = g.post({ action: 'chat', token: s.token, id: b.id });
+  eq(c2.channels.telegram, '@real'); eq(c2.invite, '');
+});
+t('чати: inbox і chat лише з сесією; непрочитані; chat позначає прочитаним; токени не видно', () => {
+  const g = fresh(); g.ctx.setupContent(); const s = signIn(g);
+  tgWorld(g, [tgMsg(1, 555, 'Привіт'), tgMsg(2, 555, 'Ви тут?')]); g.ctx.pollChannels();
+  eq(g.post({ action: 'inbox' }).error, 'unauthorized'); eq(g.post({ action: 'chat', id: 'x' }).error, 'unauthorized');
+  const inb = g.post({ action: 'inbox', token: s.token }); ok(inb.ok, JSON.stringify(inb));
+  const id = Object.keys(inb.convs)[0]; eq(inb.convs[id].unread, 2); eq(inb.convs[id].last.text, 'Ви тут?'); ok(inb.channels.telegram.on);
+  ok(!JSON.stringify(inb).includes('AAH_test'), 'no bot token'); ok(!JSON.stringify(inb).includes('LINK_SECRET'));
+  const c = g.post({ action: 'chat', token: s.token, id }); eq(c.messages.length, 2); eq(c.messages[0].channel, 'telegram'); eq(c.channels.telegram, '@ira_flowers');
+  eq(g.post({ action: 'inbox', token: s.token }).convs[id].unread, 0);
+  eq(g.post({ action: 'chat', token: s.token, id: 'nope' }).error, 'not found');
+});
+t('чати: chatSend — без confirm нічого; Telegram лише тому, хто писав; без каналу — помилка; блокування бота пояснюється', () => {
+  const g = fresh(); g.ctx.setupContent(); const s = signIn(g);
+  let sent = tgWorld(g, [tgMsg(1, 555, 'Привіт')]); g.ctx.pollChannels();
+  const id = g.sheets['Контакти'][1][1];
+  eq(g.post({ action: 'chatSend', token: s.token, id, channel: 'telegram', text: 'Вітаю!' }).error, 'confirm required');
+  eq(sent.filter(b => String(b.chat_id) === '555').length, 0);
+  const r = g.post({ action: 'chatSend', token: s.token, id, channel: 'telegram', text: 'Вітаю!', confirm: true, chat_id: '999' });
+  ok(r.ok, JSON.stringify(r)); const out = sent.filter(b => String(b.chat_id) !== '777'); eq(out.length, 1); eq(String(out[0].chat_id), '555', 'only to the linked peer');
+  eq(g.sheets['Чат'].slice(1).pop()[3], 'out');
+  eq(g.post({ action: 'chatSend', token: s.token, id, channel: 'instagram', text: 'x', confirm: true }).error, 'no channel');
+  eq(g.post({ action: 'chatSend', token: s.token, id, channel: 'sms', text: 'x', confirm: true }).error, 'bad channel');
+  eq(g.post({ action: 'chatSend', token: s.token, id, channel: 'telegram', text: '   ', confirm: true }).error, 'bad request');
+  eq(g.post({ action: 'chatSend', id, channel: 'telegram', text: 'x', confirm: true }).error, 'unauthorized');
+  sent = tgWorld(g, [], { blocked: true });
+  ok(/^TG: Forbidden/.test(g.post({ action: 'chatSend', token: s.token, id, channel: 'telegram', text: 'Ще раз', confirm: true }).error));
+});
+t('чати: пошта — лист у розмові з Gmail, відповідь лише на email із заявки, новий лист клієнта стає непрочитаним', () => {
+  const g = fresh(); g.ctx.setupContent(); const s = signIn(g); const b = seedBrief(g);
+  g.gmail.threads.push({ id: 'T1', messages: [{ id: 'M1', from: 'Олена <o@example.com>', date: new Date().toISOString(), subject: 'Сайт', body: 'Коли зможете почати?' }] });
+  g.ctx.pollChannels();
+  const inb = g.post({ action: 'inbox', token: s.token }); eq(inb.convs[b.id].unread, 1); eq(inb.convs[b.id].last.channel, 'email');
+  const c = g.post({ action: 'chat', token: s.token, id: b.id }); ok(c.messages.some(m => m.channel === 'email' && /почати/.test(m.text)), JSON.stringify(c.messages)); eq(c.channels.email, 'o@example.com');
+  const r = g.post({ action: 'chatSend', token: s.token, id: b.id, channel: 'email', subject: 'Re: Сайт', text: 'Наступного тижня', confirm: true, to: 'evil@example.com' });
+  ok(r.ok, JSON.stringify(r)); eq(g.gmail.sent.pop().to, 'o@example.com');
+  g.ctx.pollChannels(); eq(g.sheets['Чат'].slice(1).filter(m => m[6] === 'gmM1').length, 1, 'no duplicate email');
+});
+t('чати: Instagram Direct — нові повідомлення стають розмовою, відповідь через API без токена в кабінеті', () => {
+  const g = fresh(); g.ctx.setupContent(); const s = signIn(g);
+  g.props.IG_TOKEN = 'IGSECRET'; g.props.IG_USER_ID = '1789'; g.props.IG_USERNAME = 'stackup.studio';
+  const t0 = new Date(Date.now() - 60000).toISOString(); let posted = null;
+  g.hooks.reply = (url, o) => {
+    if (/\/me\/conversations/.test(url)) return { data: [{ id: 'cv1', updated_time: t0, participants: { data: [{ id: '1789', username: 'stackup.studio' }, { id: '42', username: 'nail.bar' }] }, messages: { data: [{ id: 'mm2', created_time: t0, from: { id: '1789' }, message: 'Вітаю!' }, { id: 'mm1', created_time: new Date(Date.now() - 120000).toISOString(), from: { id: '42' }, message: 'Хочу сайт' }] } }] };
+    if (/\/1789\/messages/.test(url)) { posted = o; return { recipient_id: '42', message_id: 'mm3' }; }
+    return undefined;
+  };
+  g.ctx.pollChannels();
+  const lead = g.sheets['Заявки'].slice(1).find(r => r[7] === 'chat'); eq(lead[8], 'Instagram'); eq(lead[6].text, '@nail.bar');
+  const id = lead[0]; const c = g.post({ action: 'chat', token: s.token, id });
+  eq(c.messages.map(m => (m.mine ? '>' : '<') + m.text).join('|'), '<Хочу сайт|>Вітаю!');
+  const r = g.post({ action: 'chatSend', token: s.token, id, channel: 'instagram', text: 'Що продаєте?', confirm: true });
+  ok(r.ok, JSON.stringify(r)); eq(JSON.parse(posted.payload).recipient.id, '42'); eq(posted.headers.Authorization, 'Bearer IGSECRET'); ok(!JSON.stringify(r).includes('IGSECRET'));
+  g.ctx.pollChannels(); eq(g.sheets['Чат'].slice(1).length, 3, 'no duplicates');
+});
+t('чати: Claude бачить розмову з усіх каналів, пише в стилі каналу, без email і телефону', () => {
+  const g = fresh(); g.ctx.setupContent(); const s = signIn(g); g.props.ANTHROPIC_KEY = 'sk-ant-x';
+  tgWorld(g, [tgMsg(1, 555, 'Потрібен магазин косметики')]); g.ctx.pollChannels();
+  const id = g.sheets['Контакти'][1][1]; let body = null; const base = g.hooks.reply;
+  g.hooks.reply = (url, o) => { if (/anthropic/.test(url)) { body = JSON.parse(o.payload); return { stop_reason: 'end_turn', content: [{ type: 'text', text: 'Чернетка' }] }; } return base(url, o); };
+  const r = g.post({ action: 'aiLead', token: s.token, id, task: 'reply', channel: 'telegram' });
+  ok(r.ok, JSON.stringify(r)); eq(r.channel, 'telegram');
+  const u = body.messages[0].content; ok(/магазин косметики/.test(u), 'conversation included'); ok(/Канал: Telegram/.test(u)); ok(!/ira_flowers|555/.test(u), 'no handle or chat id');
+});
+
+t('чернетки: лише з сесією; зберегти, замінити, видалити; не потрапляють у розмову; Claude зберігає свою; надіслана зникає', () => {
+  const g = fresh(); g.ctx.setupContent(); const s = signIn(g); g.props.ANTHROPIC_KEY = 'sk-ant-x';
+  const sent = tgWorld(g, [tgMsg(1, 555, 'Привіт')]); g.ctx.pollChannels();
+  const id = g.sheets['Контакти'][1][1];
+  eq(g.post({ action: 'draft', id, channel: 'telegram', text: 'x' }).error, 'unauthorized');
+  const a = g.post({ action: 'draft', token: s.token, id, channel: 'telegram', text: 'Перша' }); ok(a.ok, JSON.stringify(a)); eq(a.drafts.length, 1);
+  const b = g.post({ action: 'draft', token: s.token, id, channel: 'telegram', text: 'Перша, виправлена', did: a.draft.id }); eq(b.drafts.length, 1); eq(b.drafts[0].text, 'Перша, виправлена');
+  const e = g.post({ action: 'draft', token: s.token, id, channel: 'email', subject: 'Тема', text: 'Лист' }); eq(e.drafts.length, 2); eq(e.draft.subject, 'Тема'); eq(e.draft.text, 'Лист');
+  eq(g.post({ action: 'draft', token: s.token, id, channel: 'sms', text: 'x' }).error, 'bad channel');
+  eq(g.post({ action: 'draft', token: s.token, id, channel: 'telegram', text: '  ' }).error, 'bad request');
+  eq(g.post({ action: 'draft', token: s.token, id: 'nope', channel: 'telegram', text: 'x' }).error, 'not found');
+  const c = g.post({ action: 'chat', token: s.token, id }); eq(c.messages.length, 1, 'drafts are not messages'); eq(c.drafts.length, 2);
+  const inb = g.post({ action: 'inbox', token: s.token }); eq(inb.convs[id].drafts, 2); eq(inb.convs[id].last.text, 'Привіт'); eq(inb.convs[id].unread, 0);
+  eq(sent.filter(x => String(x.chat_id) === '555').length, 0, 'a draft is never sent');
+  const base = g.hooks.reply; g.hooks.reply = (url, o) => /anthropic/.test(url) ? { stop_reason: 'end_turn', content: [{ type: 'text', text: 'Чернетка Claude' }] } : base(url, o);
+  const ai = g.post({ action: 'aiLead', token: s.token, id, task: 'reply', channel: 'telegram' }); ok(ai.draft && ai.draft.src === 'ai:reply', JSON.stringify(ai));
+  eq(g.post({ action: 'aiLead', token: s.token, id, task: 'analyze' }).draft, undefined, 'analysis is not a draft');
+  eq(g.post({ action: 'chat', token: s.token, id }).drafts.length, 3);
+  const r = g.post({ action: 'chatSend', token: s.token, id, channel: 'telegram', text: 'Чернетка Claude', confirm: true, draft: ai.draft.id }); ok(r.ok, JSON.stringify(r));
+  eq(g.post({ action: 'chat', token: s.token, id }).drafts.length, 2, 'sent draft is gone');
+  const del = g.post({ action: 'draft', token: s.token, op: 'del', id, did: e.draft.id }); eq(del.drafts.length, 1);
+  eq(g.post({ action: 'draft', token: s.token, op: 'del', id: 'nope', did: e.draft.id }).error, 'not found');
+  ok(!JSON.stringify(g.post({ action: 'chat', token: s.token, id })).includes('sk-ant'), 'no key');
+});
+t('профіль: схема груп, полів і тегів; збереження компанії, соцмереж, тегів і полів; погані дані відкидаються', () => {
+  const g = fresh(); g.ctx.setupContent(); const s = signIn(g); const b = seedBrief(g);
+  eq(g.post({ action: 'schema', groups: [] }).error, 'unauthorized');
+  const sc = g.post({ action: 'schema', token: s.token, groups: [{ id: 'biz', name: 'Бізнес', fields: [{ id: 'niche', name: 'Ніша', type: 'text' }, { id: 'size', name: 'Команда', type: 'number' }, { id: 'src', name: 'Звідки', type: 'select', options: ['Instagram', 'Сарафан'] }, { id: 'vip', name: 'VIP', type: 'bool' }, { id: 'bad<', name: 'x', type: 'evil' }] }, { id: '', name: 'без id' }], tags: [{ id: 'hot', name: 'Гарячий', tone: 'rose' }, { id: 'hot', name: 'дубль' }, { id: 'shop', name: 'Магазин', tone: 'nope' }] });
+  ok(sc.ok, JSON.stringify(sc)); eq(sc.schema.groups.length, 1); eq(sc.schema.groups[0].fields.length, 5); eq(sc.schema.groups[0].fields[4].id, 'bad'); eq(sc.schema.groups[0].fields[4].type, 'text');
+  eq(sc.schema.tags.length, 2); eq(sc.schema.tags[1].tone, 'peach');
+  eq(g.post({ action: 'profile', id: b.id, company: 'X' }).error, 'unauthorized');
+  const p = g.post({ action: 'profile', token: s.token, id: b.id, company: '=HYPERLINK("x")', socials: { instagram: '@nail.bar', evil: 'x', website: 'https://nail.example' }, tags: ['hot', 'unknown', 'hot'], fields: { niche: 'Манікюр', size: '7', src: 'TikTok', vip: true, ghost: 'x' } });
+  ok(p.ok, JSON.stringify(p)); eq(p.profile.socials.instagram, '@nail.bar'); eq(p.profile.socials.evil, undefined); eq(p.profile.tags.join(), 'hot');
+  eq(p.profile.fields.niche, 'Манікюр'); eq(p.profile.fields.size, 7); eq(p.profile.fields.src, undefined, 'unknown option'); eq(p.profile.fields.vip, true); eq(p.profile.fields.ghost, undefined);
+  ok(g.sheets['Заявки'][1].some(v => v && v.text === '=HYPERLINK("x")'), 'company stored as text');
+  eq(g.post({ action: 'profile', token: s.token, id: b.id, email: 'not-an-email' }).error, 'bad email');
+  eq(g.post({ action: 'profile', token: s.token, id: 'nope' }).error, 'not found');
+  const p2 = g.post({ action: 'profile', token: s.token, id: b.id, fields: { niche: '' } }); eq(p2.profile.fields.niche, undefined); eq(p2.profile.tags.join(), 'hot', 'tags untouched');
+  const l = g.post({ action: 'list', token: s.token }); eq(l.profiles[b.id].socials.instagram, '@nail.bar'); eq(l.schema.tags.length, 2);
+});
+t('розсилки-кампанії: чернетка з аудиторією, повторно тим самим не надсилається, видно хто отримав, надіслану не видалити', () => {
+  const g = fresh(); g.ctx.setupContent(); const s = signIn(g); const b = seedBrief(g);
+  eq(g.post({ action: 'campaignSave', name: 'x' }).error, 'unauthorized');
+  const c = g.post({ action: 'campaignSave', token: s.token, name: 'Чорна п’ятниця', subject: 'Знижка', body: 'Привіт, {{name}}!', audience: { kind: 'tag', value: 'hot' } });
+  ok(c.ok, JSON.stringify(c)); eq(c.campaign.status, 'draft'); eq(c.campaign.audience.kind, 'tag');
+  const c2 = g.post({ action: 'campaignSave', token: s.token, cid: c.campaign.id, name: 'Чорна п’ятниця', subject: 'Знижка', body: 'Привіт!', audience: { kind: 'evil' } }); eq(c2.campaign.audience.kind, 'all');
+  eq(g.post({ action: 'mailing', token: s.token, ids: [b.id], subject: 'Знижка', body: 'Привіт!', campaign: c.campaign.id }).error, 'confirm required');
+  const n0 = g.gmail.sent.length;
+  const r = g.post({ action: 'mailing', token: s.token, ids: [b.id], subject: 'Знижка', body: 'Привіт!', campaign: c.campaign.id, confirm: true }); ok(r.ok, JSON.stringify(r)); eq(r.sent, 1); eq(g.gmail.sent.length, n0 + 1);
+  const r2 = g.post({ action: 'mailing', token: s.token, ids: [b.id], subject: 'Знижка', body: 'Привіт!', campaign: c.campaign.id, confirm: true }); eq(r2.error, 'no recipients', 'not sent twice'); eq(g.gmail.sent.length, n0 + 1);
+  const m = g.post({ action: 'mailMeta', token: s.token }); const cm = m.campaigns.find(x => x.id === c.campaign.id);
+  eq(cm.status, 'sent'); eq(cm.sent, 1); eq(cm.got.join(), b.id); ok(cm.sentAt);
+  eq(g.post({ action: 'campaignDel', token: s.token, cid: c.campaign.id }).error, 'already sent');
+  const d = g.post({ action: 'campaignSave', token: s.token, name: 'Чернетка' }); ok(g.post({ action: 'campaignDel', token: s.token, cid: d.campaign.id }).ok);
+  eq(g.post({ action: 'mailMeta', token: s.token }).campaigns.length, 1);
+});
 for (const [m, n] of results) console.log(m, n);
 console.log(`\n${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);

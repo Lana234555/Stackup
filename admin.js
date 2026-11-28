@@ -59,10 +59,12 @@ let token = sess.get();
 let challenge = '';
 let firstLoadEvent = true;
 let items = [], current = null, cache = {}, pollTimer = null, firstLoad = true, flashIds = [];
+// профіль клієнта (соцмережі, теги, свої поля) і схема (групи, поля, теги) — як у ManyChat
+let profiles = {}, schema = { groups: [], tags: [] };
 let seen = new Set(store.get(SEEN_STORE, null) || []);
 let seenInit = store.get(SEEN_STORE, null) !== null;
 let view = store.get(VIEW_STORE, 'board');
-const F0 = { status: 'active', mode: 'all', type: 'all', period: 'all', budget: 'all', sort: 'new', unread: false, q: '' };
+const F0 = { status: 'active', mode: 'all', type: 'all', period: 'all', budget: 'all', tag: 'all', sort: 'new', unread: false, q: '' };
 let F = { ...F0, ...store.get(FILTER_STORE, {}), q: '' };
 
 /* ---------- api ---------- */
@@ -180,6 +182,8 @@ async function load(background) {
   const before = new Set(items.map(x => x.id));
   items = j.items || [];
   if (j.stages) setStages(j.stages);
+  if (j.profiles) profiles = j.profiles;
+  if (j.schema && Array.isArray(j.schema.groups)) schema = { groups: j.schema.groups, tags: j.schema.tags || [] };
   items.forEach(x => { if (x.status !== 'archive' && !PIPE.includes(x.status)) x.status = 'new'; });
   if (!seenInit) { items.filter(x => x.status !== 'new').forEach(x => seen.add(x.id)); seenInit = true; saveSeen(); }
   const fresh = firstLoad ? [] : items.filter(x => !before.has(x.id));
@@ -206,7 +210,7 @@ function updateBadge() {
   document.title = (n ? `(${n}) ` : '') + 'Заявки — STACKUP.';
   const b = $('#newBadge'); b.hidden = !n; b.textContent = '◆ ' + n + ' ' + (n === 1 ? 'НОВА' : n < 5 ? 'НОВІ' : 'НОВИХ');
   $('#cntNew').textContent = n || '';
-  $('#cntAll').textContent = items.filter(x => x.status !== 'archive').length;
+  $('#cntAll').textContent = n ? '' : items.filter(x => x.status !== 'archive').length;
   $('#cntArch').textContent = items.filter(x => x.status === 'archive').length || '';
 }
 function announce(fresh) {
@@ -254,9 +258,10 @@ function filtered(ignoreStatus) {
     if (F.mode !== 'all' && x.mode !== F.mode) return false;
     if (F.type !== 'all' && x.type !== F.type) return false;
     if (F.budget !== 'all' && x.budget !== F.budget) return false;
+    if (F.tag !== 'all' && !tagsOf(x.id).includes(F.tag)) return false;
     if (F.unread && !isUnread(x)) return false;
     if (!inPeriod(x)) return false;
-    if (q && ![x.name, x.company, x.email, x.phone, x.id, x.type, notesText(x.notes)].join(' ').toLowerCase().includes(q)) return false;
+    if (q && ![x.name, x.company, x.email, x.phone, x.id, x.type, notesText(x.notes), tagsOf(x.id).map(tagName).join(' '), Object.values((profiles[x.id] || {}).socials || {}).join(' ')].join(' ').toLowerCase().includes(q)) return false;
     return true;
   });
   const dl = x => { const i = DL_ORDER.indexOf(x.deadline); return i < 0 ? 99 : i; };
@@ -271,6 +276,7 @@ function renderFilters() {
   $('#fMode').value = F.mode;
   $('#fType').innerHTML = options('type', uniq('type'), 'Усі проєкти');
   $('#fBudget').innerHTML = options('budget', uniq('budget'), 'Будь-який бюджет');
+  const ft = $('#fTag'); if (ft) { if (F.tag !== 'all' && !schema.tags.some(t => t.id === F.tag)) F.tag = 'all'; ft.innerHTML = `<option value="all">Усі теги</option>` + schema.tags.map(t => `<option value="${esc(t.id)}"${t.id === F.tag ? ' selected' : ''}>${esc(t.name)}</option>`).join(''); ft.hidden = !schema.tags.length; }
   $('#fPeriod').value = F.period; $('#fSort').value = F.sort; $('#fUnread').checked = F.unread;
   $('#resetBtn').hidden = !(JSON.stringify({ ...F, q: '', status: 'active' }) !== JSON.stringify({ ...F0, q: '' }) || F.q || (view === 'list' && F.status !== 'active'));
 }
@@ -278,9 +284,9 @@ function renderFilters() {
 /* ---------- render ---------- */
 function render() {
   updateBadge(); renderFilters(); renderKpis();
-  $$('[data-view]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.view === view)));
+  $$('[data-view]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.view === view && !(b.dataset.plain && F.status === 'archive'))));
   $$('[data-quick]').forEach(b => b.setAttribute('aria-pressed', String((b.dataset.quick === 'unread' && F.unread) || (b.dataset.quick === 'archive' && view === 'list' && F.status === 'archive'))));
-  $('#viewTitle').textContent = view === 'board' ? 'Воронка' : (F.status === 'archive' ? 'Архів' : 'Усі заявки');
+  $('#viewTitle').textContent = view === 'list' && F.status === 'archive' ? 'Архів' : 'Заявки';
   $('#board').hidden = view !== 'board'; $('#listview').hidden = view !== 'list';
   if (view === 'board') renderBoard(); else renderTable();
   flashIds = [];
@@ -301,12 +307,16 @@ function renderKpis() {
   ].map(([l, n, t, q]) => `<${q ? 'button type="button" data-quick="' + q + '"' : 'div'} class="kpi ${t}"><span class="mono">${l}</span><b>${n}</b></${q ? 'button' : 'div'}>`).join('');
 }
 
+const tagsOf = id => ((profiles[id] || {}).tags || []).filter(t => schema.tags.some(k => k.id === t));
+const tagName = id => (schema.tags.find(t => t.id === id) || {}).name || id;
+const tagTone = id => (schema.tags.find(t => t.id === id) || {}).tone || 'peach';
+const modeTag = x => x.mode === 'has' ? 'ТЗ ✓' : x.mode === 'lead' ? 'САЙТ' : x.mode === 'chat' ? (x.type === 'Instagram' ? 'INSTAGRAM' : 'TELEGRAM') : 'БРИФ';
 function card(x) {
   return `<article class="card${isUnread(x) ? ' unread' : ''}${flashIds.includes(x.id) ? ' flash' : ''}${current === x.id ? ' cur' : ''}" draggable="true" data-open="${esc(x.id)}" tabindex="0">
     <div class="card-top"><span class="ava ${stTone(x.status)}">${esc(initials(x))}</span><span class="mono card-age">${esc(ago(x.created))}</span>${isUnread(x) ? '<em class="new-tag mono">НОВА</em>' : ''}</div>
     <strong>${esc(x.company || x.name)}</strong>
     <span class="card-sub">${esc(x.company ? x.name : x.email)}</span>
-    <div class="tags"><span class="tag mono">${x.mode === 'has' ? 'ТЗ ✓' : x.mode === 'lead' ? 'САЙТ' : 'БРИФ'}</span>${x.type && x.mode === 'none' ? `<span class="tag">${esc(x.type)}</span>` : ''}</div>
+    <div class="tags"><span class="tag mono">${modeTag(x)}</span>${x.type && x.mode === 'none' ? `<span class="tag">${esc(x.type)}</span>` : ''}${tagsOf(x.id).slice(0, 3).map(t => `<span class="ctag ${esc(tagTone(t))}">${esc(tagName(t))}</span>`).join('')}${tagsOf(x.id).length > 3 ? `<span class="ctag more">+${tagsOf(x.id).length - 3}</span>` : ''}</div>
     <div class="card-foot mono">${x.budget ? `<span>${esc(x.budget)}</span>` : ''}${x.deadline ? `<span>⏱ ${esc(x.deadline)}</span>` : ''}${num(x.files) ? `<span>📎 ${num(x.files)}</span>` : ''}${x.notes ? '<span title="Є нотатки">✎</span>' : ''}</div>
   </article>`;
 }
@@ -364,7 +374,7 @@ function renderTable() {
       <td class="c-dot"><span class="ava ${stTone(x.status)}">${esc(initials(x))}</span></td>
       <td class="c-date"><b>${esc(fmtDay(x.created))}</b><span class="mono">${esc(ago(x.created))} тому</span></td>
       <td class="c-client"><b>${esc(x.company || x.name)}${isUnread(x) ? ' <em class="new-tag mono">НОВА</em>' : ''}</b><span>${esc(x.company ? x.name : x.email)}</span></td>
-      <td class="c-what"><span class="tag mono">${x.mode === 'has' ? 'ТЗ ✓' : x.mode === 'lead' ? 'САЙТ' : 'БРИФ'}</span> ${esc(x.mode === 'has' ? 'Власне ТЗ' : x.type || '—')}</td>
+      <td class="c-what"><span class="tag mono">${modeTag(x)}</span> ${esc(x.mode === 'has' ? 'Власне ТЗ' : x.type || '—')}</td>
       <td class="c-dl">${esc(x.deadline || '—')}</td>
       <td class="c-bg">${esc(x.budget || '—')}</td>
       <td class="c-files mono">${x.files ? '📎 ' + x.files : ''}</td>
@@ -410,11 +420,23 @@ function valueHTML(r) {
 }
 function contactLinks(c) {
   const out = [];
-  if (c.email) out.push(`<a class="button primary" href="mailto:${esc(c.email)}"><b>Написати</b> <span>↗︎</span></a>`);
+  out.push(`<button type="button" class="button primary" data-dtab="chat"><b>Написати в чаті</b> <span>→</span></button>`);
   const ph = String(c.phone || '').trim();
   if (/^@?[a-z0-9_]{4,}$/i.test(ph) && !/^\d+$/.test(ph.replace('@', ''))) out.push(`<a class="button ghost" href="https://t.me/${esc(ph.replace('@', ''))}" target="_blank" rel="noopener"><b>Telegram</b> <span>↗︎</span></a>`);
   else if (ph) out.push(`<a class="button ghost" href="tel:${esc(ph.replace(/[^\d+]/g, ''))}"><b>${esc(ph)}</b> <span>↗︎</span></a>`);
   return out.join('');
+}
+/* Картка клієнта: одна картка, три вкладки. Чат (усі канали), Бриф (ТЗ, відповіді, файли), Клієнт (етап, контакти, Claude, задачі, нотатки). */
+const DTABS = [['chat', 'Чат'], ['brief', 'Бриф'], ['client', 'Клієнт']];
+let dtab = store.get('stackup-dtab', 'chat');
+function setDtab(t, focus) {
+  if (!DTABS.some(x => x[0] === t)) t = 'chat';
+  dtab = t; store.set('stackup-dtab', t);
+  $$('#detail [data-dtab]').forEach(b => { const on = b.dataset.dtab === t; b.setAttribute('aria-selected', String(on)); b.tabIndex = on ? 0 : -1; if (on && focus) b.focus(); });
+  $$('#detail [data-pane]').forEach(p => { p.hidden = p.dataset.pane !== t; });
+  const bar = $('#detail .d-tabs'), on = bar && bar.querySelector('[aria-selected=true]');
+  if (bar && on) { bar.style.setProperty('--ux', on.offsetLeft + 'px'); bar.style.setProperty('--uw', on.offsetWidth + 'px'); }
+  document.dispatchEvent(new CustomEvent('stackup:dtab', { detail: { tab: t, id: current } }));
 }
 function renderDetail(d) {
   const row = d.row, rec = d.record || {}, c = rec.client || row;
@@ -422,37 +444,45 @@ function renderDetail(d) {
   const groups = {};
   (d.files || []).forEach(f => (groups[f.label] = groups[f.label] || []).push(f));
   const spec = (d.files || []).filter(f => f.field === 'specFiles');
+  const hasBrief = !!(spec.length || (rec.sections || []).length || (rec.estimate || []).length || (d.files || []).length);
+  const who = c.company ? c.name : (row.mode === 'has' ? 'надіслав(ла) ТЗ' : row.mode === 'lead' ? 'залишив(ла) заявку на сайті' : row.mode === 'chat' ? 'написав(ла) в ' + (row.type || 'месенджер') : 'створив(ла) ТЗ');
   $('#detail').innerHTML = `
     <div class="d-nav"><button type="button" class="icon-btn" id="closeDrawer" aria-label="Закрити">×</button>${navBtns(row.id)}</div>
-    <div class="d-bar mono"><span>№ ${esc(row.id)}</span><span>${esc(fmtDate(row.created))}</span></div>
     <div class="d-hero"><span class="ava big ${stTone(live.status)}">${esc(initials(c))}</span>
-      <div><h2>${esc(c.company || c.name)}</h2><p class="serif d-who">${esc(c.company ? c.name : (row.mode === 'has' ? 'надіслав(ла) ТЗ' : row.mode === 'lead' ? 'залишив(ла) заявку на сайті' : 'створив(ла) ТЗ'))}</p></div></div>
-    <p class="contact-line">${esc(c.email || '')}${c.phone ? ' · ' + esc(c.phone) : ''}</p>
+      <div class="d-hero-t"><h2>${esc(c.company || c.name)}</h2><p class="d-who"><span class="serif">${esc(who)}</span></p><p class="mono d-id">№ ${esc(row.id)} · ${esc(fmtDate(row.created))} · <b>${esc(stLabel(live.status)).toUpperCase()}</b></p></div></div>
+    <div class="d-tabs" role="tablist" aria-label="Розділи картки">${DTABS.map(([k, l]) => `<button type="button" role="tab" data-dtab="${k}" aria-selected="false" aria-controls="pane-${k}" id="tab-${k}">${l}${k === 'chat' ? '<em class="hot" id="dChatNew"></em>' : k === 'brief' && !hasBrief ? '<i class="mono">НЕМАЄ</i>' : ''}</button>`).join('')}<span class="d-ux" aria-hidden="true"></span></div>
+
+    <div class="d-pane" data-pane="chat" id="pane-chat" role="tabpanel" aria-labelledby="tab-chat"><section class="talk" id="dTalk"></section></div>
+
+    <div class="d-pane" data-pane="brief" id="pane-brief" role="tabpanel" aria-labelledby="tab-brief" hidden>
+    ${hasBrief ? '' : `<div class="d-empty"><p><b>Брифу ще немає.</b> Надішли клієнту посилання, і відповіді з’являться тут.</p><div class="act-row"><button type="button" class="button ghost sm" data-copy="brief.html?mode=none"><b>Бриф: ТЗ немає</b> <span class="mono">КОПІЮВАТИ</span></button><button type="button" class="button ghost sm" data-copy="brief.html?mode=has"><b>Бриф: є ТЗ</b> <span class="mono">КОПІЮВАТИ</span></button></div></div>`}
+    ${spec.length ? `<div class="spec-box"><span class="mono">ТЗ КЛІЄНТА</span>${spec.map(f => `<a href="${esc(safeUrl(f.url))}" target="_blank" rel="noopener noreferrer"><span class="mono">${esc(ext(f.name))}</span><b>${esc(f.name)}</b><em>${size(f.size)}</em><i>↗︎</i></a>`).join('')}</div>` : ''}
+    ${rec.estimate && rec.estimate.length ? `<section class="d-sec d-est"><h3><span class="mono">✱</span>Для оцінки</h3><div class="est">${rec.estimate.map(([k, v]) => `<div><span class="mono">${esc(k)}</span><b>${esc(v)}</b></div>`).join('')}</div></section>` : ''}
+    ${(rec.sections || []).map((s, i) => `<details class="d-sec acc"${i < 2 ? ' open' : ''}><summary><h3><span class="mono">${String(i + 1).padStart(2, '0')}</span>${esc(s.title)}</h3><i aria-hidden="true">+</i></summary>
+      <dl>${s.rows.map(r => `<dt>${esc(r.label)}</dt><dd>${valueHTML(r)}</dd>`).join('')}</dl></details>`).join('')}
+    ${hasBrief ? `<section class="d-sec"><h3><span class="mono">📎</span>Файли · ${(d.files || []).length}</h3>
+      ${Object.keys(groups).length ? Object.entries(groups).map(([label, list]) => `<p class="f-group mono">${esc(label).toUpperCase()}</p><ul class="file-list">${list.map(f => `<li><span class="mono">${esc(ext(f.name))}</span><b><a href="${esc(safeUrl(f.url))}" target="_blank" rel="noopener noreferrer">${esc(f.name)}</a></b><em>${size(f.size)}</em></li>`).join('')}</ul>`).join('') : '<p class="lead">Файлів немає.</p>'}
+      ${safeUrl(d.folderUrl) ? `<p class="d-folder"><a class="link mono" href="${esc(safeUrl(d.folderUrl))}" target="_blank" rel="noopener noreferrer">ПАПКА НА GOOGLE DRIVE ↗︎</a></p>` : ''}
+    </section>` : ''}
+    </div>
+
+    <div class="d-pane" data-pane="client" id="pane-client" role="tabpanel" aria-labelledby="tab-client" hidden>
     <p class="mono d-label">ЕТАП</p>
     <div class="stage" role="group" aria-label="Етап">${STATUS.map(([v, l, t], i) => `<button type="button" class="${t}${PIPE.indexOf(v) <= PIPE.indexOf(live.status) && PIPE.includes(live.status) && PIPE.includes(v) ? ' passed' : ''}" data-st="${esc(v)}" aria-pressed="${live.status === v}"><span class="mono">${v === 'archive' ? '×' : String(i + 1).padStart(2, '0')}</span>${esc(l)}</button>`).join('')}</div>
     <div class="act-row">${contactLinks(c)}${safeUrl(d.folderUrl) ? `<a class="button ghost" href="${esc(safeUrl(d.folderUrl))}" target="_blank" rel="noopener noreferrer"><b>Папка на Drive</b> <span>↗︎</span></a>` : ''}</div>
-
-    <section class="d-sec talk" id="dTalk"></section>
+    ${row.type || row.budget || row.deadline ? `<dl class="d-kv d-req">${row.type ? `<dt>Що потрібно</dt><dd>${esc(row.type)}</dd>` : ''}${row.budget ? `<dt>Бюджет</dt><dd>${esc(row.budget)}</dd>` : ''}${row.deadline ? `<dt>Терміни</dt><dd>${esc(row.deadline)}</dd>` : ''}</dl>` : ''}
+    <section class="d-sec prof" id="dProfile"></section>
     <section class="d-sec ai" id="dAi"></section>
-
-    ${spec.length ? `<div class="spec-box"><span class="mono">ТЗ КЛІЄНТА</span>${spec.map(f => `<a href="${esc(safeUrl(f.url))}" target="_blank" rel="noopener noreferrer"><span class="mono">${esc(ext(f.name))}</span><b>${esc(f.name)}</b><em>${size(f.size)}</em><i>↗︎</i></a>`).join('')}</div>` : ''}
-
+    <section class="d-sec d-tasks" id="dTasks"></section>
     <section class="d-sec notes"><h3><span class="mono">✎</span>Мої нотатки</h3>
       <ol class="nt-list" id="noteList">${notesHTML(live.notes)}</ol>
       <div class="nt-compose"><textarea id="notes" rows="2" placeholder="Нова нотатка: оцінка, години, ціна, питання до клієнта…">${esc(noteDraft[current] || '')}</textarea>
       <button type="button" class="nt-send" id="saveNotes" aria-label="Додати нотатку">↑</button></div>
       <div class="notes-bar"><span class="mono">ENTER: ДОДАТИ · SHIFT+ENTER: НОВИЙ РЯДОК</span><span class="mono" id="notesState"></span></div>
     </section>
-
-    ${rec.estimate && rec.estimate.length ? `<section class="d-sec d-est"><h3><span class="mono">✱</span>Для оцінки</h3><div class="est">${rec.estimate.map(([k, v]) => `<div><span class="mono">${esc(k)}</span><b>${esc(v)}</b></div>`).join('')}</div></section>` : ''}
-
-    ${(rec.sections || []).map((s, i) => `<details class="d-sec acc"${i < 2 ? ' open' : ''}><summary><h3><span class="mono">${String(i + 1).padStart(2, '0')}</span>${esc(s.title)}</h3><i aria-hidden="true">+</i></summary>
-      <dl>${s.rows.map(r => `<dt>${esc(r.label)}</dt><dd>${valueHTML(r)}</dd>`).join('')}</dl></details>`).join('')}
-
-    <section class="d-sec"><h3><span class="mono">📎</span>Файли · ${(d.files || []).length}</h3>
-      ${Object.keys(groups).length ? Object.entries(groups).map(([label, list]) => `<p class="f-group mono">${esc(label).toUpperCase()}</p><ul class="file-list">${list.map(f => `<li><span class="mono">${esc(ext(f.name))}</span><b><a href="${esc(safeUrl(f.url))}" target="_blank" rel="noopener noreferrer">${esc(f.name)}</a></b><em>${size(f.size)}</em></li>`).join('')}</ul>`).join('') : '<p class="lead">Файлів немає.</p>'}
-    </section>`;
-  document.dispatchEvent(new CustomEvent('stackup:detail', { detail: { id: row.id, row: { ...row, email: c.email || row.email, name: c.name || row.name, company: c.company || row.company } } }));
+    </div>`;
+  setDtab(dtab);
+  document.dispatchEvent(new CustomEvent('stackup:detail', { detail: { id: row.id, row: { ...row, email: c.email || row.email, name: c.name || row.name, company: c.company || row.company, phone: c.phone || row.phone } } }));
 }
 
 async function setStatus(id, st) {
@@ -515,6 +545,7 @@ $('#search').addEventListener('input', e => { F.q = e.target.value; render(); })
 $('#fMode').addEventListener('change', e => setF('mode', e.target.value));
 $('#fType').addEventListener('change', e => setF('type', e.target.value));
 $('#fBudget').addEventListener('change', e => setF('budget', e.target.value));
+$('#fTag') && $('#fTag').addEventListener('change', e => setF('tag', e.target.value));
 $('#fPeriod').addEventListener('change', e => setF('period', e.target.value));
 $('#fSort').addEventListener('change', e => setF('sort', e.target.value));
 $('#fUnread').addEventListener('change', e => setF('unread', e.target.checked));
@@ -525,6 +556,7 @@ $('#scrim').addEventListener('click', () => closeDrawer());
 document.addEventListener('click', e => {
   if (e.target.closest('#toast .x')) { $('#toast').hidden = true; return; }
   if (e.target.closest('#closeDrawer')) { closeDrawer(); return; }
+  const dt = e.target.closest('[data-dtab]'); if (dt) { setDtab(dt.dataset.dtab); return; }
   const v = e.target.closest('[data-view]'); if (v) { if (v.closest('.side-nav')) { F.unread = false; if (F.status === 'archive') F.status = 'active'; } setView(v.dataset.view); return; }
   const q = e.target.closest('[data-quick]');
   if (q) {
@@ -543,6 +575,7 @@ document.addEventListener('click', e => {
 });
 document.addEventListener('keydown', e => {
   if (e.key === 'Escape' && current) closeDrawer();
+  if ((e.key === 'ArrowRight' || e.key === 'ArrowLeft') && e.target.matches && e.target.matches('[data-dtab]')) { const i = DTABS.findIndex(x => x[0] === dtab), j = (i + (e.key === 'ArrowRight' ? 1 : DTABS.length - 1)) % DTABS.length; setDtab(DTABS[j][0], true); }
   if (e.key === 'Enter' && e.target.matches('[data-open].card, tr.row')) openDrawer(e.target.dataset.open);
   if ((e.metaKey || e.ctrlKey) && e.key === 's' && document.activeElement && document.activeElement.id === 'notes') { e.preventDefault(); saveNotes(); }
   if (e.key === 'Enter' && !e.shiftKey && !e.isComposing && document.activeElement && document.activeElement.id === 'notes') { e.preventDefault(); saveNotes(); }
@@ -622,16 +655,24 @@ function demoData() {
     { id: '261002-N1DD', created: h(720), status: 'done', name: 'Анна Руденко', company: 'Rudenko Law', email: 'anna@rudenko.example', phone: '', mode: 'none', type: 'Лендинг', deadline: 'До 1 місяця', budget: '$1 000–3 000', files: 2, notes: 'Здано 25.10.', record: { estimate: [], sections: [] }, fileList: [] }
   ];
 }
+const DEMO_SCHEMA = { tags: [{ id: 'hot', name: 'Гарячий', tone: 'rose' }, { id: 'shop', name: 'Магазин', tone: 'blue' }, { id: 'vip', name: 'VIP', tone: 'sand' }, { id: 'repeat', name: 'Повторний', tone: 'mint' }, { id: 'kyiv', name: 'Київ', tone: 'lav' }],
+  groups: [{ id: 'biz', name: 'Бізнес', fields: [{ id: 'niche', name: 'Ніша', type: 'text' }, { id: 'team', name: 'Людей у команді', type: 'number' }, { id: 'source', name: 'Звідки дізнались', type: 'select', options: ['Instagram', 'Сарафан', 'Google', 'Telegram'] }] },
+    { id: 'deal', name: 'Угода', fields: [{ id: 'price', name: 'Ціна в КП, $', type: 'number' }, { id: 'call', name: 'Дзвінок', type: 'date' }, { id: 'prepaid', name: 'Передоплата отримана', type: 'bool' }] }] };
+const DEMO_PROFILES = { '261101-A7F2': { tags: ['hot', 'shop', 'kyiv'], socials: { instagram: '@coffeelab.kyiv', website: 'https://coffeelab.example' }, fields: { niche: 'Кав’ярня і обсмажка', team: 12, source: 'Instagram' } }, '261031-K2D9': { tags: ['vip'], socials: { linkedin: 'nexa-logistics' }, fields: {} }, '261015-P8LA': { tags: ['repeat'], socials: {}, fields: { prepaid: true, price: 7800 } } };
 let demo = null;
 function demoGet(p) {
   demo = demo || demoData();
-  if (p.action === 'list') return Promise.resolve({ ok: true, stages: store.get('stackup-demo-stages', null), items: demo.map(({ record, fileList, ...r }) => r) });
+  if (p.action === 'list') return Promise.resolve({ ok: true, stages: store.get('stackup-demo-stages', null), items: demo.map(({ record, fileList, ...r }) => r), profiles: store.get('stackup-demo-profiles', DEMO_PROFILES), schema: store.get('stackup-demo-schema', DEMO_SCHEMA) });
   const x = demo.find(d => d.id === p.id);
   const { record, fileList, ...row } = x;
   return new Promise(ok => setTimeout(() => ok({ ok: true, row, record: { client: row, ...record }, folderUrl: 'https://drive.google.com/',
     files: fileList.map(([field, label, name, sz]) => ({ field, label, name, size: sz, url: 'https://drive.google.com/' })) }), 200));
 }
-function demoPost(b) { if (b.action === 'stages') { store.set('stackup-demo-stages', b.stages); return Promise.resolve({ ok: true }); } const x = demo.find(d => d.id === b.id); if (b.status) x.status = b.status; if (b.notes != null) x.notes = b.notes; return Promise.resolve({ ok: true }); }
+function demoPost(b) {
+  if (b.action === 'profile') { const all = store.get('stackup-demo-profiles', DEMO_PROFILES), cur = all[b.id] || {}; if (b.socials) cur.socials = b.socials; if (b.tags) cur.tags = b.tags; if (b.fields) { cur.fields = Object.assign(cur.fields || {}, b.fields); Object.keys(cur.fields).forEach(k => { if (cur.fields[k] === '' || cur.fields[k] == null) delete cur.fields[k]; }); } all[b.id] = cur; store.set('stackup-demo-profiles', all);
+    const x = demo.find(d => d.id === b.id); ['name', 'company', 'email', 'phone'].forEach(k => { if (b[k] != null && x) x[k] = b[k]; }); return Promise.resolve({ ok: true, profile: cur }); }
+  if (b.action === 'schema') { const sc = { groups: b.groups || [], tags: b.tags || [] }; store.set('stackup-demo-schema', sc); return Promise.resolve({ ok: true, schema: sc }); }
+  if (b.action === 'stages') { store.set('stackup-demo-stages', b.stages); return Promise.resolve({ ok: true }); } const x = demo.find(d => d.id === b.id); if (b.status) x.status = b.status; if (b.notes != null) x.notes = b.notes; return Promise.resolve({ ok: true }); }
 
 // demo: a fresh brief "arrives" 20 s after opening, to show how new ones look
 if (DEMO) setTimeout(() => {
@@ -648,7 +689,23 @@ window.StackupCRM = {
   leads: () => items.slice(),
   stages: () => stages.slice(),
   isUnread: x => isUnread(x),
-  open: id => openDrawer(id),
+  open: (id, tab) => { if (tab) { dtab = tab; store.set('stackup-dtab', tab); } openDrawer(id); },
+  tab: t => setDtab(t),
+  current: () => current,
+  profile: id => JSON.parse(JSON.stringify(profiles[id] || { tags: [], socials: {}, fields: {} })),
+  profiles: () => profiles,
+  schema: () => JSON.parse(JSON.stringify(schema)),
+  /* зберегти профіль клієнта: контакти пишуться в заявку, решта — в аркуш «Профілі» */
+  saveProfile: async (id, patch) => {
+    const r = await apiPost({ action: 'profile', id, ...patch });
+    profiles[id] = r.profile || profiles[id];
+    const row = items.find(x => x.id === id), c = cache[id];
+    ['name', 'company', 'email', 'phone'].forEach(k => { if (patch[k] == null) return; if (row) row[k] = patch[k]; if (c) { c.row[k] = patch[k]; if (c.record && c.record.client) c.record.client[k] = patch[k]; } });
+    if (current === id && c && (patch.name != null || patch.company != null)) { const h = $('#detail .d-hero h2'); if (h) h.textContent = c.row.company || (c.record && c.record.client && c.record.client.company) || c.row.name; }
+    render(); document.dispatchEvent(new CustomEvent('stackup:leads'));
+    return profiles[id];
+  },
+  saveSchema: async sc => { const r = await apiPost({ action: 'schema', groups: sc.groups, tags: sc.tags }); schema = r.schema || sc; render(); document.dispatchEvent(new CustomEvent('stackup:leads')); return schema; },
   toast: (html, ms) => { const t = $('#toast'); t.innerHTML = html + '<button type="button" class="x" aria-label="Закрити">×</button>'; t.hidden = false; clearTimeout(t._h); t._h = setTimeout(() => { t.hidden = true; }, ms || 3200); }
 };
 
